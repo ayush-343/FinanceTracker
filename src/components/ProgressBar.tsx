@@ -1,11 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import Animated, {
     useAnimatedStyle,
     withSpring,
     useSharedValue,
     withTiming,
-    interpolateColor,
 } from 'react-native-reanimated';
 import { useTheme } from '../theme';
 import { getProgressColor } from '../constants';
@@ -31,16 +30,22 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
     const displayProgress = Math.min(progress, 100);
     const progressColor = getProgressColor(progress);
 
-    const animatedStyle = useAnimatedStyle(() => {
-        const width = animated
-            ? withSpring(displayProgress, { damping: 15, stiffness: 100 })
-            : displayProgress;
+    // Use shared values for proper animation
+    const progressValue = useSharedValue(0);
 
+    useEffect(() => {
+        if (animated) {
+            progressValue.value = withSpring(displayProgress, { damping: 15, stiffness: 100 });
+        } else {
+            progressValue.value = displayProgress;
+        }
+    }, [displayProgress, animated]);
+
+    const animatedStyle = useAnimatedStyle(() => {
         return {
-            width: `${width}%`,
-            backgroundColor: progressColor,
+            width: `${progressValue.value}%`,
         };
-    }, [displayProgress, progressColor, animated]);
+    });
 
     return (
         <View
@@ -57,7 +62,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
             <Animated.View
                 style={[
                     styles.progress,
-                    { borderRadius: borderRadius.full },
+                    { borderRadius: borderRadius.full, backgroundColor: progressColor },
                     animatedStyle,
                 ]}
             />

@@ -25,10 +25,9 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 export const RootNavigator: React.FC = () => {
     const { colors } = useTheme();
     const { isOnboardingCompleted, isBiometricEnabled, loadSettings } = useSettingsStore();
-    const { authenticate, isAuthenticated } = useBiometricAuth();
+    const { authenticate, isAuthenticated, isAuthenticating } = useBiometricAuth();
 
     const [isLoading, setIsLoading] = useState(true);
-    const [isUnlocked, setIsUnlocked] = useState(false);
 
     useEffect(() => {
         initializeApp();
@@ -40,33 +39,18 @@ export const RootNavigator: React.FC = () => {
         setIsLoading(false);
     };
 
-    useEffect(() => {
-        // Handle biometric authentication
-        if (!isLoading && isOnboardingCompleted && isBiometricEnabled && !isUnlocked) {
-            handleBiometricAuth();
-        } else if (!isBiometricEnabled) {
-            setIsUnlocked(true);
-        }
-    }, [isLoading, isOnboardingCompleted, isBiometricEnabled]);
-
-    useEffect(() => {
-        // Update unlock state when authentication status changes
-        if (isAuthenticated) {
-            setIsUnlocked(true);
-        }
-    }, [isAuthenticated]);
-
     const handleBiometricAuth = async () => {
-        const success = await authenticate();
-        setIsUnlocked(success);
+        if (!isAuthenticating) {
+            await authenticate();
+        }
     };
 
     if (isLoading) {
         return <LoadingScreen message="Loading..." />;
     }
 
-    // Show lock screen if biometric is enabled but not authenticated
-    if (isOnboardingCompleted && isBiometricEnabled && !isUnlocked) {
+    // Show lock screen if biometric is enabled but not authenticated (and not currently authenticating)
+    if (isOnboardingCompleted && isBiometricEnabled && !isAuthenticated && !isAuthenticating) {
         return (
             <LoadingScreen
                 message="Tap to unlock"

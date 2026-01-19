@@ -1,7 +1,7 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { useSettingsStore } from '../store';
-import { Alert, AppState, AppStateStatus } from 'react-native';
+import { AppState, AppStateStatus } from 'react-native';
 
 export interface BiometricAuth {
   isAvailable: boolean;
@@ -10,6 +10,7 @@ export interface BiometricAuth {
   isAuthenticating: boolean;
   authenticate: () => Promise<boolean>;
   checkAvailability: () => Promise<void>;
+  resetAuth: () => void;
 }
 
 export const useBiometricAuth = (): BiometricAuth => {
@@ -18,6 +19,9 @@ export const useBiometricAuth = (): BiometricAuth => {
   const [biometricType, setBiometricType] = useState<'fingerprint' | 'faceid' | 'iris' | 'none'>('none');
   const [isAuthenticated, setIsAuthenticated] = useState(!isBiometricEnabled);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const appStateRef = useRef(AppState.currentState);
+  const isAuthenticatingRef = useRef(false);
+  const hasInitialAuthRun = useRef(false);
 
   const checkAvailability = useCallback(async () => {
     try {
@@ -44,11 +48,12 @@ export const useBiometricAuth = (): BiometricAuth => {
   }, []);
 
   const authenticate = useCallback(async (): Promise<boolean> => {
-    if (!isAvailable) {
-      setIsAuthenticated(true);
-      return true;
+    // Prevent multiple simultaneous auth attempts
+    if (isAuthenticatingRef.current) {
+      return false;
     }
 
+    isAuthenticatingRef.current = true;
     setIsAuthenticating(true);
 
     try {
@@ -60,7 +65,6 @@ export const useBiometricAuth = (): BiometricAuth => {
       });
 
       setIsAuthenticated(result.success);
-      setIsAuthenticating(false);
       
       if (!result.success && result.error) {
         console.log('Authentication failed:', result.error);
@@ -69,16 +73,24 @@ export const useBiometricAuth = (): BiometricAuth => {
       return result.success;
     } catch (error) {
       console.error('Authentication error:', error);
-      setIsAuthenticating(false);
       setIsAuthenticated(false);
       return false;
+    } finally {
+      setIsAuthenticating(false);
+      isAuthenticatingRef.current = false;
     }
-  }, [isAvailable]);
+  }, []);
 
   // Check availability on mount
   useEffect(() => {
     checkAvailability();
   }, [checkAvailability]);
+
+  // Reset authentication state
+  const resetAuth = useCallback(() => {
+    setIsAuthenticated(false);
+    hasInitialAuthRun.current = false;
+  }, []);
 
   // Handle app state changes for re-authentication
   useEffect(() => {
@@ -88,11 +100,20 @@ export const useBiometricAuth = (): BiometricAuth => {
     }
 
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
-      if (nextAppState === 'active' && !isAuthenticated) {
-        authenticate();
-      } else if (nextAppState === 'background') {
-        // Lock when going to background
+      const previousState = appStateRef.current;
+      appStateRef.current = nextAppState;
+
+      // Only trigger re-auth when coming from background to active
+      if (
+        previousState === 'background' &&
+        nextAppState === 'active' &&
+        !isAuthenticatingRef.current
+      ) {
         setIsAuthenticated(false);
+        // Small delay to ensure UI is ready
+        setTimeout(() => {
+          authenticate();
+        }, 100);
       }
     };
 
@@ -101,7 +122,15 @@ export const useBiometricAuth = (): BiometricAuth => {
     return () => {
       subscription.remove();
     };
-  }, [isBiometricEnabled, isAuthenticated, authenticate]);
+  }, [isBiometricEnabled, authenticate]);
+
+  // Initial authentication - runs only once on mount
+  useEffect(() => {
+    if (isBiometricEnabled && !hasInitialAuthRun.current) {
+      hasInitialAuthRun.current = true;
+      authenticate();
+    }
+  }, [isBiometricEnabled, authenticate]);
 
   return {
     isAvailable,
@@ -110,5 +139,6 @@ export const useBiometricAuth = (): BiometricAuth => {
     isAuthenticating,
     authenticate,
     checkAvailability,
+    resetAuth,
   };
 };
