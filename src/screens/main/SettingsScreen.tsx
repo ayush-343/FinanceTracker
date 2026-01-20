@@ -383,7 +383,7 @@ export const SettingsScreen: React.FC<Props> = ({ navigation }) => {
                 <SettingRow
                     icon="info"
                     title="App Version"
-                    subtitle="0.1.0"
+                    subtitle="0.2.1"
                 />
                 <SettingRow
                     icon="refresh-cw"
