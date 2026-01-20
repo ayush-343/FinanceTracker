@@ -11,6 +11,7 @@ import {
     AddCategoryScreen,
     EditCategoryScreen,
     AddSubcategoryScreen,
+    EditSubcategoryScreen,
     AddSubscriptionScreen,
     EditSubscriptionScreen,
 } from '../screens/forms';
@@ -121,6 +122,14 @@ export const RootNavigator: React.FC = () => {
                         <Stack.Screen
                             name="AddSubcategory"
                             component={AddSubcategoryScreen}
+                            options={{
+                                presentation: 'modal',
+                                animation: 'slide_from_bottom',
+                            }}
+                        />
+                        <Stack.Screen
+                            name="EditSubcategory"
+                            component={EditSubcategoryScreen}
                             options={{
                                 presentation: 'modal',
                                 animation: 'slide_from_bottom',

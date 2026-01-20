@@ -6,11 +6,11 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../theme';
-import { ProgressBar, EmptyState, Button } from '../../components';
+import { ProgressBar, EmptyState, Button, SwipeableSubcategory } from '../../components';
 import { useBudgetStore } from '../../store';
 import { useCurrency, useHaptics } from '../../hooks';
 import { RootStackParamList, Subcategory, CategoryWithSpending } from '../../types';
-import { getCategoriesWithSpending, getSubcategories, getTotalSpending } from '../../database';
+import { getCategoriesWithSpending, getSubcategories, getTransactionsByCategory } from '../../database';
 import { format as formatDate, startOfMonth, endOfMonth } from '../../utils';
 
 type Props = {
@@ -28,7 +28,7 @@ export const CategoryScreen: React.FC<Props> = ({ route, navigation }) => {
     const { colors, spacing, textStyles, borderRadius } = useTheme();
     const { format } = useCurrency();
     const { light } = useHaptics();
-    const { dateRange, removeCategory } = useBudgetStore();
+    const { dateRange, removeCategory, removeSubcategory } = useBudgetStore();
 
     const [category, setCategory] = useState<CategoryWithSpending | null>(null);
     const [subcategories, setSubcategories] = useState<SubcategoryWithSpending[]>([]);
@@ -45,12 +45,36 @@ export const CategoryScreen: React.FC<Props> = ({ route, navigation }) => {
         // Get subcategories
         const subs = await getSubcategories(categoryId);
 
-        // Calculate spending per subcategory (simplified - you might want to add proper queries)
-        const subsWithSpending: SubcategoryWithSpending[] = subs.map(sub => ({
-            ...sub,
-            spent: 0, // TODO: Add proper subcategory spending calculation
-            percentage: 0,
-        }));
+        // Get transactions for this category and compute spending by subcategory
+        const transactions = await getTransactionsByCategory(categoryId, dateRange.start, dateRange.end);
+        const spendingBySub: Record<string, number> = {};
+
+        transactions.forEach((t) => {
+            const key = t.subcategory_id === null ? 'uncategorized' : String(t.subcategory_id);
+            spendingBySub[key] = (spendingBySub[key] || 0) + t.amount;
+        });
+
+        const subsWithSpending: SubcategoryWithSpending[] = subs.map(sub => {
+            const spent = spendingBySub[String(sub.id)] || 0;
+            return {
+                ...sub,
+                spent,
+                percentage: sub.budget_limit && sub.budget_limit > 0 ? (spent / sub.budget_limit) * 100 : 0,
+            };
+        });
+
+        // Add a synthetic "Uncategorized" subcategory for category-level transactions
+        const uncategorizedSpent = spendingBySub['uncategorized'] || 0;
+        if (uncategorizedSpent > 0) {
+            subsWithSpending.unshift({
+                id: -1,
+                category_id: categoryId,
+                name: 'Uncategorized',
+                budget_limit: 0,
+                spent: uncategorizedSpent,
+                percentage: 0,
+            });
+        }
 
         setSubcategories(subsWithSpending);
         setIsLoading(false);
@@ -86,6 +110,28 @@ export const CategoryScreen: React.FC<Props> = ({ route, navigation }) => {
             categoryId,
             title: subcategoryName,
         });
+    };
+
+    const handleEditSubcategory = (subcategoryId: number) => {
+        navigation.navigate('EditSubcategory', { subcategoryId, categoryId });
+    };
+
+    const handleDeleteSubcategory = (subcategoryId: number, subcategoryName: string) => {
+        Alert.alert(
+            'Delete Subcategory',
+            `Are you sure you want to delete "${subcategoryName}"? This will also remove items and transactions under it.`,
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: async () => {
+                        await removeSubcategory(subcategoryId);
+                        await loadData();
+                    },
+                },
+            ]
+        );
     };
 
     const handleViewAllTransactions = () => {
@@ -164,19 +210,21 @@ export const CategoryScreen: React.FC<Props> = ({ route, navigation }) => {
                         style={{ marginTop: spacing.lg }}
                     />
 
-                    <Text
-                        style={[
-                            textStyles.body,
-                            {
-                                color: category.budget_limit - category.spent >= 0 ? colors.success : colors.error,
-                                marginTop: spacing.md,
-                            },
-                        ]}
-                    >
-                        {category.budget_limit - category.spent >= 0
-                            ? `${format(category.budget_limit - category.spent)} remaining`
-                            : `${format(Math.abs(category.budget_limit - category.spent))} over budget`}
-                    </Text>
+                    {category.budget_limit > 0 && (
+                        <Text
+                            style={[
+                                textStyles.body,
+                                {
+                                    color: category.budget_limit - category.spent >= 0 ? colors.success : colors.error,
+                                    marginTop: spacing.md,
+                                },
+                            ]}
+                        >
+                            {category.budget_limit - category.spent >= 0
+                                ? `${format(category.budget_limit - category.spent)} remaining`
+                                : `${format(Math.abs(category.budget_limit - category.spent))} over budget`}
+                        </Text>
+                    )}
                 </View>
 
                 {/* Quick Actions */}
@@ -208,31 +256,20 @@ export const CategoryScreen: React.FC<Props> = ({ route, navigation }) => {
 
                     {subcategories.length > 0 ? (
                         subcategories.map((sub) => (
-                            <TouchableOpacity
-                                key={sub.id}
-                                style={[
-                                    styles.subcategoryCard,
-                                    {
-                                        backgroundColor: colors.card,
-                                        borderRadius: borderRadius.lg,
-                                        padding: spacing.lg,
-                                        marginTop: spacing.md,
-                                    },
-                                ]}
-                                onPress={() => handleSubcategoryPress(sub.id, sub.name)}
-                            >
-                                <View style={styles.subcategoryInfo}>
-                                    <Text style={[textStyles.body, { color: colors.text, fontWeight: '500' }]}>
-                                        {sub.name}
-                                    </Text>
-                                    {sub.budget_limit !== undefined && sub.budget_limit > 0 && (
-                                        <Text style={[textStyles.labelSmall, { color: colors.textSecondary }]}>
-                                            Budget: {format(sub.budget_limit)}
-                                        </Text>
-                                    )}
-                                </View>
-                                <Feather name="chevron-right" size={20} color={colors.textTertiary} />
-                            </TouchableOpacity>
+                            <View key={sub.id} style={{ marginTop: spacing.md }}>
+                                <SwipeableSubcategory
+                                    subcategory={sub}
+                                    onPress={() => handleSubcategoryPress(sub.id, sub.name)}
+                                    onEdit={() => handleEditSubcategory(sub.id)}
+                                    onDelete={() => handleDeleteSubcategory(sub.id, sub.name)}
+                                    disableActions={sub.id === -1}
+                                    rightLabel={
+                                        sub.budget_limit !== undefined && sub.budget_limit > 0
+                                            ? `Budget: ${format(sub.budget_limit)}`
+                                            : undefined
+                                    }
+                                />
+                            </View>
                         ))
                     ) : (
                         <EmptyState

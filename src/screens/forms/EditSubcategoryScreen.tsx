@@ -1,0 +1,203 @@
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RouteProp } from '@react-navigation/native';
+import { Feather } from '@expo/vector-icons';
+import { useTheme } from '../../theme';
+import { Button, TextInput as CustomTextInput } from '../../components';
+import { useBudgetStore } from '../../store';
+import { useHaptics } from '../../hooks';
+import { RootStackParamList, Category, Subcategory } from '../../types';
+import { getCategoryById, getSubcategoryById, updateSubcategory, deleteSubcategory } from '../../database';
+
+type Props = {
+    navigation: NativeStackNavigationProp<RootStackParamList, 'EditSubcategory'>;
+    route: RouteProp<RootStackParamList, 'EditSubcategory'>;
+};
+
+export const EditSubcategoryScreen: React.FC<Props> = ({ navigation, route }) => {
+    const { subcategoryId, categoryId } = route.params;
+    const { colors, spacing, textStyles, borderRadius } = useTheme();
+    const { success, error: errorHaptic } = useHaptics();
+    const { loadSpendingData } = useBudgetStore();
+
+    const [name, setName] = useState('');
+    const [parentCategory, setParentCategory] = useState<Category | null>(null);
+    const [subcategory, setSubcategory] = useState<Subcategory | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        loadData();
+    }, [subcategoryId, categoryId]);
+
+    const loadData = async () => {
+        const category = await getCategoryById(categoryId);
+        setParentCategory(category);
+
+        const sub = await getSubcategoryById(subcategoryId);
+        setSubcategory(sub);
+        setName(sub?.name || '');
+    };
+
+    const handleSubmit = async () => {
+        if (!name.trim()) {
+            errorHaptic();
+            Alert.alert('Missing Name', 'Please enter a subcategory name.');
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            await updateSubcategory(subcategoryId, {
+                name: name.trim(),
+            });
+            await loadSpendingData();
+            success();
+            navigation.goBack();
+        } catch (err) {
+            errorHaptic();
+            Alert.alert('Error', 'Failed to update subcategory. Please try again.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleDelete = () => {
+        Alert.alert(
+            'Delete Subcategory',
+            `Are you sure you want to delete "${subcategory?.name}"? This will also remove items and transactions under it.`,
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            await deleteSubcategory(subcategoryId);
+                            await loadSpendingData();
+                            success();
+                            navigation.goBack();
+                        } catch (err) {
+                            errorHaptic();
+                            Alert.alert('Error', 'Failed to delete subcategory.');
+                        }
+                    },
+                },
+            ]
+        );
+    };
+
+    return (
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+            <KeyboardAvoidingView
+                style={{ flex: 1 }}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            >
+                {/* Header */}
+                <View style={[styles.header, { paddingHorizontal: spacing.lg }]}>
+                    <TouchableOpacity onPress={() => navigation.goBack()}>
+                        <Feather name="x" size={24} color={colors.text} />
+                    </TouchableOpacity>
+                    <Text style={[textStyles.h3, { color: colors.text }]}>Edit Subcategory</Text>
+                    <View style={{ width: 24 }} />
+                </View>
+
+                <ScrollView
+                    style={styles.scrollView}
+                    contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: 40 }}
+                    keyboardShouldPersistTaps="handled"
+                >
+                    {/* Parent Category Info */}
+                    {parentCategory && (
+                        <View
+                            style={[
+                                styles.parentInfo,
+                                {
+                                    backgroundColor: colors.card,
+                                    borderRadius: borderRadius.lg,
+                                    padding: spacing.lg,
+                                    marginTop: spacing.xl,
+                                    borderLeftWidth: 4,
+                                    borderLeftColor: parentCategory.color,
+                                },
+                            ]}
+                        >
+                            <View
+                                style={[
+                                    styles.iconContainer,
+                                    { backgroundColor: `${parentCategory.color}20` },
+                                ]}
+                            >
+                                <Feather
+                                    name={parentCategory.icon_name as any}
+                                    size={24}
+                                    color={parentCategory.color}
+                                />
+                            </View>
+                            <View style={{ marginLeft: spacing.md }}>
+                                <Text style={[textStyles.labelSmall, { color: colors.textSecondary }]}>Parent Category</Text>
+                                <Text style={[textStyles.body, { color: colors.text, fontWeight: '600' }]}>
+                                    {parentCategory.name}
+                                </Text>
+                            </View>
+                        </View>
+                    )}
+
+                    {/* Name Input */}
+                    <View style={{ marginTop: spacing.xl }}>
+                        <Text style={[textStyles.label, { color: colors.textSecondary, marginBottom: spacing.sm }]}>Subcategory Name</Text>
+                        <CustomTextInput
+                            value={name}
+                            onChangeText={setName}
+                            placeholder="e.g., Groceries, Restaurants"
+                            autoCapitalize="words"
+                            autoFocus
+                        />
+                    </View>
+
+                    {/* Actions */}
+                    <View style={{ marginTop: spacing.xxl }}>
+                        <Button
+                            title="Save Changes"
+                            onPress={handleSubmit}
+                            loading={isSubmitting}
+                        />
+                        <Button
+                            title="Delete Subcategory"
+                            variant="danger"
+                            onPress={handleDelete}
+                            style={{ marginTop: spacing.md }}
+                        />
+                    </View>
+                </ScrollView>
+            </KeyboardAvoidingView>
+        </SafeAreaView>
+    );
+};
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingVertical: 16,
+    },
+    scrollView: {
+        flex: 1,
+    },
+    parentInfo: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    iconContainer: {
+        width: 48,
+        height: 48,
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+});

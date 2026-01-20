@@ -37,7 +37,9 @@ export const ItemsScreen: React.FC<Props> = ({ route, navigation }) => {
         }
 
         // Filter by subcategory if provided
-        if (subcategoryId) {
+        if (subcategoryId === -1) {
+            allTransactions = allTransactions.filter(t => t.subcategory_id === null);
+        } else if (subcategoryId) {
             allTransactions = allTransactions.filter(t => t.subcategory_id === subcategoryId);
         }
 
@@ -132,7 +134,7 @@ export const ItemsScreen: React.FC<Props> = ({ route, navigation }) => {
                             title="No Transactions"
                             description="Add transactions to track your spending"
                             actionLabel="Add Transaction"
-                            onAction={() => navigation.navigate('AddTransaction', { categoryId, subcategoryId })}
+                            onAction={() => navigation.navigate('AddTransaction', { categoryId, subcategoryId: subcategoryId === -1 ? undefined : subcategoryId })}
                             style={{ marginTop: spacing.xxl }}
                         />
                     }
@@ -141,7 +143,7 @@ export const ItemsScreen: React.FC<Props> = ({ route, navigation }) => {
                 {/* FAB */}
                 <TouchableOpacity
                     style={[styles.fab, { backgroundColor: colors.primary }]}
-                    onPress={() => navigation.navigate('AddTransaction', { categoryId, subcategoryId })}
+                    onPress={() => navigation.navigate('AddTransaction', { categoryId, subcategoryId: subcategoryId === -1 ? undefined : subcategoryId })}
                 >
                     <Feather name="plus" size={28} color="#FFF" />
                 </TouchableOpacity>

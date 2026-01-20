@@ -26,6 +26,7 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
         onPress();
     };
 
+    const hasBudget = category.budget_limit > 0;
     const remaining = category.budget_limit - category.spent;
     const isOverBudget = remaining < 0;
 
@@ -85,20 +86,22 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({
                 style={{ marginTop: spacing.md }}
             />
 
-            <Text
-                style={[
-                    textStyles.labelSmall,
-                    {
-                        color: isOverBudget ? colors.error : colors.textSecondary,
-                        marginTop: spacing.sm,
+            {hasBudget && (
+                <Text
+                    style={[
+                        textStyles.labelSmall,
+                        {
+                            color: isOverBudget ? colors.error : colors.textSecondary,
+                            marginTop: spacing.sm,
+                        }
+                    ]}
+                >
+                    {isOverBudget
+                        ? `Over budget by ${format(Math.abs(remaining))}`
+                        : `${format(remaining)} remaining`
                     }
-                ]}
-            >
-                {isOverBudget
-                    ? `Over budget by ${format(Math.abs(remaining))}`
-                    : `${format(remaining)} remaining`
-                }
-            </Text>
+                </Text>
+            )}
         </TouchableOpacity>
     );
 };

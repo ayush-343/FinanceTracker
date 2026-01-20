@@ -98,6 +98,14 @@ export const getSubcategories = async (categoryId: number): Promise<Subcategory[
   );
 };
 
+export const getSubcategoryById = async (id: number): Promise<Subcategory | null> => {
+  const db = await getDatabase();
+  return db.getFirstAsync<Subcategory>(
+    'SELECT * FROM subcategories WHERE id = ?',
+    [id]
+  );
+};
+
 export const createSubcategory = async (subcategory: Omit<Subcategory, 'id'>): Promise<number> => {
   const db = await getDatabase();
   const result = await db.runAsync(

@@ -36,7 +36,7 @@ export const AddCategoryScreen: React.FC<Props> = ({ navigation, route }) => {
             return;
         }
 
-        if (!allocatedBudget || parseFloat(allocatedBudget) <= 0) {
+        if (allocatedBudget && parseFloat(allocatedBudget) < 0) {
             errorHaptic();
             Alert.alert('Invalid Budget', 'Please enter a valid budget amount.');
             return;
@@ -46,7 +46,7 @@ export const AddCategoryScreen: React.FC<Props> = ({ navigation, route }) => {
         try {
             await addCategory({
                 name: name.trim(),
-                budget_limit: parseFloat(allocatedBudget),
+                budget_limit: allocatedBudget ? parseFloat(allocatedBudget) : 0,
                 icon_name: selectedIcon,
                 color: selectedColor,
             });
@@ -127,7 +127,7 @@ export const AddCategoryScreen: React.FC<Props> = ({ navigation, route }) => {
                     {/* Budget Input */}
                     <View style={{ marginTop: spacing.xl }}>
                         <Text style={[textStyles.label, { color: colors.textSecondary, marginBottom: spacing.sm }]}>
-                            Allocated Budget
+                            Allocated Budget (Optional)
                         </Text>
                         <CustomTextInput
                             value={allocatedBudget}

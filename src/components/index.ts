@@ -1,6 +1,7 @@
 export { ProgressBar } from './ProgressBar';
 export { CategoryCard } from './CategoryCard';
 export { SwipeableTransaction } from './SwipeableTransaction';
+export { SwipeableSubcategory } from './SwipeableSubcategory';
 export { IconPicker, IconPickerModal } from './IconPicker';
 export { ColorPicker, ColorPickerModal } from './ColorPicker';
 export { Button } from './Button';

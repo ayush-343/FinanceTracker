@@ -160,7 +160,8 @@ export const AddTransactionScreen: React.FC<Props> = ({ navigation, route }) => 
                             onChangeText={setAmount}
                             placeholder="0.00"
                             keyboardType="decimal-pad"
-                            style={{ fontSize: 32, fontWeight: '700', textAlign: 'center' }}
+                            inputContainerStyle={{ height: 64 }}
+                            style={{ fontSize: 32, fontWeight: '700', textAlign: 'center', lineHeight: 36 }}
                         />
                     </View>
 

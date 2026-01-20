@@ -23,6 +23,7 @@ export const AddSubcategoryScreen: React.FC<Props> = ({ navigation, route }) => 
     const { loadSpendingData } = useBudgetStore();
 
     const [name, setName] = useState('');
+    const [allocatedBudget, setAllocatedBudget] = useState('');
     const [parentCategory, setParentCategory] = useState<Category | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -43,11 +44,18 @@ export const AddSubcategoryScreen: React.FC<Props> = ({ navigation, route }) => 
             return;
         }
 
+        if (allocatedBudget && parseFloat(allocatedBudget) < 0) {
+            errorHaptic();
+            Alert.alert('Invalid Budget', 'Please enter a valid budget amount.');
+            return;
+        }
+
         setIsSubmitting(true);
         try {
             await insertSubcategory({
                 category_id: categoryId,
                 name: name.trim(),
+                budget_limit: allocatedBudget ? parseFloat(allocatedBudget) : 0,
             });
             await loadSpendingData();
             success();
@@ -133,6 +141,19 @@ export const AddSubcategoryScreen: React.FC<Props> = ({ navigation, route }) => 
                         <Text style={[textStyles.labelSmall, { color: colors.textSecondary, marginTop: spacing.sm }]}>
                             Subcategories help organize transactions within a category
                         </Text>
+                    </View>
+
+                    {/* Budget Input */}
+                    <View style={{ marginTop: spacing.xl }}>
+                        <Text style={[textStyles.label, { color: colors.textSecondary, marginBottom: spacing.sm }]}>
+                            Allocated Budget (Optional)
+                        </Text>
+                        <CustomTextInput
+                            value={allocatedBudget}
+                            onChangeText={setAllocatedBudget}
+                            placeholder="0.00"
+                            keyboardType="decimal-pad"
+                        />
                     </View>
 
                     {/* Examples */}

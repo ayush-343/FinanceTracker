@@ -122,19 +122,21 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
                         style={{ marginTop: spacing.lg }}
                     />
 
-                    <Text
-                        style={[
-                            textStyles.body,
-                            {
-                                color: remaining >= 0 ? colors.success : colors.error,
-                                marginTop: spacing.md,
-                            },
-                        ]}
-                    >
-                        {remaining >= 0
-                            ? `${format(remaining)} remaining`
-                            : `${format(Math.abs(remaining))} over budget`}
-                    </Text>
+                    {totalBudget > 0 && (
+                        <Text
+                            style={[
+                                textStyles.body,
+                                {
+                                    color: remaining >= 0 ? colors.success : colors.error,
+                                    marginTop: spacing.md,
+                                },
+                            ]}
+                        >
+                            {remaining >= 0
+                                ? `${format(remaining)} remaining`
+                                : `${format(Math.abs(remaining))} over budget`}
+                        </Text>
+                    )}
                 </View>
 
                 {/* Spending Chart */}

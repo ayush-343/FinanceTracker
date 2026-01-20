@@ -18,6 +18,7 @@ interface TextInputProps extends RNTextInputProps {
     rightIcon?: keyof typeof Feather.glyphMap;
     onRightIconPress?: () => void;
     containerStyle?: ViewStyle;
+    inputContainerStyle?: ViewStyle;
 }
 
 export const TextInput: React.FC<TextInputProps> = ({
@@ -27,6 +28,7 @@ export const TextInput: React.FC<TextInputProps> = ({
     rightIcon,
     onRightIconPress,
     containerStyle,
+    inputContainerStyle,
     style,
     ...props
 }) => {
@@ -55,6 +57,7 @@ export const TextInput: React.FC<TextInputProps> = ({
                         height: heights.input,
                         paddingHorizontal: spacing.lg,
                     },
+                    inputContainerStyle,
                 ]}
             >
                 {leftIcon && (
@@ -69,7 +72,7 @@ export const TextInput: React.FC<TextInputProps> = ({
                     style={[
                         styles.input,
                         textStyles.body,
-                        { color: colors.text },
+                        { color: colors.text, textAlignVertical: 'center', paddingVertical: 0 },
                         style,
                     ]}
                     placeholderTextColor={colors.placeholder}

@@ -139,6 +139,7 @@ export type RootStackParamList = {
   AddCategory: undefined;
   EditCategory: { categoryId: number };
   AddSubcategory: { categoryId: number };
+  EditSubcategory: { subcategoryId: number; categoryId: number };
   AddSubscription: undefined;
   EditSubscription: { subscriptionId: number };
 };
