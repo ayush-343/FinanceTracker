@@ -109,11 +109,8 @@ export const useBiometricAuth = (): BiometricAuth => {
         nextAppState === 'active' &&
         !isAuthenticatingRef.current
       ) {
+        // Defer authentication to an explicit user action to avoid system_cancel
         setIsAuthenticated(false);
-        // Small delay to ensure UI is ready
-        setTimeout(() => {
-          authenticate();
-        }, 100);
       }
     };
 
@@ -124,13 +121,13 @@ export const useBiometricAuth = (): BiometricAuth => {
     };
   }, [isBiometricEnabled, authenticate]);
 
-  // Initial authentication - runs only once on mount
+  // Initial authentication - require explicit user action
   useEffect(() => {
     if (isBiometricEnabled && !hasInitialAuthRun.current) {
       hasInitialAuthRun.current = true;
-      authenticate();
+      setIsAuthenticated(false);
     }
-  }, [isBiometricEnabled, authenticate]);
+  }, [isBiometricEnabled]);
 
   return {
     isAvailable,

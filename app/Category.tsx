@@ -1,30 +1,31 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { RouteProp } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-import { useTheme } from '../../theme';
-import { ProgressBar, EmptyState, Button, SwipeableSubcategory } from '../../components';
-import { useBudgetStore } from '../../store';
-import { useCurrency, useHaptics } from '../../hooks';
-import { RootStackParamList, Subcategory, CategoryWithSpending } from '../../types';
-import { getCategoriesWithSpending, getSubcategories, getTransactionsByCategory } from '../../database';
-import { format as formatDate, startOfMonth, endOfMonth } from '../../utils';
-
-type Props = {
-    route: RouteProp<RootStackParamList, 'Category'>;
-    navigation: NativeStackNavigationProp<RootStackParamList, 'Category'>;
-};
+import { useTheme } from '../src/theme';
+import { ProgressBar, EmptyState, Button, SwipeableSubcategory } from '../src/components';
+import { useBudgetStore } from '../src/store';
+import { useCurrency, useHaptics } from '../src/hooks';
+import { Subcategory, CategoryWithSpending } from '../src/types';
+import { getCategoriesWithSpending, getSubcategories, getTransactionsByCategory } from '../src/database';
+import { format as formatDate, startOfMonth, endOfMonth } from '../src/utils';
 
 interface SubcategoryWithSpending extends Subcategory {
     spent: number;
     percentage: number;
 }
 
-export const CategoryScreen: React.FC<Props> = ({ route, navigation }) => {
-    const { categoryId, categoryName } = route.params;
+export const CategoryScreen: React.FC = () => {
+    const router = useRouter();
+    const { categoryId, categoryName } = useLocalSearchParams<{
+        categoryId?: string;
+        categoryName?: string;
+    }>();
+
+    const parsedCategoryId = categoryId ? Number(categoryId) : NaN;
+    const categoryNameText = typeof categoryName === 'string' ? categoryName : '';
     const { colors, spacing, textStyles, borderRadius } = useTheme();
     const { format } = useCurrency();
     const { light } = useHaptics();
@@ -39,14 +40,14 @@ export const CategoryScreen: React.FC<Props> = ({ route, navigation }) => {
 
         // Get category with spending
         const categories = await getCategoriesWithSpending(dateRange.start, dateRange.end);
-        const cat = categories.find(c => c.id === categoryId);
+        const cat = categories.find(c => c.id === parsedCategoryId);
         if (cat) setCategory(cat);
 
         // Get subcategories
-        const subs = await getSubcategories(categoryId);
+        const subs = await getSubcategories(parsedCategoryId);
 
         // Get transactions for this category and compute spending by subcategory
-        const transactions = await getTransactionsByCategory(categoryId, dateRange.start, dateRange.end);
+        const transactions = await getTransactionsByCategory(parsedCategoryId, dateRange.start, dateRange.end);
         const spendingBySub: Record<string, number> = {};
 
         transactions.forEach((t) => {
@@ -68,7 +69,7 @@ export const CategoryScreen: React.FC<Props> = ({ route, navigation }) => {
         if (uncategorizedSpent > 0) {
             subsWithSpending.unshift({
                 id: -1,
-                category_id: categoryId,
+                category_id: parsedCategoryId,
                 name: 'Uncategorized',
                 budget_limit: 0,
                 spent: uncategorizedSpent,
@@ -83,21 +84,21 @@ export const CategoryScreen: React.FC<Props> = ({ route, navigation }) => {
     useFocusEffect(
         useCallback(() => {
             loadData();
-        }, [categoryId, dateRange])
+        }, [parsedCategoryId, dateRange])
     );
 
     const handleDelete = () => {
         Alert.alert(
             'Delete Category',
-            `Are you sure you want to delete "${categoryName}"? This will also delete all subcategories and transactions.`,
+            `Are you sure you want to delete "${categoryNameText}"? This will also delete all subcategories and transactions.`,
             [
                 { text: 'Cancel', style: 'cancel' },
                 {
                     text: 'Delete',
                     style: 'destructive',
                     onPress: async () => {
-                        await removeCategory(categoryId);
-                        navigation.goBack();
+                        await removeCategory(parsedCategoryId);
+                        router.back();
                     },
                 },
             ]
@@ -105,15 +106,21 @@ export const CategoryScreen: React.FC<Props> = ({ route, navigation }) => {
     };
 
     const handleSubcategoryPress = (subcategoryId: number, subcategoryName: string) => {
-        navigation.navigate('Items', {
-            subcategoryId,
-            categoryId,
-            title: subcategoryName,
+        router.push({
+            pathname: '/Items',
+            params: {
+                subcategoryId: String(subcategoryId),
+                categoryId: String(parsedCategoryId),
+                title: subcategoryName,
+            },
         });
     };
 
     const handleEditSubcategory = (subcategoryId: number) => {
-        navigation.navigate('EditSubcategory', { subcategoryId, categoryId });
+        router.push({
+            pathname: '/EditSubcategory',
+            params: { subcategoryId: String(subcategoryId), categoryId: String(parsedCategoryId) },
+        });
     };
 
     const handleDeleteSubcategory = (subcategoryId: number, subcategoryName: string) => {
@@ -135,12 +142,16 @@ export const CategoryScreen: React.FC<Props> = ({ route, navigation }) => {
     };
 
     const handleViewAllTransactions = () => {
-        navigation.navigate('Items', {
-            categoryId,
-            title: categoryName,
+        router.push({
+            pathname: '/Items',
+            params: {
+                categoryId: String(parsedCategoryId),
+                title: categoryNameText,
+            },
         });
     };
 
+    if (!Number.isFinite(parsedCategoryId)) return null;
     if (!category) return null;
 
     return (
@@ -148,13 +159,13 @@ export const CategoryScreen: React.FC<Props> = ({ route, navigation }) => {
             <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
                 {/* Header */}
                 <View style={[styles.header, { paddingHorizontal: spacing.lg }]}>
-                    <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <TouchableOpacity onPress={() => router.back()}>
                         <Feather name="arrow-left" size={24} color={colors.text} />
                     </TouchableOpacity>
                     <Text style={[textStyles.h2, { color: colors.text, flex: 1, marginLeft: spacing.md }]}>
-                        {categoryName}
+                        {categoryNameText}
                     </Text>
-                    <TouchableOpacity onPress={() => navigation.navigate('EditCategory', { categoryId })}>
+                    <TouchableOpacity onPress={() => router.push({ pathname: '/EditCategory', params: { categoryId: String(parsedCategoryId) } })}>
                         <Feather name="edit-2" size={20} color={colors.textSecondary} />
                     </TouchableOpacity>
                 </View>
@@ -231,7 +242,7 @@ export const CategoryScreen: React.FC<Props> = ({ route, navigation }) => {
                 <View style={[styles.actions, { paddingHorizontal: spacing.lg, marginTop: spacing.xl }]}>
                     <Button
                         title="Add Transaction"
-                        onPress={() => navigation.navigate('AddTransaction', { categoryId })}
+                        onPress={() => router.push({ pathname: '/AddTransaction', params: { categoryId: String(parsedCategoryId) } })}
                         fullWidth
                     />
                     <Button
@@ -249,7 +260,7 @@ export const CategoryScreen: React.FC<Props> = ({ route, navigation }) => {
                         <Text style={[textStyles.h3, { color: colors.text }]}>
                             Subcategories
                         </Text>
-                        <TouchableOpacity onPress={() => navigation.navigate('AddSubcategory', { categoryId })}>
+                        <TouchableOpacity onPress={() => router.push({ pathname: '/AddSubcategory', params: { categoryId: String(parsedCategoryId) } })}>
                             <Feather name="plus" size={24} color={colors.primary} />
                         </TouchableOpacity>
                     </View>
@@ -277,7 +288,7 @@ export const CategoryScreen: React.FC<Props> = ({ route, navigation }) => {
                             title="No Subcategories"
                             description="Add subcategories to organize spending within this category"
                             actionLabel="Add Subcategory"
-                            onAction={() => navigation.navigate('AddSubcategory', { categoryId })}
+                            onAction={() => router.push({ pathname: '/AddSubcategory', params: { categoryId: String(parsedCategoryId) } })}
                             style={{ marginTop: spacing.lg }}
                         />
                     )}
@@ -343,3 +354,5 @@ const styles = StyleSheet.create({
     },
     subcategoryInfo: {},
 });
+
+export default CategoryScreen;

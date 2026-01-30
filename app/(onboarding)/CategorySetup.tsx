@@ -1,18 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Feather } from '@expo/vector-icons';
-import { useTheme } from '../../theme';
-import { Button, TextInput, IconPickerModal, ColorPickerModal } from '../../components';
-import { useBudgetStore, useSettingsStore } from '../../store';
-import { useCurrency, useHaptics } from '../../hooks';
-import { CATEGORY_COLORS, CATEGORY_ICONS } from '../../constants';
-import { OnboardingStackParamList, Category } from '../../types';
-
-type Props = {
-    navigation: NativeStackNavigationProp<OnboardingStackParamList, 'CategorySetup'>;
-};
+import { useTheme } from '../../src/theme';
+import { Button, TextInput, IconPickerModal, ColorPickerModal } from '../../src/components';
+import { useBudgetStore, useSettingsStore } from '../../src/store';
+import { useCurrency, useHaptics } from '../../src/hooks';
+import { CATEGORY_COLORS, CATEGORY_ICONS } from '../../src/constants';
+import { Category } from '../../src/types';
 
 interface CategoryDraft {
     name: string;
@@ -21,7 +16,7 @@ interface CategoryDraft {
     budget_limit: string;
 }
 
-export const CategorySetupScreen: React.FC<Props> = ({ navigation }) => {
+export const CategorySetupScreen: React.FC = () => {
     const { colors, spacing, textStyles, borderRadius } = useTheme();
     const { addCategory } = useBudgetStore();
     const { setOnboardingCompleted } = useSettingsStore();
@@ -356,3 +351,5 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
 });
+
+export default CategorySetupScreen;

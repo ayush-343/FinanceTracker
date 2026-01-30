@@ -89,7 +89,7 @@ export const SwipeableSubcategory: React.FC<SwipeableSubcategoryProps> = ({
                     {subcategory.name}
                 </Text>
                 {!!rightLabel && (
-                    <Text style={[textStyles.labelSmall, { color: colors.textSecondary, marginTop: 2 }]}> 
+                    <Text style={[textStyles.labelSmall, { color: colors.textSecondary, marginTop: 2 }]}>
                         {rightLabel}
                     </Text>
                 )}

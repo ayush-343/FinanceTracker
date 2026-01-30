@@ -1,19 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import * as LocalAuthentication from 'expo-local-authentication';
-import { useTheme } from '../../theme';
-import { Button } from '../../components';
-import { useSettingsStore } from '../../store';
-import { OnboardingStackParamList } from '../../types';
-
-type Props = {
-    navigation: NativeStackNavigationProp<OnboardingStackParamList, 'BiometricSetup'>;
-};
-
-export const BiometricSetupScreen: React.FC<Props> = ({ navigation }) => {
+import { useTheme } from '../../src/theme';
+import { Button } from '../../src/components';
+import { useSettingsStore } from '../../src/store';
+export const BiometricSetupScreen: React.FC = () => {
+    const router = useRouter();
     const { colors, spacing, textStyles, borderRadius } = useTheme();
     const { setBiometricEnabled } = useSettingsStore();
 
@@ -52,7 +47,7 @@ export const BiometricSetupScreen: React.FC<Props> = ({ navigation }) => {
 
         if (result.success) {
             await setBiometricEnabled(true);
-            navigation.navigate('CategorySetup');
+            router.push('/(onboarding)/CategorySetup');
         }
 
         setIsLoading(false);
@@ -60,7 +55,7 @@ export const BiometricSetupScreen: React.FC<Props> = ({ navigation }) => {
 
     const handleSkip = async () => {
         await setBiometricEnabled(false);
-        navigation.navigate('CategorySetup');
+        router.push('/(onboarding)/CategorySetup');
     };
 
     const getIcon = () => {
@@ -209,3 +204,5 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
 });
+
+export default BiometricSetupScreen;

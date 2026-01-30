@@ -1,25 +1,28 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { RouteProp } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { useTheme } from '../../theme';
-import { SwipeableTransaction, EmptyState } from '../../components';
-import { useBudgetStore } from '../../store';
-import { useCurrency } from '../../hooks';
-import { RootStackParamList, TransactionWithDetails } from '../../types';
-import { getTransactions } from '../../database';
+import { useTheme } from '../src/theme';
+import { SwipeableTransaction, EmptyState } from '../src/components';
+import { useBudgetStore } from '../src/store';
+import { useCurrency } from '../src/hooks';
+import { TransactionWithDetails } from '../src/types';
+import { getTransactions } from '../src/database';
 
-type Props = {
-    route: RouteProp<RootStackParamList, 'Items'>;
-    navigation: NativeStackNavigationProp<RootStackParamList, 'Items'>;
-};
+export const ItemsScreen: React.FC = () => {
+    const router = useRouter();
+    const { categoryId, subcategoryId, title } = useLocalSearchParams<{
+        categoryId?: string;
+        subcategoryId?: string;
+        title?: string;
+    }>();
 
-export const ItemsScreen: React.FC<Props> = ({ route, navigation }) => {
-    const { categoryId, subcategoryId, title } = route.params;
+    const parsedCategoryId = categoryId ? Number(categoryId) : undefined;
+    const parsedSubcategoryId = subcategoryId ? Number(subcategoryId) : undefined;
+    const titleText = typeof title === 'string' ? title : '';
     const { colors, spacing, textStyles, borderRadius } = useTheme();
     const { format } = useCurrency();
     const { dateRange, removeTransaction } = useBudgetStore();
@@ -32,15 +35,15 @@ export const ItemsScreen: React.FC<Props> = ({ route, navigation }) => {
         let allTransactions = await getTransactions(dateRange.start, dateRange.end);
 
         // Filter by category
-        if (categoryId) {
-            allTransactions = allTransactions.filter(t => t.category_id === categoryId);
+        if (parsedCategoryId) {
+            allTransactions = allTransactions.filter(t => t.category_id === parsedCategoryId);
         }
 
         // Filter by subcategory if provided
-        if (subcategoryId === -1) {
+        if (parsedSubcategoryId === -1) {
             allTransactions = allTransactions.filter(t => t.subcategory_id === null);
-        } else if (subcategoryId) {
-            allTransactions = allTransactions.filter(t => t.subcategory_id === subcategoryId);
+        } else if (parsedSubcategoryId) {
+            allTransactions = allTransactions.filter(t => t.subcategory_id === parsedSubcategoryId);
         }
 
         setTransactions(allTransactions);
@@ -50,11 +53,11 @@ export const ItemsScreen: React.FC<Props> = ({ route, navigation }) => {
     useFocusEffect(
         useCallback(() => {
             loadData();
-        }, [categoryId, subcategoryId, dateRange])
+        }, [parsedCategoryId, parsedSubcategoryId, dateRange])
     );
 
     const handleEdit = (transactionId: number) => {
-        navigation.navigate('EditTransaction', { transactionId });
+        router.push({ pathname: '/EditTransaction', params: { transactionId: String(transactionId) } });
     };
 
     const handleDelete = (transactionId: number) => {
@@ -82,11 +85,11 @@ export const ItemsScreen: React.FC<Props> = ({ route, navigation }) => {
             <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
                 {/* Header */}
                 <View style={[styles.header, { paddingHorizontal: spacing.lg }]}>
-                    <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <TouchableOpacity onPress={() => router.back()}>
                         <Feather name="arrow-left" size={24} color={colors.text} />
                     </TouchableOpacity>
                     <Text style={[textStyles.h2, { color: colors.text, flex: 1, marginLeft: spacing.md }]}>
-                        {title}
+                        {titleText}
                     </Text>
                 </View>
 
@@ -134,7 +137,20 @@ export const ItemsScreen: React.FC<Props> = ({ route, navigation }) => {
                             title="No Transactions"
                             description="Add transactions to track your spending"
                             actionLabel="Add Transaction"
-                            onAction={() => navigation.navigate('AddTransaction', { categoryId, subcategoryId: subcategoryId === -1 ? undefined : subcategoryId })}
+                            onAction={() =>
+                                router.push({
+                                    pathname: '/AddTransaction',
+                                    params: {
+                                        categoryId: parsedCategoryId ? String(parsedCategoryId) : undefined,
+                                        subcategoryId:
+                                            parsedSubcategoryId === -1
+                                                ? undefined
+                                                : parsedSubcategoryId
+                                                    ? String(parsedSubcategoryId)
+                                                    : undefined,
+                                    },
+                                })
+                            }
                             style={{ marginTop: spacing.xxl }}
                         />
                     }
@@ -143,7 +159,20 @@ export const ItemsScreen: React.FC<Props> = ({ route, navigation }) => {
                 {/* FAB */}
                 <TouchableOpacity
                     style={[styles.fab, { backgroundColor: colors.primary }]}
-                    onPress={() => navigation.navigate('AddTransaction', { categoryId, subcategoryId: subcategoryId === -1 ? undefined : subcategoryId })}
+                    onPress={() =>
+                        router.push({
+                            pathname: '/AddTransaction',
+                            params: {
+                                categoryId: parsedCategoryId ? String(parsedCategoryId) : undefined,
+                                subcategoryId:
+                                    parsedSubcategoryId === -1
+                                        ? undefined
+                                        : parsedSubcategoryId
+                                            ? String(parsedSubcategoryId)
+                                            : undefined,
+                            },
+                        })
+                    }
                 >
                     <Feather name="plus" size={28} color="#FFF" />
                 </TouchableOpacity>
@@ -185,3 +214,5 @@ const styles = StyleSheet.create({
         elevation: 8,
     },
 });
+
+export default ItemsScreen;

@@ -2,13 +2,12 @@ import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-import { useTheme } from '../../theme';
-import { CalendarDay, EmptyState } from '../../components';
-import { useBudgetStore } from '../../store';
-import { useCurrency } from '../../hooks';
-import { RootStackParamList, TransactionWithDetails } from '../../types';
+import { useTheme } from '../../src/theme';
+import { CalendarDay, EmptyState } from '../../src/components';
+import { useCurrency } from '../../src/hooks';
+import { TransactionWithDetails } from '../../src/types';
 import {
     getCalendarGrid,
     getWeekdayLabels,
@@ -18,14 +17,11 @@ import {
     endOfMonth,
     format,
     isSameDay,
-} from '../../utils';
-import { getTransactionsByDate, getDailySpending } from '../../database';
+} from '../../src/utils';
+import { getTransactionsByDate, getDailySpending } from '../../src/database';
 
-type Props = {
-    navigation: NativeStackNavigationProp<RootStackParamList, 'Main'>;
-};
-
-export const CalendarScreen: React.FC<Props> = ({ navigation }) => {
+const CalendarScreen: React.FC = () => {
+    const router = useRouter();
     const { colors, spacing, textStyles, borderRadius } = useTheme();
     const { format: formatCurrency } = useCurrency();
 
@@ -167,7 +163,12 @@ export const CalendarScreen: React.FC<Props> = ({ navigation }) => {
                                         marginBottom: spacing.sm,
                                     },
                                 ]}
-                                onPress={() => navigation.navigate('EditTransaction', { transactionId: item.id })}
+                                onPress={() =>
+                                    router.push({
+                                        pathname: '/EditTransaction',
+                                        params: { transactionId: String(item.id) },
+                                    })
+                                }
                             >
                                 <View style={styles.transactionInfo}>
                                     <View
@@ -251,3 +252,5 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
 });
+
+export default CalendarScreen;

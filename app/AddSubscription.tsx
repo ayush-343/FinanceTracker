@@ -1,73 +1,43 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, Alert, Switch } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RouteProp } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-import { useTheme } from '../../theme';
-import { Button, TextInput as CustomTextInput } from '../../components';
-import { useSubscriptionStore } from '../../store';
-import { useHaptics } from '../../hooks';
-import { RootStackParamList, Category, Subscription, SubscriptionFrequency } from '../../types';
-import { getCategories, getSubscriptionById, updateSubscription, deleteSubscription } from '../../database';
+import { format } from 'date-fns';
+import { useTheme } from '../src/theme';
+import { Button, TextInput as CustomTextInput } from '../src/components';
+import { useSubscriptionStore } from '../src/store';
+import { useHaptics } from '../src/hooks';
+import { Category, SubscriptionFrequency } from '../src/types';
+import { getCategories } from '../src/database';
 
-type Props = {
-    navigation: NativeStackNavigationProp<RootStackParamList, 'EditSubscription'>;
-    route: RouteProp<RootStackParamList, 'EditSubscription'>;
-};
-
-const FREQUENCIES: { value: SubscriptionFrequency; label: string }[] = [
-    { value: 'daily', label: 'Daily' },
-    { value: 'weekly', label: 'Weekly' },
-    { value: 'monthly', label: 'Monthly' },
+const FREQUENCIES: { value: SubscriptionFrequency; label: string; description: string }[] = [
+    { value: 'daily', label: 'Daily', description: 'Every day' },
+    { value: 'weekly', label: 'Weekly', description: 'Once a week' },
+    { value: 'monthly', label: 'Monthly', description: 'Once a month' },
 ];
 
-export const EditSubscriptionScreen: React.FC<Props> = ({ navigation, route }) => {
-    const { subscriptionId } = route.params;
+export const AddSubscriptionScreen: React.FC = () => {
+    const router = useRouter();
     const { colors, spacing, textStyles, borderRadius } = useTheme();
     const { success, error: errorHaptic, light } = useHaptics();
-    const { loadSubscriptions } = useSubscriptionStore();
+    const { addSubscription } = useSubscriptionStore();
 
-    const [subscription, setSubscription] = useState<Subscription | null>(null);
     const [name, setName] = useState('');
     const [amount, setAmount] = useState('');
     const [frequency, setFrequency] = useState<SubscriptionFrequency>('monthly');
-    const [isActive, setIsActive] = useState(true);
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
     const [categories, setCategories] = useState<Category[]>([]);
     const [showCategoryPicker, setShowCategoryPicker] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        loadData();
-    }, [subscriptionId]);
+        loadCategories();
+    }, []);
 
-    const loadData = async () => {
-        setIsLoading(true);
-        try {
-            // Load subscription
-            const sub = await getSubscriptionById(subscriptionId);
-            if (sub) {
-                setSubscription(sub);
-                setName(sub.name);
-                setAmount(sub.amount.toString());
-                setFrequency(sub.frequency as SubscriptionFrequency);
-                setIsActive(sub.is_active);
-            }
-
-            // Load categories
-            const cats = await getCategories();
-            setCategories(cats);
-
-            // Set selected category
-            if (sub) {
-                const cat = cats.find(c => c.id === sub.category_id);
-                setSelectedCategory(cat || null);
-            }
-        } finally {
-            setIsLoading(false);
-        }
+    const loadCategories = async () => {
+        const cats = await getCategories();
+        setCategories(cats);
     };
 
     const handleCategorySelect = (category: Category) => {
@@ -98,58 +68,22 @@ export const EditSubscriptionScreen: React.FC<Props> = ({ navigation, route }) =
 
         setIsSubmitting(true);
         try {
-            await updateSubscription(subscriptionId, {
+            await addSubscription({
                 category_id: selectedCategory.id,
                 name: name.trim(),
                 amount: parseFloat(amount),
                 frequency,
-                is_active: isActive,
+                start_date: format(new Date(), 'yyyy-MM-dd'),
             });
-            await loadSubscriptions();
             success();
-            navigation.goBack();
+            router.back();
         } catch (err) {
             errorHaptic();
-            Alert.alert('Error', 'Failed to update subscription. Please try again.');
+            Alert.alert('Error', 'Failed to create subscription. Please try again.');
         } finally {
             setIsSubmitting(false);
         }
     };
-
-    const handleDelete = () => {
-        Alert.alert(
-            'Delete Subscription',
-            `Are you sure you want to delete "${name}"? This cannot be undone.`,
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Delete',
-                    style: 'destructive',
-                    onPress: async () => {
-                        try {
-                            await deleteSubscription(subscriptionId);
-                            await loadSubscriptions();
-                            success();
-                            navigation.goBack();
-                        } catch (err) {
-                            errorHaptic();
-                            Alert.alert('Error', 'Failed to delete subscription.');
-                        }
-                    },
-                },
-            ]
-        );
-    };
-
-    if (isLoading) {
-        return (
-            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-                <View style={styles.loadingContainer}>
-                    <Text style={[textStyles.body, { color: colors.textSecondary }]}>Loading...</Text>
-                </View>
-            </SafeAreaView>
-        );
-    }
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
@@ -159,13 +93,11 @@ export const EditSubscriptionScreen: React.FC<Props> = ({ navigation, route }) =
             >
                 {/* Header */}
                 <View style={[styles.header, { paddingHorizontal: spacing.lg }]}>
-                    <TouchableOpacity onPress={() => navigation.goBack()}>
-                        <Feather name="arrow-left" size={24} color={colors.text} />
+                    <TouchableOpacity onPress={() => router.back()}>
+                        <Feather name="x" size={24} color={colors.text} />
                     </TouchableOpacity>
-                    <Text style={[textStyles.h3, { color: colors.text }]}>Edit Subscription</Text>
-                    <TouchableOpacity onPress={handleDelete}>
-                        <Feather name="trash-2" size={24} color={colors.error} />
-                    </TouchableOpacity>
+                    <Text style={[textStyles.h3, { color: colors.text }]}>New Subscription</Text>
+                    <View style={{ width: 24 }} />
                 </View>
 
                 <ScrollView
@@ -173,34 +105,6 @@ export const EditSubscriptionScreen: React.FC<Props> = ({ navigation, route }) =
                     contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: 40 }}
                     keyboardShouldPersistTaps="handled"
                 >
-                    {/* Active Toggle */}
-                    <View
-                        style={[
-                            styles.toggleRow,
-                            {
-                                backgroundColor: colors.card,
-                                borderRadius: borderRadius.lg,
-                                padding: spacing.lg,
-                                marginTop: spacing.xl,
-                            },
-                        ]}
-                    >
-                        <View style={{ flex: 1 }}>
-                            <Text style={[textStyles.body, { color: colors.text }]}>Active</Text>
-                            <Text style={[textStyles.labelSmall, { color: colors.textSecondary }]}>
-                                {isActive ? 'This subscription is active' : 'This subscription is paused'}
-                            </Text>
-                        </View>
-                        <Switch
-                            value={isActive}
-                            onValueChange={(value) => {
-                                light();
-                                setIsActive(value);
-                            }}
-                            trackColor={{ false: colors.border, true: colors.primary }}
-                        />
-                    </View>
-
                     {/* Name Input */}
                     <View style={{ marginTop: spacing.xl }}>
                         <Text style={[textStyles.label, { color: colors.textSecondary, marginBottom: spacing.sm }]}>
@@ -261,6 +165,18 @@ export const EditSubscriptionScreen: React.FC<Props> = ({ navigation, route }) =
                                         ]}
                                     >
                                         {f.label}
+                                    </Text>
+                                    <Text
+                                        style={[
+                                            textStyles.labelSmall,
+                                            {
+                                                color: frequency === f.value ? 'rgba(255,255,255,0.8)' : colors.textSecondary,
+                                                textAlign: 'center',
+                                                marginTop: 2,
+                                            },
+                                        ]}
+                                    >
+                                        {f.description}
                                     </Text>
                                 </TouchableOpacity>
                             ))}
@@ -355,14 +271,37 @@ export const EditSubscriptionScreen: React.FC<Props> = ({ navigation, route }) =
                                         )}
                                     </TouchableOpacity>
                                 ))}
+                                {categories.length === 0 && (
+                                    <Text style={[textStyles.body, { color: colors.textSecondary, textAlign: 'center', padding: spacing.lg }]}>
+                                        No categories yet. Create one first.
+                                    </Text>
+                                )}
                             </View>
                         )}
+                    </View>
+
+                    {/* Info */}
+                    <View
+                        style={[
+                            styles.infoBox,
+                            {
+                                backgroundColor: `${colors.primary}10`,
+                                borderRadius: borderRadius.lg,
+                                padding: spacing.lg,
+                                marginTop: spacing.xl,
+                            },
+                        ]}
+                    >
+                        <Feather name="info" size={20} color={colors.primary} />
+                        <Text style={[textStyles.bodySmall, { color: colors.text, marginLeft: spacing.sm, flex: 1 }]}>
+                            Recurring subscriptions will automatically create transactions based on the frequency. You can skip individual occurrences if needed.
+                        </Text>
                     </View>
 
                     {/* Submit Button */}
                     <View style={{ marginTop: spacing.xxl }}>
                         <Button
-                            title="Save Changes"
+                            title="Create Subscription"
                             onPress={handleSubmit}
                             loading={isSubmitting}
                         />
@@ -385,20 +324,6 @@ const styles = StyleSheet.create({
     },
     scrollView: {
         flex: 1,
-    },
-    loadingContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    toggleRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-        elevation: 2,
     },
     frequencyContainer: {
         flexDirection: 'row',
@@ -445,4 +370,10 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
     },
+    infoBox: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+    },
 });
+
+export default AddSubscriptionScreen;

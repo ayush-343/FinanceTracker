@@ -1,29 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RouteProp } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-import { useTheme } from '../../theme';
-import { Button, TextInput as CustomTextInput, IconPicker, ColorPicker, LoadingScreen } from '../../components';
-import { useBudgetStore } from '../../store';
-import { useHaptics } from '../../hooks';
-import { RootStackParamList, Category } from '../../types';
-import { getCategoryById, updateCategory, deleteCategory } from '../../database/queries';
+import { useTheme } from '../src/theme';
+import { Button, TextInput as CustomTextInput, IconPicker, ColorPicker } from '../src/components';
+import { useBudgetStore } from '../src/store';
+import { useHaptics } from '../src/hooks';
 
-type Props = {
-    navigation: NativeStackNavigationProp<RootStackParamList, 'EditCategory'>;
-    route: RouteProp<RootStackParamList, 'EditCategory'>;
-};
-
-export const EditCategoryScreen: React.FC<Props> = ({ navigation, route }) => {
-    const { categoryId } = route.params;
+export const AddCategoryScreen: React.FC = () => {
+    const router = useRouter();
     const { colors, spacing, textStyles, borderRadius } = useTheme();
     const { success, error: errorHaptic } = useHaptics();
-    const { refreshData } = useBudgetStore();
+    const { addCategory } = useBudgetStore();
 
-    const [category, setCategory] = useState<Category | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
     const [name, setName] = useState('');
     const [allocatedBudget, setAllocatedBudget] = useState('');
     const [selectedIcon, setSelectedIcon] = useState('folder');
@@ -31,29 +21,6 @@ export const EditCategoryScreen: React.FC<Props> = ({ navigation, route }) => {
     const [showIconPicker, setShowIconPicker] = useState(false);
     const [showColorPicker, setShowColorPicker] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-
-    useEffect(() => {
-        loadCategory();
-    }, [categoryId]);
-
-    const loadCategory = async () => {
-        try {
-            const cat = await getCategoryById(categoryId);
-            if (cat) {
-                setCategory(cat);
-                setName(cat.name);
-                setAllocatedBudget(cat.budget_limit.toString());
-                setSelectedIcon(cat.icon_name);
-                setSelectedColor(cat.color);
-            }
-        } catch (err) {
-            console.error('Failed to load category:', err);
-            Alert.alert('Error', 'Failed to load category.');
-            navigation.goBack();
-        } finally {
-            setIsLoading(false);
-        }
-    };
 
     const handleSubmit = async () => {
         // Validation
@@ -63,7 +30,7 @@ export const EditCategoryScreen: React.FC<Props> = ({ navigation, route }) => {
             return;
         }
 
-        if (!allocatedBudget || parseFloat(allocatedBudget) <= 0) {
+        if (allocatedBudget && parseFloat(allocatedBudget) < 0) {
             errorHaptic();
             Alert.alert('Invalid Budget', 'Please enter a valid budget amount.');
             return;
@@ -71,55 +38,21 @@ export const EditCategoryScreen: React.FC<Props> = ({ navigation, route }) => {
 
         setIsSubmitting(true);
         try {
-            await updateCategory(categoryId, {
+            await addCategory({
                 name: name.trim(),
-                budget_limit: parseFloat(allocatedBudget),
+                budget_limit: allocatedBudget ? parseFloat(allocatedBudget) : 0,
                 icon_name: selectedIcon,
                 color: selectedColor,
             });
-            await refreshData();
             success();
-            navigation.goBack();
+            router.back();
         } catch (err) {
             errorHaptic();
-            Alert.alert('Error', 'Failed to update category. Please try again.');
+            Alert.alert('Error', 'Failed to create category. Please try again.');
         } finally {
             setIsSubmitting(false);
         }
     };
-
-    const handleDelete = () => {
-        Alert.alert(
-            'Delete Category',
-            'Are you sure you want to delete this category? This will also delete all subcategories, items, and transactions.',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Delete',
-                    style: 'destructive',
-                    onPress: async () => {
-                        try {
-                            await deleteCategory(categoryId);
-                            await refreshData();
-                            success();
-                            navigation.goBack();
-                        } catch (err) {
-                            errorHaptic();
-                            Alert.alert('Error', 'Failed to delete category.');
-                        }
-                    },
-                },
-            ]
-        );
-    };
-
-    if (isLoading) {
-        return <LoadingScreen message="Loading category..." />;
-    }
-
-    if (!category) {
-        return null;
-    }
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
@@ -129,13 +62,11 @@ export const EditCategoryScreen: React.FC<Props> = ({ navigation, route }) => {
             >
                 {/* Header */}
                 <View style={[styles.header, { paddingHorizontal: spacing.lg }]}>
-                    <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <TouchableOpacity onPress={() => router.back()}>
                         <Feather name="x" size={24} color={colors.text} />
                     </TouchableOpacity>
-                    <Text style={[textStyles.h3, { color: colors.text }]}>Edit Category</Text>
-                    <TouchableOpacity onPress={handleDelete}>
-                        <Feather name="trash-2" size={22} color={colors.error} />
-                    </TouchableOpacity>
+                    <Text style={[textStyles.h3, { color: colors.text }]}>New Category</Text>
+                    <View style={{ width: 24 }} />
                 </View>
 
                 <ScrollView
@@ -190,7 +121,7 @@ export const EditCategoryScreen: React.FC<Props> = ({ navigation, route }) => {
                     {/* Budget Input */}
                     <View style={{ marginTop: spacing.xl }}>
                         <Text style={[textStyles.label, { color: colors.textSecondary, marginBottom: spacing.sm }]}>
-                            Allocated Budget
+                            Allocated Budget (Optional)
                         </Text>
                         <CustomTextInput
                             value={allocatedBudget}
@@ -288,7 +219,7 @@ export const EditCategoryScreen: React.FC<Props> = ({ navigation, route }) => {
                     {/* Submit Button */}
                     <View style={{ marginTop: spacing.xxl }}>
                         <Button
-                            title="Save Changes"
+                            title="Create Category"
                             onPress={handleSubmit}
                             loading={isSubmitting}
                         />
@@ -348,3 +279,5 @@ const styles = StyleSheet.create({
         borderRadius: 12,
     },
 });
+
+export default AddCategoryScreen;

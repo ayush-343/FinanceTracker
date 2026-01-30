@@ -1,21 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import * as Localization from 'expo-localization';
-import { useTheme } from '../../theme';
-import { Button } from '../../components';
-import { useSettingsStore } from '../../store';
-import { useHaptics } from '../../hooks';
-import { CURRENCIES, LOCALE_TO_CURRENCY, getCurrencyByCode } from '../../constants';
-import { OnboardingStackParamList } from '../../types';
-
-type Props = {
-    navigation: NativeStackNavigationProp<OnboardingStackParamList, 'CurrencySetup'>;
-};
-
-export const CurrencySetupScreen: React.FC<Props> = ({ navigation }) => {
+import { useTheme } from '../../src/theme';
+import { Button } from '../../src/components';
+import { useSettingsStore } from '../../src/store';
+import { useHaptics } from '../../src/hooks';
+import { CURRENCIES, LOCALE_TO_CURRENCY, getCurrencyByCode } from '../../src/constants';
+export const CurrencySetupScreen: React.FC = () => {
+    const router = useRouter();
     const { colors, spacing, textStyles, borderRadius } = useTheme();
     const { setCurrency } = useSettingsStore();
     const { selection } = useHaptics();
@@ -34,7 +29,7 @@ export const CurrencySetupScreen: React.FC<Props> = ({ navigation }) => {
 
     const handleContinue = async () => {
         await setCurrency(selectedCurrency);
-        navigation.navigate('BiometricSetup');
+        router.push('/(onboarding)/BiometricSetup');
     };
 
     const displayedCurrencies = showAll
@@ -214,3 +209,5 @@ const styles = StyleSheet.create({
         paddingTop: 12,
     },
 });
+
+export default CurrencySetupScreen;

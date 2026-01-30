@@ -1,17 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-import { useTheme } from '../../theme';
-import { Button } from '../../components';
-import { OnboardingStackParamList } from '../../types';
-
-type Props = {
-    navigation: NativeStackNavigationProp<OnboardingStackParamList, 'Welcome'>;
-};
-
-export const WelcomeScreen: React.FC<Props> = ({ navigation }) => {
+import { useTheme } from '../../src/theme';
+import { Button } from '../../src/components';
+export const WelcomeScreen: React.FC = () => {
+    const router = useRouter();
     const { colors, spacing, textStyles } = useTheme();
 
     return (
@@ -74,7 +69,7 @@ export const WelcomeScreen: React.FC<Props> = ({ navigation }) => {
             <View style={[styles.footer, { paddingHorizontal: spacing.xl }]}>
                 <Button
                     title="Get Started"
-                    onPress={() => navigation.navigate('CurrencySetup')}
+                    onPress={() => router.push('/(onboarding)/CurrencySetup')}
                     fullWidth
                 />
             </View>
@@ -115,3 +110,5 @@ const styles = StyleSheet.create({
         paddingBottom: 20,
     },
 });
+
+export default WelcomeScreen;

@@ -1,21 +1,17 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { GestureHandlerRootView, Swipeable, RectButton } from 'react-native-gesture-handler';
 import { Animated as RNAnimated } from 'react-native';
-import { useTheme } from '../../theme';
-import { EmptyState, Button } from '../../components';
-import { useSubscriptionStore, useBudgetStore } from '../../store';
-import { useCurrency, useHaptics } from '../../hooks';
-import { RootStackParamList, Subscription } from '../../types';
-import { getCategoryById } from '../../database';
-
-type Props = {
-    navigation: NativeStackNavigationProp<RootStackParamList, 'Main'>;
-};
+import { useTheme } from '../../src/theme';
+import { EmptyState } from '../../src/components';
+import { useSubscriptionStore } from '../../src/store';
+import { useCurrency, useHaptics } from '../../src/hooks';
+import { Subscription } from '../../src/types';
+import { getCategoryById } from '../../src/database';
 
 interface SubscriptionWithCategory extends Subscription {
     category_name: string;
@@ -23,7 +19,8 @@ interface SubscriptionWithCategory extends Subscription {
     category_icon: string;
 }
 
-export const SubscriptionsScreen: React.FC<Props> = ({ navigation }) => {
+const SubscriptionsScreen: React.FC = () => {
+    const router = useRouter();
     const { colors, spacing, textStyles, borderRadius } = useTheme();
     const { format } = useCurrency();
     const { light, error } = useHaptics();
@@ -109,7 +106,10 @@ export const SubscriptionsScreen: React.FC<Props> = ({ navigation }) => {
                     style={[styles.actionButton, { backgroundColor: colors.primary }]}
                     onPress={() => {
                         light();
-                        navigation.navigate('EditSubscription', { subscriptionId: sub.id });
+                        router.push({
+                            pathname: '/EditSubscription',
+                            params: { subscriptionId: String(sub.id) },
+                        });
                     }}
                 >
                     <RNAnimated.View style={{ transform: [{ scale }] }}>
@@ -152,9 +152,7 @@ export const SubscriptionsScreen: React.FC<Props> = ({ navigation }) => {
                         },
                     ]}
                 >
-                    <Text style={[textStyles.label, { color: colors.textSecondary }]}>
-                        Monthly Recurring Total
-                    </Text>
+                    <Text style={[textStyles.label, { color: colors.textSecondary }]}>Monthly Recurring Total</Text>
                     <Text style={[textStyles.currencyLarge, { color: colors.text }]}>
                         {format(monthlyTotal)}
                     </Text>
@@ -192,7 +190,12 @@ export const SubscriptionsScreen: React.FC<Props> = ({ navigation }) => {
                                         borderLeftColor: item.category_color,
                                     },
                                 ]}
-                                onPress={() => navigation.navigate('EditSubscription', { subscriptionId: item.id })}
+                                onPress={() =>
+                                    router.push({
+                                        pathname: '/EditSubscription',
+                                        params: { subscriptionId: String(item.id) },
+                                    })
+                                }
                             >
                                 <View style={styles.cardHeader}>
                                     <View style={styles.cardInfo}>
@@ -230,7 +233,7 @@ export const SubscriptionsScreen: React.FC<Props> = ({ navigation }) => {
                             title="No Subscriptions"
                             description="Add recurring expenses like Netflix, Spotify, or daily milk delivery"
                             actionLabel="Add Subscription"
-                            onAction={() => navigation.navigate('AddSubscription')}
+                            onAction={() => router.push('/AddSubscription')}
                             style={{ marginTop: spacing.xxl }}
                         />
                     }
@@ -239,7 +242,7 @@ export const SubscriptionsScreen: React.FC<Props> = ({ navigation }) => {
                 {/* FAB */}
                 <TouchableOpacity
                     style={[styles.fab, { backgroundColor: colors.primary }]}
-                    onPress={() => navigation.navigate('AddSubscription')}
+                    onPress={() => router.push('/AddSubscription')}
                 >
                     <Feather name="plus" size={28} color="#FFF" />
                 </TouchableOpacity>
@@ -311,3 +314,5 @@ const styles = StyleSheet.create({
         elevation: 8,
     },
 });
+
+export default SubscriptionsScreen;

@@ -1,24 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RouteProp } from '@react-navigation/native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
-import { useTheme } from '../../theme';
-import { Button, TextInput as CustomTextInput } from '../../components';
-import { useBudgetStore } from '../../store';
-import { useCurrency, useHaptics } from '../../hooks';
-import { RootStackParamList, Category, Subcategory } from '../../types';
-import { getCategories, getSubcategories, createItem, getItems } from '../../database';
+import { useTheme } from '../src/theme';
+import { Button, TextInput as CustomTextInput } from '../src/components';
+import { useBudgetStore } from '../src/store';
+import { useCurrency, useHaptics } from '../src/hooks';
+import { Category, Subcategory } from '../src/types';
+import { getCategories, getSubcategories, createItem, getItems } from '../src/database';
 
-type Props = {
-    navigation: NativeStackNavigationProp<RootStackParamList, 'AddTransaction'>;
-    route: RouteProp<RootStackParamList, 'AddTransaction'>;
-};
-
-export const AddTransactionScreen: React.FC<Props> = ({ navigation, route }) => {
+export const AddTransactionScreen: React.FC = () => {
+    const router = useRouter();
+    const { categoryId, subcategoryId } = useLocalSearchParams<{
+        categoryId?: string;
+        subcategoryId?: string;
+    }>();
+    const parsedCategoryId = categoryId ? Number(categoryId) : undefined;
+    const parsedSubcategoryId = subcategoryId ? Number(subcategoryId) : undefined;
     const { colors, spacing, textStyles, borderRadius } = useTheme();
     const { format: formatCurrency } = useCurrency();
     const { success, error: errorHaptic } = useHaptics();
@@ -42,20 +43,20 @@ export const AddTransactionScreen: React.FC<Props> = ({ navigation, route }) => 
     }, []);
 
     useEffect(() => {
-        if (route.params?.categoryId) {
-            const category = categories.find(c => c.id === route.params.categoryId);
+        if (parsedCategoryId) {
+            const category = categories.find(c => c.id === parsedCategoryId);
             if (category) {
                 setSelectedCategory(category);
                 loadSubcategories(category.id);
             }
         }
-        if (route.params?.subcategoryId) {
-            const subcategory = subcategories.find(s => s.id === route.params.subcategoryId);
+        if (parsedSubcategoryId) {
+            const subcategory = subcategories.find(s => s.id === parsedSubcategoryId);
             if (subcategory) {
                 setSelectedSubcategory(subcategory);
             }
         }
-    }, [route.params, categories, subcategories]);
+    }, [parsedCategoryId, parsedSubcategoryId, categories, subcategories]);
 
     const loadCategories = async () => {
         const cats = await getCategories();
@@ -121,7 +122,7 @@ export const AddTransactionScreen: React.FC<Props> = ({ navigation, route }) => 
                 date: format(date, 'yyyy-MM-dd'),
             });
             success();
-            navigation.goBack();
+            router.back();
         } catch (err) {
             errorHaptic();
             Alert.alert('Error', 'Failed to add transaction. Please try again.');
@@ -138,7 +139,7 @@ export const AddTransactionScreen: React.FC<Props> = ({ navigation, route }) => 
             >
                 {/* Header */}
                 <View style={[styles.header, { paddingHorizontal: spacing.lg }]}>
-                    <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <TouchableOpacity onPress={() => router.back()}>
                         <Feather name="x" size={24} color={colors.text} />
                     </TouchableOpacity>
                     <Text style={[textStyles.h3, { color: colors.text }]}>Add Transaction</Text>
@@ -467,3 +468,5 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
 });
+
+export default AddTransactionScreen;

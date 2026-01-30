@@ -2,6 +2,7 @@
   "expo": {
     "name": "Finance Tracker",
     "slug": "finance-tracker",
+    "scheme": "finance-tracker",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -32,7 +33,13 @@
       "expo-sqlite",
       "expo-secure-store",
       "expo-localization",
-      "@react-native-community/datetimepicker"
-    ]
+      "@react-native-community/datetimepicker",
+      "expo-router"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "170761ec-4f38-4726-b53f-899bf4592ade"
+      }
+    }
   }
 }

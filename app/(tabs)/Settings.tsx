@@ -1,25 +1,22 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert, TextInput, KeyboardAvoidingView, Platform, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
-import { useTheme } from '../../theme';
-import { useSettingsStore, useBudgetStore } from '../../store';
-import { useCurrency, useBiometricAuth, useHaptics } from '../../hooks';
-import { RootStackParamList, BudgetPeriod } from '../../types';
-import { CURRENCIES, BUDGET_PERIODS } from '../../constants';
-import { getCategoriesWithSpending, getTransactionsByCategory, updateCategory } from '../../database';
-
-type Props = {
-    navigation: NativeStackNavigationProp<RootStackParamList, 'Main'>;
-};
+import { useTheme } from '../../src/theme';
+import { useSettingsStore, useBudgetStore } from '../../src/store';
+import { useCurrency, useBiometricAuth, useHaptics } from '../../src/hooks';
+import { BudgetPeriod } from '../../src/types';
+import { CURRENCIES, BUDGET_PERIODS } from '../../src/constants';
+import { getCategoriesWithSpending, getTransactionsByCategory, updateCategory } from '../../src/database';
 
 const CURRENCY_OPTIONS = CURRENCIES.slice(0, 10); // Show top 10 currencies
 
-export const SettingsScreen: React.FC<Props> = ({ navigation }) => {
+export const SettingsScreen: React.FC = () => {
+    const router = useRouter();
     const { colors, spacing, textStyles, borderRadius } = useTheme();
     const { format: formatCurrency } = useCurrency();
     const { isAvailable: biometricAvailable, biometricType } = useBiometricAuth();
@@ -124,105 +121,105 @@ export const SettingsScreen: React.FC<Props> = ({ navigation }) => {
                 const transactions = await getTransactionsByCategory(category.id, startDate, endDate);
                 if (transactions.length > 0) {
                     transactionsHTML += `
-            <h3 style="color: ${category.color}; margin-top: 20px;">${category.name}</h3>
-            <table style="width: 100%; border-collapse: collapse;">
-              <tr style="background: #f5f5f5;">
-                <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Date</th>
-                <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Notes</th>
-                <th style="padding: 8px; text-align: right; border: 1px solid #ddd;">Amount</th>
-              </tr>
-              ${transactions.map(t => `
-                <tr>
-                  <td style="padding: 8px; border: 1px solid #ddd;">${format(new Date(t.date), 'MMM d, yyyy')}</td>
-                  <td style="padding: 8px; border: 1px solid #ddd;">${t.notes || '-'}</td>
-                  <td style="padding: 8px; text-align: right; border: 1px solid #ddd;">${formatCurrency(t.amount)}</td>
-                </tr>
-              `).join('')}
-            </table>
-          `;
+			<h3 style="color: ${category.color}; margin-top: 20px;">${category.name}</h3>
+			<table style="width: 100%; border-collapse: collapse;">
+			  <tr style="background: #f5f5f5;">
+				<th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Date</th>
+				<th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Notes</th>
+				<th style="padding: 8px; text-align: right; border: 1px solid #ddd;">Amount</th>
+			  </tr>
+			  ${transactions.map(t => `
+				<tr>
+				  <td style="padding: 8px; border: 1px solid #ddd;">${format(new Date(t.date), 'MMM d, yyyy')}</td>
+				  <td style="padding: 8px; border: 1px solid #ddd;">${t.notes || '-'}</td>
+				  <td style="padding: 8px; text-align: right; border: 1px solid #ddd;">${formatCurrency(t.amount)}</td>
+				</tr>
+			  `).join('')}
+			</table>
+		  `;
                 }
             }
 
             const html = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <title>Budget Report</title>
-          <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 40px; }
-            h1 { color: #333; border-bottom: 2px solid #6366f1; padding-bottom: 10px; }
-            h2 { color: #666; margin-top: 30px; }
-            .summary { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }
-            .summary-row { display: flex; justify-content: space-between; padding: 8px 0; }
-            .label { color: #666; }
-            .value { font-weight: 600; color: #333; }
-            .progress { margin-top: 20px; }
-            .progress-bar { height: 12px; background: #e9ecef; border-radius: 6px; overflow: hidden; }
-            .progress-fill { height: 100%; background: #6366f1; }
-          </style>
-        </head>
-        <body>
-          <h1>📊 Budget Report</h1>
-          <p style="color: #666;">Generated on ${format(new Date(), 'MMMM d, yyyy \'at\' h:mm a')}</p>
+		<!DOCTYPE html>
+		<html>
+		<head>
+		  <meta charset="utf-8">
+		  <title>Budget Report</title>
+		  <style>
+			body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 40px; }
+			h1 { color: #333; border-bottom: 2px solid #6366f1; padding-bottom: 10px; }
+			h2 { color: #666; margin-top: 30px; }
+			.summary { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }
+			.summary-row { display: flex; justify-content: space-between; padding: 8px 0; }
+			.label { color: #666; }
+			.value { font-weight: 600; color: #333; }
+			.progress { margin-top: 20px; }
+			.progress-bar { height: 12px; background: #e9ecef; border-radius: 6px; overflow: hidden; }
+			.progress-fill { height: 100%; background: #6366f1; }
+		  </style>
+		</head>
+		<body>
+		  <h1>📊 Budget Report</h1>
+		  <p style="color: #666;">Generated on ${format(new Date(), 'MMMM d, yyyy \'at\' h:mm a')}</p>
           
-          <div class="summary">
-            <div class="summary-row">
-              <span class="label">Budget Period:</span>
-              <span class="value">${format(startOfMonth(now), 'MMM d')} - ${format(endOfMonth(now), 'MMM d, yyyy')}</span>
-            </div>
-            <div class="summary-row">
-              <span class="label">Total Budget:</span>
-              <span class="value">${formatCurrency(totalBudgetAmount)}</span>
-            </div>
-            <div class="summary-row">
-              <span class="label">Total Spent:</span>
-              <span class="value">${formatCurrency(totalSpent)}</span>
-            </div>
-            <div class="summary-row">
-              <span class="label">Remaining:</span>
-              <span class="value" style="color: ${totalBudgetAmount - totalSpent >= 0 ? '#22c55e' : '#ef4444'}">
-                ${formatCurrency(totalBudgetAmount - totalSpent)}
-              </span>
-            </div>
-            <div class="progress">
-              <div class="progress-bar">
-                <div class="progress-fill" style="width: ${Math.min((totalSpent / totalBudgetAmount) * 100, 100)}%"></div>
-              </div>
-            </div>
-          </div>
+		  <div class="summary">
+			<div class="summary-row">
+			  <span class="label">Budget Period:</span>
+			  <span class="value">${format(startOfMonth(now), 'MMM d')} - ${format(endOfMonth(now), 'MMM d, yyyy')}</span>
+			</div>
+			<div class="summary-row">
+			  <span class="label">Total Budget:</span>
+			  <span class="value">${formatCurrency(totalBudgetAmount)}</span>
+			</div>
+			<div class="summary-row">
+			  <span class="label">Total Spent:</span>
+			  <span class="value">${formatCurrency(totalSpent)}</span>
+			</div>
+			<div class="summary-row">
+			  <span class="label">Remaining:</span>
+			  <span class="value" style="color: ${totalBudgetAmount - totalSpent >= 0 ? '#22c55e' : '#ef4444'}">
+				${formatCurrency(totalBudgetAmount - totalSpent)}
+			  </span>
+			</div>
+			<div class="progress">
+			  <div class="progress-bar">
+				<div class="progress-fill" style="width: ${Math.min((totalSpent / totalBudgetAmount) * 100, 100)}%"></div>
+			  </div>
+			</div>
+		  </div>
 
-          <h2>Category Summary</h2>
-          <table style="width: 100%; border-collapse: collapse;">
-            <tr style="background: #f5f5f5;">
-              <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Category</th>
-              <th style="padding: 10px; text-align: right; border: 1px solid #ddd;">Budget</th>
-              <th style="padding: 10px; text-align: right; border: 1px solid #ddd;">Spent</th>
-              <th style="padding: 10px; text-align: right; border: 1px solid #ddd;">Remaining</th>
-            </tr>
-            ${categoriesData.map(c => `
-              <tr>
-                <td style="padding: 10px; border: 1px solid #ddd;">
-                  <span style="color: ${c.color};">●</span> ${c.name}
-                </td>
-                <td style="padding: 10px; text-align: right; border: 1px solid #ddd;">${formatCurrency(c.budget_limit)}</td>
-                <td style="padding: 10px; text-align: right; border: 1px solid #ddd;">${formatCurrency(c.spent)}</td>
-                <td style="padding: 10px; text-align: right; border: 1px solid #ddd; color: ${c.budget_limit - c.spent >= 0 ? '#22c55e' : '#ef4444'}">
-                  ${formatCurrency(c.budget_limit - c.spent)}
-                </td>
-              </tr>
-            `).join('')}
-          </table>
+		  <h2>Category Summary</h2>
+		  <table style="width: 100%; border-collapse: collapse;">
+			<tr style="background: #f5f5f5;">
+			  <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Category</th>
+			  <th style="padding: 10px; text-align: right; border: 1px solid #ddd;">Budget</th>
+			  <th style="padding: 10px; text-align: right; border: 1px solid #ddd;">Spent</th>
+			  <th style="padding: 10px; text-align: right; border: 1px solid #ddd;">Remaining</th>
+			</tr>
+			${categoriesData.map(c => `
+			  <tr>
+				<td style="padding: 10px; border: 1px solid #ddd;">
+				  <span style="color: ${c.color};">●</span> ${c.name}
+				</td>
+				<td style="padding: 10px; text-align: right; border: 1px solid #ddd;">${formatCurrency(c.budget_limit)}</td>
+				<td style="padding: 10px; text-align: right; border: 1px solid #ddd;">${formatCurrency(c.spent)}</td>
+				<td style="padding: 10px; text-align: right; border: 1px solid #ddd; color: ${c.budget_limit - c.spent >= 0 ? '#22c55e' : '#ef4444'}">
+				  ${formatCurrency(c.budget_limit - c.spent)}
+				</td>
+			  </tr>
+			`).join('')}
+		  </table>
 
-          <h2>Transaction Details</h2>
-          ${transactionsHTML || '<p style="color: #666;">No transactions recorded.</p>'}
+		  <h2>Transaction Details</h2>
+		  ${transactionsHTML || '<p style="color: #666;">No transactions recorded.</p>'}
 
-          <footer style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e9ecef; color: #999; font-size: 12px;">
-            Generated by Finance Tracker App
-          </footer>
-        </body>
-        </html>
-      `;
+		  <footer style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e9ecef; color: #999; font-size: 12px;">
+			Generated by Finance Tracker App
+		  </footer>
+		</body>
+		</html>
+	  `;
 
             const { uri } = await Print.printToFileAsync({ html });
 
@@ -253,10 +250,7 @@ export const SettingsScreen: React.FC<Props> = ({ navigation }) => {
                     style: 'destructive',
                     onPress: async () => {
                         await resetOnboarding();
-                        navigation.reset({
-                            index: 0,
-                            routes: [{ name: 'Onboarding' }],
-                        });
+                        router.replace('/(onboarding)/Welcome');
                     },
                 },
             ]
@@ -383,7 +377,7 @@ export const SettingsScreen: React.FC<Props> = ({ navigation }) => {
                 <SettingRow
                     icon="info"
                     title="App Version"
-                    subtitle="0.2.1"
+                    subtitle="0.3.0"
                 />
                 <SettingRow
                     icon="refresh-cw"
@@ -642,3 +636,5 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
 });
+
+export default SettingsScreen;

@@ -1,25 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RouteProp } from '@react-navigation/native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format, parseISO } from 'date-fns';
-import { useTheme } from '../../theme';
-import { Button, TextInput as CustomTextInput } from '../../components';
-import { useBudgetStore } from '../../store';
-import { useCurrency, useHaptics } from '../../hooks';
-import { RootStackParamList, Category, Subcategory, TransactionWithDetails } from '../../types';
-import { getCategories, getSubcategories, getTransactionById, updateTransaction, deleteTransaction, createItem } from '../../database';
+import { useTheme } from '../src/theme';
+import { Button, TextInput as CustomTextInput } from '../src/components';
+import { useBudgetStore } from '../src/store';
+import { useCurrency, useHaptics } from '../src/hooks';
+import { Category, Subcategory, TransactionWithDetails } from '../src/types';
+import { getCategories, getSubcategories, getTransactionById, updateTransaction, deleteTransaction, createItem } from '../src/database';
 
-type Props = {
-    navigation: NativeStackNavigationProp<RootStackParamList, 'EditTransaction'>;
-    route: RouteProp<RootStackParamList, 'EditTransaction'>;
-};
-
-export const EditTransactionScreen: React.FC<Props> = ({ navigation, route }) => {
-    const { transactionId } = route.params;
+export const EditTransactionScreen: React.FC = () => {
+    const router = useRouter();
+    const { transactionId } = useLocalSearchParams<{ transactionId?: string }>();
+    const parsedTransactionId = transactionId ? Number(transactionId) : NaN;
     const { colors, spacing, textStyles, borderRadius } = useTheme();
     const { format: formatCurrency } = useCurrency();
     const { success, error: errorHaptic, light } = useHaptics();
@@ -41,14 +37,16 @@ export const EditTransactionScreen: React.FC<Props> = ({ navigation, route }) =>
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        loadData();
-    }, [transactionId]);
+        if (Number.isFinite(parsedTransactionId)) {
+            loadData();
+        }
+    }, [parsedTransactionId]);
 
     const loadData = async () => {
         setIsLoading(true);
         try {
             // Load transaction
-            const trans = await getTransactionById(transactionId);
+            const trans = await getTransactionById(parsedTransactionId);
             if (trans) {
                 setTransaction(trans);
                 setAmount(trans.amount.toString());
@@ -101,6 +99,9 @@ export const EditTransactionScreen: React.FC<Props> = ({ navigation, route }) =>
     };
 
     const handleSubmit = async () => {
+        if (!Number.isFinite(parsedTransactionId)) {
+            return;
+        }
         // Validation
         if (!amount || parseFloat(amount) <= 0) {
             errorHaptic();
@@ -132,7 +133,7 @@ export const EditTransactionScreen: React.FC<Props> = ({ navigation, route }) =>
                 });
             }
 
-            await updateTransaction(transactionId, {
+            await updateTransaction(parsedTransactionId, {
                 category_id: selectedCategory.id,
                 subcategory_id: selectedSubcategory?.id || null,
                 item_id: itemId,
@@ -142,7 +143,7 @@ export const EditTransactionScreen: React.FC<Props> = ({ navigation, route }) =>
             });
             await refreshData();
             success();
-            navigation.goBack();
+            router.back();
         } catch (err) {
             errorHaptic();
             Alert.alert('Error', 'Failed to update transaction. Please try again.');
@@ -152,6 +153,9 @@ export const EditTransactionScreen: React.FC<Props> = ({ navigation, route }) =>
     };
 
     const handleDelete = () => {
+        if (!Number.isFinite(parsedTransactionId)) {
+            return;
+        }
         Alert.alert(
             'Delete Transaction',
             'Are you sure you want to delete this transaction? This action cannot be undone.',
@@ -162,10 +166,10 @@ export const EditTransactionScreen: React.FC<Props> = ({ navigation, route }) =>
                     style: 'destructive',
                     onPress: async () => {
                         try {
-                            await deleteTransaction(transactionId);
+                            await deleteTransaction(parsedTransactionId);
                             await refreshData();
                             success();
-                            navigation.goBack();
+                            router.back();
                         } catch (err) {
                             errorHaptic();
                             Alert.alert('Error', 'Failed to delete transaction.');
@@ -175,6 +179,10 @@ export const EditTransactionScreen: React.FC<Props> = ({ navigation, route }) =>
             ]
         );
     };
+
+    if (!Number.isFinite(parsedTransactionId)) {
+        return null;
+    }
 
     if (isLoading) {
         return (
@@ -194,7 +202,7 @@ export const EditTransactionScreen: React.FC<Props> = ({ navigation, route }) =>
             >
                 {/* Header */}
                 <View style={[styles.header, { paddingHorizontal: spacing.lg }]}>
-                    <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <TouchableOpacity onPress={() => router.back()}>
                         <Feather name="x" size={24} color={colors.text} />
                     </TouchableOpacity>
                     <Text style={[textStyles.h3, { color: colors.text }]}>Edit Transaction</Text>
@@ -504,3 +512,5 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
 });
+
+export default EditTransactionScreen;

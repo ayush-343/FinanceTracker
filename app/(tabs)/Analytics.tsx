@@ -2,13 +2,12 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BarChart, PieChart } from 'react-native-gifted-charts';
-import { useTheme } from '../../theme';
-import { TimeframePicker, EmptyState } from '../../components';
-import { useBudgetStore, useSettingsStore } from '../../store';
-import { useCurrency } from '../../hooks';
-import { RootStackParamList, Timeframe } from '../../types';
+import { useTheme } from '../../src/theme';
+import { TimeframePicker } from '../../src/components';
+import { useBudgetStore, useSettingsStore } from '../../src/store';
+import { useCurrency } from '../../src/hooks';
+import { Timeframe } from '../../src/types';
 import {
     startOfWeek,
     endOfWeek,
@@ -22,16 +21,12 @@ import {
     subWeeks,
     subMonths,
 } from 'date-fns';
-import { getDailySpending, getCategoriesWithSpending } from '../../database';
-
-type Props = {
-    navigation: NativeStackNavigationProp<RootStackParamList, 'Main'>;
-};
+import { getDailySpending, getCategoriesWithSpending } from '../../src/database';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CHART_WIDTH = SCREEN_WIDTH - 64;
 
-export const AnalyticsScreen: React.FC<Props> = ({ navigation }) => {
+const AnalyticsScreen: React.FC = () => {
     const { colors, spacing, textStyles, borderRadius } = useTheme();
     const { format: formatCurrency } = useCurrency();
     const { currency } = useSettingsStore();
@@ -138,7 +133,7 @@ export const AnalyticsScreen: React.FC<Props> = ({ navigation }) => {
     );
 
     const barChartData = useMemo(() => {
-        return spendingData.map((d, i) => ({
+        return spendingData.map((d) => ({
             value: d.value,
             label: d.label,
             frontColor: colors.primary,
@@ -205,9 +200,7 @@ export const AnalyticsScreen: React.FC<Props> = ({ navigation }) => {
                             },
                         ]}
                     >
-                        <Text style={[textStyles.labelSmall, { color: colors.textSecondary }]}>
-                            Total Spent
-                        </Text>
+                        <Text style={[textStyles.labelSmall, { color: colors.textSecondary }]}>Total Spent</Text>
                         <Text style={[textStyles.h3, { color: colors.text }]}>
                             {formatCurrency(totalSpent)}
                         </Text>
@@ -222,9 +215,7 @@ export const AnalyticsScreen: React.FC<Props> = ({ navigation }) => {
                             },
                         ]}
                     >
-                        <Text style={[textStyles.labelSmall, { color: colors.textSecondary }]}>
-                            Average
-                        </Text>
+                        <Text style={[textStyles.labelSmall, { color: colors.textSecondary }]}>Average</Text>
                         <Text style={[textStyles.h3, { color: colors.text }]}>
                             {formatCurrency(avgSpending)}
                         </Text>
@@ -239,9 +230,7 @@ export const AnalyticsScreen: React.FC<Props> = ({ navigation }) => {
                             },
                         ]}
                     >
-                        <Text style={[textStyles.labelSmall, { color: colors.textSecondary }]}>
-                            Highest
-                        </Text>
+                        <Text style={[textStyles.labelSmall, { color: colors.textSecondary }]}>Highest</Text>
                         <Text style={[textStyles.h3, { color: colors.text }]}>
                             {formatCurrency(maxSpending)}
                         </Text>
@@ -256,9 +245,7 @@ export const AnalyticsScreen: React.FC<Props> = ({ navigation }) => {
                             },
                         ]}
                     >
-                        <Text style={[textStyles.labelSmall, { color: colors.textSecondary }]}>
-                            Categories
-                        </Text>
+                        <Text style={[textStyles.labelSmall, { color: colors.textSecondary }]}>Categories</Text>
                         <Text style={[textStyles.h3, { color: colors.text }]}>
                             {categoryData.length}
                         </Text>
@@ -278,9 +265,7 @@ export const AnalyticsScreen: React.FC<Props> = ({ navigation }) => {
                         },
                     ]}
                 >
-                    <Text style={[textStyles.h4, { color: colors.text, marginBottom: spacing.md }]}>
-                        Spending Over Time
-                    </Text>
+                    <Text style={[textStyles.h4, { color: colors.text, marginBottom: spacing.md }]}>Spending Over Time</Text>
                     {spendingData.length > 0 && (
                         <BarChart
                             data={barChartData}
@@ -317,9 +302,7 @@ export const AnalyticsScreen: React.FC<Props> = ({ navigation }) => {
                             },
                         ]}
                     >
-                        <Text style={[textStyles.h4, { color: colors.text, marginBottom: spacing.lg }]}>
-                            Category Breakdown
-                        </Text>
+                        <Text style={[textStyles.h4, { color: colors.text, marginBottom: spacing.lg }]}>Category Breakdown</Text>
                         <View style={styles.pieContainer}>
                             <PieChart
                                 data={pieChartData}
@@ -328,9 +311,7 @@ export const AnalyticsScreen: React.FC<Props> = ({ navigation }) => {
                                 innerRadius={50}
                                 centerLabelComponent={() => (
                                     <View style={styles.pieCenter}>
-                                        <Text style={[textStyles.labelSmall, { color: colors.textSecondary }]}>
-                                            Total
-                                        </Text>
+                                        <Text style={[textStyles.labelSmall, { color: colors.textSecondary }]}>Total</Text>
                                         <Text style={[textStyles.body, { color: colors.text, fontWeight: '600' }]}>
                                             {formatCurrency(totalSpent)}
                                         </Text>
@@ -370,9 +351,7 @@ export const AnalyticsScreen: React.FC<Props> = ({ navigation }) => {
                         },
                     ]}
                 >
-                    <Text style={[textStyles.h4, { color: colors.text, marginBottom: spacing.lg }]}>
-                        Top Spending Categories
-                    </Text>
+                    <Text style={[textStyles.h4, { color: colors.text, marginBottom: spacing.lg }]}>Top Spending Categories</Text>
                     {categoryData.slice(0, 5).map((c, i) => {
                         const percentage = (c.amount / totalSpent) * 100;
                         return (
@@ -481,3 +460,5 @@ const styles = StyleSheet.create({
         height: '100%',
     },
 });
+
+export default AnalyticsScreen;

@@ -1,23 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RouteProp } from '@react-navigation/native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-import { useTheme } from '../../theme';
-import { Button, TextInput as CustomTextInput } from '../../components';
-import { useBudgetStore } from '../../store';
-import { useHaptics } from '../../hooks';
-import { RootStackParamList, Category } from '../../types';
-import { getCategoryById, insertSubcategory } from '../../database';
+import { useTheme } from '../src/theme';
+import { Button, TextInput as CustomTextInput } from '../src/components';
+import { useBudgetStore } from '../src/store';
+import { useHaptics } from '../src/hooks';
+import { Category } from '../src/types';
+import { getCategoryById, insertSubcategory } from '../src/database';
 
-type Props = {
-    navigation: NativeStackNavigationProp<RootStackParamList, 'AddSubcategory'>;
-    route: RouteProp<RootStackParamList, 'AddSubcategory'>;
-};
-
-export const AddSubcategoryScreen: React.FC<Props> = ({ navigation, route }) => {
-    const { categoryId } = route.params;
+export const AddSubcategoryScreen: React.FC = () => {
+    const router = useRouter();
+    const { categoryId } = useLocalSearchParams<{ categoryId?: string }>();
+    const parsedCategoryId = categoryId ? Number(categoryId) : NaN;
     const { colors, spacing, textStyles, borderRadius } = useTheme();
     const { success, error: errorHaptic } = useHaptics();
     const { loadSpendingData } = useBudgetStore();
@@ -27,12 +23,18 @@ export const AddSubcategoryScreen: React.FC<Props> = ({ navigation, route }) => 
     const [parentCategory, setParentCategory] = useState<Category | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    if (!Number.isFinite(parsedCategoryId)) {
+        return null;
+    }
+
     useEffect(() => {
-        loadParentCategory();
-    }, [categoryId]);
+        if (Number.isFinite(parsedCategoryId)) {
+            loadParentCategory();
+        }
+    }, [parsedCategoryId]);
 
     const loadParentCategory = async () => {
-        const category = await getCategoryById(categoryId);
+        const category = await getCategoryById(parsedCategoryId);
         setParentCategory(category);
     };
 
@@ -53,13 +55,13 @@ export const AddSubcategoryScreen: React.FC<Props> = ({ navigation, route }) => 
         setIsSubmitting(true);
         try {
             await insertSubcategory({
-                category_id: categoryId,
+                category_id: parsedCategoryId,
                 name: name.trim(),
                 budget_limit: allocatedBudget ? parseFloat(allocatedBudget) : 0,
             });
             await loadSpendingData();
             success();
-            navigation.goBack();
+            router.back();
         } catch (err) {
             errorHaptic();
             Alert.alert('Error', 'Failed to create subcategory. Please try again.');
@@ -76,7 +78,7 @@ export const AddSubcategoryScreen: React.FC<Props> = ({ navigation, route }) => 
             >
                 {/* Header */}
                 <View style={[styles.header, { paddingHorizontal: spacing.lg }]}>
-                    <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <TouchableOpacity onPress={() => router.back()}>
                         <Feather name="x" size={24} color={colors.text} />
                     </TouchableOpacity>
                     <Text style={[textStyles.h3, { color: colors.text }]}>New Subcategory</Text>
@@ -268,3 +270,5 @@ const styles = StyleSheet.create({
         elevation: 1,
     },
 });
+
+export default AddSubcategoryScreen;

@@ -2,21 +2,17 @@ import React, { useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { BarChart } from 'react-native-gifted-charts';
-import { useTheme } from '../../theme';
-import { CategoryCard, ProgressBar, EmptyState } from '../../components';
-import { useBudgetStore, useSettingsStore } from '../../store';
-import { useCurrency } from '../../hooks';
-import { RootStackParamList } from '../../types';
-import { getMonthRangeString, getWeekRangeString } from '../../utils';
+import { useTheme } from '../../src/theme';
+import { CategoryCard, ProgressBar, EmptyState } from '../../src/components';
+import { useBudgetStore, useSettingsStore } from '../../src/store';
+import { useCurrency } from '../../src/hooks';
+import { getMonthRangeString, getWeekRangeString } from '../../src/utils';
 
-type Props = {
-    navigation: NativeStackNavigationProp<RootStackParamList, 'Main'>;
-};
-
-export const HomeScreen: React.FC<Props> = ({ navigation }) => {
+const HomeScreen: React.FC = () => {
+    const router = useRouter();
     const { colors, spacing, textStyles, borderRadius } = useTheme();
     const { format, formatCompact } = useCurrency();
     const { budgetPeriod } = useSettingsStore();
@@ -45,18 +41,21 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
         : getMonthRangeString(currentDate);
 
     // Prepare chart data
-    const chartData = dailySpending.slice(-7).map((day, index) => ({
+    const chartData = dailySpending.slice(-7).map((day) => ({
         value: day.total,
         label: new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 2),
         frontColor: colors.primary,
     }));
 
     const handleCategoryPress = (categoryId: number, categoryName: string) => {
-        navigation.navigate('Category', { categoryId, categoryName });
+        router.push({
+            pathname: '/Category',
+            params: { categoryId: String(categoryId), categoryName },
+        });
     };
 
     const handleAddTransaction = () => {
-        navigation.navigate('AddTransaction', {});
+        router.push('/AddTransaction');
     };
 
     return (
@@ -99,17 +98,13 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
                 >
                     <View style={styles.summaryRow}>
                         <View>
-                            <Text style={[textStyles.label, { color: colors.textSecondary }]}>
-                                Total Spent
-                            </Text>
+                            <Text style={[textStyles.label, { color: colors.textSecondary }]}>Total Spent</Text>
                             <Text style={[textStyles.currencyLarge, { color: colors.text }]}>
                                 {formatCompact(totalSpending)}
                             </Text>
                         </View>
                         <View style={{ alignItems: 'flex-end' }}>
-                            <Text style={[textStyles.label, { color: colors.textSecondary }]}>
-                                Budget
-                            </Text>
+                            <Text style={[textStyles.label, { color: colors.textSecondary }]}>Budget</Text>
                             <Text style={[textStyles.h3, { color: colors.textSecondary }]}>
                                 {formatCompact(totalBudget)}
                             </Text>
@@ -153,9 +148,7 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
                             },
                         ]}
                     >
-                        <Text style={[textStyles.h3, { color: colors.text, marginBottom: spacing.md }]}>
-                            Last 7 Days
-                        </Text>
+                        <Text style={[textStyles.h3, { color: colors.text, marginBottom: spacing.md }]}>Last 7 Days</Text>
                         <BarChart
                             data={chartData}
                             barWidth={28}
@@ -178,10 +171,8 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
                 {/* Categories */}
                 <View style={[styles.section, { paddingHorizontal: spacing.lg, marginTop: spacing.xl }]}>
                     <View style={styles.sectionHeader}>
-                        <Text style={[textStyles.h3, { color: colors.text }]}>
-                            Categories
-                        </Text>
-                        <TouchableOpacity onPress={() => navigation.navigate('AddCategory')}>
+                        <Text style={[textStyles.h3, { color: colors.text }]}>Categories</Text>
+                        <TouchableOpacity onPress={() => router.push('/AddCategory')}>
                             <Feather name="plus" size={24} color={colors.primary} />
                         </TouchableOpacity>
                     </View>
@@ -201,7 +192,7 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
                             title="No Categories"
                             description="Add categories to start tracking your spending"
                             actionLabel="Add Category"
-                            onAction={() => navigation.navigate('AddCategory')}
+                            onAction={() => router.push('/AddCategory')}
                             style={{ marginTop: spacing.xl }}
                         />
                     )}
@@ -210,10 +201,7 @@ export const HomeScreen: React.FC<Props> = ({ navigation }) => {
 
             {/* FAB */}
             <TouchableOpacity
-                style={[
-                    styles.fab,
-                    { backgroundColor: colors.primary },
-                ]}
+                style={[styles.fab, { backgroundColor: colors.primary }]}
                 onPress={handleAddTransaction}
             >
                 <Feather name="plus" size={28} color="#FFF" />
@@ -248,8 +236,7 @@ const styles = StyleSheet.create({
         shadowRadius: 8,
         elevation: 2,
     },
-    section: {
-    },
+    section: {},
     sectionHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -271,3 +258,5 @@ const styles = StyleSheet.create({
         elevation: 8,
     },
 });
+
+export default HomeScreen;

@@ -1,23 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RouteProp } from '@react-navigation/native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-import { useTheme } from '../../theme';
-import { Button, TextInput as CustomTextInput } from '../../components';
-import { useBudgetStore } from '../../store';
-import { useHaptics } from '../../hooks';
-import { RootStackParamList, Category, Subcategory } from '../../types';
-import { getCategoryById, getSubcategoryById, updateSubcategory, deleteSubcategory } from '../../database';
+import { useTheme } from '../src/theme';
+import { Button, TextInput as CustomTextInput } from '../src/components';
+import { useBudgetStore } from '../src/store';
+import { useHaptics } from '../src/hooks';
+import { Category, Subcategory } from '../src/types';
+import { getCategoryById, getSubcategoryById, updateSubcategory, deleteSubcategory } from '../src/database';
 
-type Props = {
-    navigation: NativeStackNavigationProp<RootStackParamList, 'EditSubcategory'>;
-    route: RouteProp<RootStackParamList, 'EditSubcategory'>;
-};
-
-export const EditSubcategoryScreen: React.FC<Props> = ({ navigation, route }) => {
-    const { subcategoryId, categoryId } = route.params;
+export const EditSubcategoryScreen: React.FC = () => {
+    const router = useRouter();
+    const { subcategoryId, categoryId } = useLocalSearchParams<{
+        subcategoryId?: string;
+        categoryId?: string;
+    }>();
+    const parsedSubcategoryId = subcategoryId ? Number(subcategoryId) : NaN;
+    const parsedCategoryId = categoryId ? Number(categoryId) : NaN;
     const { colors, spacing, textStyles, borderRadius } = useTheme();
     const { success, error: errorHaptic } = useHaptics();
     const { loadSpendingData } = useBudgetStore();
@@ -27,15 +27,21 @@ export const EditSubcategoryScreen: React.FC<Props> = ({ navigation, route }) =>
     const [subcategory, setSubcategory] = useState<Subcategory | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    if (!Number.isFinite(parsedSubcategoryId) || !Number.isFinite(parsedCategoryId)) {
+        return null;
+    }
+
     useEffect(() => {
-        loadData();
-    }, [subcategoryId, categoryId]);
+        if (Number.isFinite(parsedSubcategoryId) && Number.isFinite(parsedCategoryId)) {
+            loadData();
+        }
+    }, [parsedSubcategoryId, parsedCategoryId]);
 
     const loadData = async () => {
-        const category = await getCategoryById(categoryId);
+        const category = await getCategoryById(parsedCategoryId);
         setParentCategory(category);
 
-        const sub = await getSubcategoryById(subcategoryId);
+        const sub = await getSubcategoryById(parsedSubcategoryId);
         setSubcategory(sub);
         setName(sub?.name || '');
     };
@@ -49,12 +55,12 @@ export const EditSubcategoryScreen: React.FC<Props> = ({ navigation, route }) =>
 
         setIsSubmitting(true);
         try {
-            await updateSubcategory(subcategoryId, {
+            await updateSubcategory(parsedSubcategoryId, {
                 name: name.trim(),
             });
             await loadSpendingData();
             success();
-            navigation.goBack();
+            router.back();
         } catch (err) {
             errorHaptic();
             Alert.alert('Error', 'Failed to update subcategory. Please try again.');
@@ -74,10 +80,10 @@ export const EditSubcategoryScreen: React.FC<Props> = ({ navigation, route }) =>
                     style: 'destructive',
                     onPress: async () => {
                         try {
-                            await deleteSubcategory(subcategoryId);
+                            await deleteSubcategory(parsedSubcategoryId);
                             await loadSpendingData();
                             success();
-                            navigation.goBack();
+                            router.back();
                         } catch (err) {
                             errorHaptic();
                             Alert.alert('Error', 'Failed to delete subcategory.');
@@ -96,7 +102,7 @@ export const EditSubcategoryScreen: React.FC<Props> = ({ navigation, route }) =>
             >
                 {/* Header */}
                 <View style={[styles.header, { paddingHorizontal: spacing.lg }]}>
-                    <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <TouchableOpacity onPress={() => router.back()}>
                         <Feather name="x" size={24} color={colors.text} />
                     </TouchableOpacity>
                     <Text style={[textStyles.h3, { color: colors.text }]}>Edit Subcategory</Text>
@@ -201,3 +207,5 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
 });
+
+export default EditSubcategoryScreen;
