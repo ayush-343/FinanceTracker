@@ -23,7 +23,9 @@ const NotFoundScreen: React.FC = () => {
                 </Text>
                 <View style={{ marginTop: spacing.xl, width: '100%' }}>
                     <Link href="/" asChild>
-                        <Button title="Go to Home" fullWidth />
+                        <Button title="Go to Home" fullWidth onPress={function (): void {
+                            throw new Error('Function not implemented.');
+                        }} />
                     </Link>
                 </View>
             </View>

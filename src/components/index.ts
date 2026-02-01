@@ -10,3 +10,5 @@ export { TimeframePicker } from './TimeframePicker';
 export { CalendarDay } from './CalendarDay';
 export { LoadingScreen } from './LoadingScreen';
 export { EmptyState } from './EmptyState';
+export { PendingItemsBanner } from './PendingItemsBanner';
+export { ScanningModal } from './ScanningModal';

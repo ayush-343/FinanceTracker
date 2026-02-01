@@ -15,7 +15,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.financetracker.app"
+      "bundleIdentifier": "com.financetracker.app",
+      "infoPlist": {
+        "UIViewControllerBasedStatusBarAppearance": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -28,6 +31,9 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "statusBar": {
+      "style": "auto"
     },
     "plugins": [
       "expo-sqlite",

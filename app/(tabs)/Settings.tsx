@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert, TextInput, KeyboardAvoidingView, Platform, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
+import { BottomSheet, Host, VStack, Text as SwiftText, Button as SwiftButton } from '@expo/ui/swift-ui';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { useTheme } from '../../src/theme';
 import { useSettingsStore, useBudgetStore } from '../../src/store';
@@ -24,9 +25,11 @@ export const SettingsScreen: React.FC = () => {
 
     const {
         isBiometricEnabled,
+        darkMode,
         currency,
         budgetPeriod,
         setBiometricEnabled,
+        setDarkMode,
         setCurrency,
         setBudgetPeriod,
         resetOnboarding,
@@ -36,13 +39,16 @@ export const SettingsScreen: React.FC = () => {
 
     const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
     const [showPeriodPicker, setShowPeriodPicker] = useState(false);
+    const [showThemePicker, setShowThemePicker] = useState(false);
     const [showBudgetEditor, setShowBudgetEditor] = useState(false);
     const [budgetInput, setBudgetInput] = useState('');
     const [isExporting, setIsExporting] = useState(false);
     const [isSavingBudget, setIsSavingBudget] = useState(false);
+    const [pendingTheme, setPendingTheme] = useState<boolean | null>(darkMode);
 
     const currencyName = CURRENCIES.find(c => c.code === currency)?.name || currency;
     const periodName = BUDGET_PERIODS.find(p => p.key === budgetPeriod)?.label || budgetPeriod;
+    const themeName = darkMode === null ? 'System' : darkMode ? 'Dark' : 'Light';
 
     const handleBiometricToggle = async (value: boolean) => {
         light();
@@ -60,6 +66,18 @@ export const SettingsScreen: React.FC = () => {
         await setBudgetPeriod(period);
         setShowPeriodPicker(false);
     };
+
+    const handleThemeChange = async (mode: boolean | null) => {
+        light();
+        await setDarkMode(mode);
+        setShowThemePicker(false);
+    };
+
+    useEffect(() => {
+        if (showThemePicker) {
+            setPendingTheme(darkMode);
+        }
+    }, [showThemePicker, darkMode]);
 
     const handleOpenBudgetEditor = () => {
         setBudgetInput(totalBudget.toString());
@@ -358,6 +376,12 @@ export const SettingsScreen: React.FC = () => {
                     subtitle={periodName}
                     onPress={() => setShowPeriodPicker(true)}
                 />
+                <SettingRow
+                    icon="moon"
+                    title="Appearance"
+                    subtitle={themeName}
+                    onPress={() => setShowThemePicker(true)}
+                />
 
                 {/* Data */}
                 <Text style={[textStyles.label, { color: colors.textSecondary, marginTop: spacing.xl, marginBottom: spacing.sm }]}>
@@ -377,7 +401,7 @@ export const SettingsScreen: React.FC = () => {
                 <SettingRow
                     icon="info"
                     title="App Version"
-                    subtitle="0.3.0"
+                    subtitle="0.4.0"
                 />
                 <SettingRow
                     icon="refresh-cw"
@@ -488,7 +512,127 @@ export const SettingsScreen: React.FC = () => {
                         </TouchableOpacity>
                     </View>
                 )}
+
             </ScrollView>
+
+            {Platform.OS !== 'ios' && (
+                <Modal
+                    visible={showThemePicker}
+                    animationType="slide"
+                    transparent
+                    onRequestClose={() => setShowThemePicker(false)}
+                >
+                    <View style={styles.sheetOverlay}>
+                        <TouchableOpacity
+                            style={styles.sheetBackdrop}
+                            onPress={() => setShowThemePicker(false)}
+                            activeOpacity={1}
+                        />
+                        <View
+                            style={[
+                                styles.sheetContainer,
+                                { backgroundColor: colors.card, borderRadius: borderRadius.xl },
+                            ]}
+                        >
+                            <View style={[styles.sheetHandle, { backgroundColor: colors.border }]} />
+                            <Text style={[textStyles.h4, { color: colors.text, marginBottom: spacing.md }]}>Appearance</Text>
+                            {[
+                                { key: true, label: 'Dark', icon: 'moon' },
+                                { key: false, label: 'Light', icon: 'sun' },
+                                { key: null, label: 'Use device theme', icon: 'smartphone' },
+                            ].map((theme) => (
+                                <TouchableOpacity
+                                    key={String(theme.key)}
+                                    style={[
+                                        styles.pickerOption,
+                                        {
+                                            backgroundColor: pendingTheme === theme.key ? `${colors.primary}20` : 'transparent',
+                                            borderRadius: borderRadius.md,
+                                            padding: spacing.md,
+                                        },
+                                    ]}
+                                    onPress={() => setPendingTheme(theme.key)}
+                                >
+                                    <Feather name={theme.icon as any} size={20} color={colors.text} style={{ marginRight: spacing.sm }} />
+                                    <Text style={[textStyles.body, { color: colors.text, flex: 1 }]}>
+                                        {theme.label}
+                                    </Text>
+                                    {pendingTheme === theme.key && (
+                                        <Feather name="check" size={20} color={colors.primary} />
+                                    )}
+                                </TouchableOpacity>
+                            ))}
+                            <TouchableOpacity
+                                style={[
+                                    styles.primarySheetButton,
+                                    { backgroundColor: colors.primary, borderRadius: borderRadius.md },
+                                ]}
+                                onPress={() => handleThemeChange(pendingTheme)}
+                            >
+                                <Text style={[textStyles.body, { color: '#FFF', fontWeight: '600', textAlign: 'center' }]}>Save preference</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[
+                                    styles.secondarySheetButton,
+                                    { backgroundColor: colors.border, borderRadius: borderRadius.md },
+                                ]}
+                                onPress={() => setShowThemePicker(false)}
+                            >
+                                <Text style={[textStyles.body, { color: colors.text, textAlign: 'center' }]}>Cancel</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </Modal>
+            )}
+
+            {Platform.OS === 'ios' && showThemePicker && (
+                <Host style={styles.bottomSheetHost}>
+                    <BottomSheet
+                        isOpened={showThemePicker}
+                        onIsOpenedChange={setShowThemePicker}
+                    >
+                        <VStack spacing={12} padding={{ top: 20, bottom: 20, leading: 20, trailing: 20 }}>
+                            <SwiftText size={20} weight="bold">
+                                Appearance
+                            </SwiftText>
+                            <VStack spacing={8}>
+                                {[
+                                    { key: true, label: 'Dark' },
+                                    { key: false, label: 'Light' },
+                                    { key: null, label: 'Use device theme' },
+                                ].map((theme) => (
+                                    <SwiftButton
+                                        key={String(theme.key)}
+                                        variant="bordered"
+                                        systemImage={pendingTheme === theme.key ? 'checkmark.circle.fill' : 'circle'}
+                                        onPress={() => setPendingTheme(theme.key)}
+                                        frame={{ maxWidth: 1000, alignment: 'leading' }}
+                                        padding={{ top: 8, bottom: 8, leading: 12, trailing: 12 }}
+                                    >
+                                        {theme.label}
+                                    </SwiftButton>
+                                ))}
+                            </VStack>
+                            <SwiftButton
+                                variant="borderedProminent"
+                                onPress={() => handleThemeChange(pendingTheme)}
+                                frame={{ maxWidth: 1000 }}
+                                padding={{ top: 10, bottom: 10, leading: 12, trailing: 12 }}
+                            >
+                                Save preference
+                            </SwiftButton>
+                            <SwiftButton
+                                variant="bordered"
+                                onPress={() => setShowThemePicker(false)}
+                                frame={{ maxWidth: 1000 }}
+                                padding={{ top: 8, bottom: 8, leading: 12, trailing: 12 }}
+                            >
+                                Cancel
+                            </SwiftButton>
+                        </VStack>
+                    </BottomSheet>
+                </Host>
+            )}
 
             {/* Budget Editor Modal */}
             <Modal
@@ -634,6 +778,42 @@ const styles = StyleSheet.create({
         flex: 1,
         paddingVertical: 14,
         alignItems: 'center',
+    },
+    bottomSheetHost: {
+        ...StyleSheet.absoluteFillObject,
+        pointerEvents: 'box-none',
+    },
+    sheetOverlay: {
+        flex: 1,
+        justifyContent: 'flex-end',
+        backgroundColor: 'rgba(0, 0, 0, 0.35)',
+    },
+    sheetBackdrop: {
+        flex: 1,
+    },
+    sheetContainer: {
+        padding: 20,
+        paddingBottom: 24,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+        elevation: 12,
+    },
+    sheetHandle: {
+        width: 44,
+        height: 5,
+        borderRadius: 3,
+        alignSelf: 'center',
+        marginBottom: 12,
+    },
+    primarySheetButton: {
+        paddingVertical: 14,
+        marginTop: 12,
+    },
+    secondarySheetButton: {
+        paddingVertical: 14,
+        marginTop: 8,
     },
 });
 

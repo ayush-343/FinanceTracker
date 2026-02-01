@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -15,6 +15,22 @@ const AppShell: React.FC = () => {
     const { authenticate, isAuthenticated, isAuthenticating } = useBiometricAuth();
     const router = useRouter();
     const segments = useSegments();
+
+    // Memoize route checks to prevent unnecessary re-renders
+    const segmentFirst = segments[0];
+    const segmentSecond = (segments as string[])[1];
+    const isInOnboarding = useMemo(() => segmentFirst === '(onboarding)', [segmentFirst]);
+    const isInSettings = useMemo(() => segmentFirst === '(tabs)' && segmentSecond === 'Settings', [segmentFirst, segmentSecond]);
+
+    // Memoize StatusBar style to prevent unnecessary updates
+    const statusBarStyle = useMemo(() => isDark ? 'light' : 'dark', [isDark]);
+
+    // Memoize Stack screenOptions to prevent re-renders
+    const stackScreenOptions = useMemo(() => ({
+        headerShown: false,
+        animation: 'slide_from_right' as const,
+        contentStyle: { backgroundColor: colors.background },
+    }), [colors.background]);
 
     const [isDbReady, setIsDbReady] = useState(false);
     const [dbError, setDbError] = useState<string | null>(null);
@@ -43,9 +59,6 @@ const AppShell: React.FC = () => {
     useEffect(() => {
         if (!isSettingsReady) return;
 
-        const isInOnboarding = segments[0] === '(onboarding)';
-        const isInSettings = segments[0] === '(tabs)' && segments[1] === 'Settings';
-
         if (!isOnboardingCompleted && !isInOnboarding) {
             router.replace('/(onboarding)/Welcome');
             return;
@@ -54,7 +67,7 @@ const AppShell: React.FC = () => {
         if (isOnboardingCompleted && isInOnboarding) {
             router.replace('/(tabs)/Home');
         }
-    }, [isOnboardingCompleted, isSettingsReady, router, segments]);
+    }, [isOnboardingCompleted, isSettingsReady, router, isInOnboarding]);
 
     const handleBiometricAuth = async () => {
         if (!isAuthenticating) {
@@ -69,8 +82,6 @@ const AppShell: React.FC = () => {
     if (!isSettingsReady) {
         return <LoadingScreen message="Loading..." />;
     }
-
-    const isInSettings = segments[0] === '(tabs)' && segments[1] === 'Settings';
 
     if (isOnboardingCompleted && isBiometricEnabled && !isInSettings && isAuthenticating) {
         return <LoadingScreen message="Authenticating..." />;
@@ -88,14 +99,8 @@ const AppShell: React.FC = () => {
 
     return (
         <>
-            <StatusBar style={isDark ? 'light' : 'dark'} />
-            <Stack
-                screenOptions={{
-                    headerShown: false,
-                    animation: 'slide_from_right',
-                    contentStyle: { backgroundColor: colors.background },
-                }}
-            >
+            <StatusBar style={statusBarStyle} />
+            <Stack screenOptions={stackScreenOptions}>
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                 <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
                 <Stack.Screen name="Category" options={{ animation: 'slide_from_right' }} />

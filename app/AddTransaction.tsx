@@ -14,9 +14,13 @@ import { getCategories, getSubcategories, createItem, getItems } from '../src/da
 
 export const AddTransactionScreen: React.FC = () => {
     const router = useRouter();
-    const { categoryId, subcategoryId } = useLocalSearchParams<{
+    const { categoryId, subcategoryId, itemName: itemNameParam, amount: amountParam, notes: notesParam, date: dateParam } = useLocalSearchParams<{
         categoryId?: string;
         subcategoryId?: string;
+        itemName?: string;
+        amount?: string;
+        notes?: string;
+        date?: string;
     }>();
     const parsedCategoryId = categoryId ? Number(categoryId) : undefined;
     const parsedSubcategoryId = subcategoryId ? Number(subcategoryId) : undefined;
@@ -41,6 +45,24 @@ export const AddTransactionScreen: React.FC = () => {
     useEffect(() => {
         loadCategories();
     }, []);
+
+    useEffect(() => {
+        if (typeof itemNameParam === 'string') {
+            setItemName(itemNameParam);
+        }
+        if (typeof amountParam === 'string') {
+            setAmount(amountParam);
+        }
+        if (typeof notesParam === 'string') {
+            setDescription(notesParam);
+        }
+        if (typeof dateParam === 'string') {
+            const parsed = new Date(`${dateParam}T00:00:00`);
+            if (!Number.isNaN(parsed.getTime())) {
+                setDate(parsed);
+            }
+        }
+    }, [itemNameParam, amountParam, notesParam, dateParam]);
 
     useEffect(() => {
         if (parsedCategoryId) {
@@ -105,12 +127,19 @@ export const AddTransactionScreen: React.FC = () => {
             // Create or find an item with this name
             let itemId: number | null = null;
             if (selectedSubcategory) {
-                // Create a new item under the subcategory
-                itemId = await createItem({
-                    subcategory_id: selectedSubcategory.id,
-                    name: itemName.trim(),
-                    default_price: parseFloat(amount),
-                });
+                const normalizedName = itemName.trim().toLowerCase();
+                const existingItems = await getItems(selectedSubcategory.id);
+                const existingItem = existingItems.find(i => i.name.trim().toLowerCase() === normalizedName);
+                if (existingItem) {
+                    itemId = existingItem.id;
+                } else {
+                    // Create a new item under the subcategory
+                    itemId = await createItem({
+                        subcategory_id: selectedSubcategory.id,
+                        name: itemName.trim(),
+                        default_price: parseFloat(amount),
+                    });
+                }
             }
 
             await addTransaction({

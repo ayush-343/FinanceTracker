@@ -119,11 +119,15 @@ export const useBudgetStore = create<BudgetState>((set, get) => ({
       const { currentDate, selectedTimeframe } = get();
       const dateRange = getDateRange(currentDate, selectedTimeframe);
       
+      console.log('[BudgetStore] loadSpendingData - dateRange:', dateRange);
+      
       const [categoriesWithSpending, totalSpending, dailySpending] = await Promise.all([
         getCategoriesWithSpending(dateRange.start, dateRange.end),
         getTotalSpending(dateRange.start, dateRange.end),
         getDailySpending(dateRange.start, dateRange.end),
       ]);
+      
+      console.log('[BudgetStore] loadSpendingData - totalSpending:', totalSpending, 'categories:', categoriesWithSpending.length);
 
       const totalBudget = categoriesWithSpending.reduce((sum, cat) => sum + cat.budget_limit, 0);
       
@@ -203,13 +207,16 @@ export const useBudgetStore = create<BudgetState>((set, get) => ({
 
   // Transaction CRUD
   addTransaction: async (transaction) => {
+    console.log('[BudgetStore] addTransaction called with:', JSON.stringify(transaction, null, 2));
     const id = await dbCreateTransaction({
       ...transaction,
       item_id: transaction.item_id || null,
       subcategory_id: transaction.subcategory_id || null,
       notes: transaction.notes || '',
     });
+    console.log('[BudgetStore] Transaction created with ID:', id);
     await get().loadSpendingData();
+    console.log('[BudgetStore] Spending data reloaded');
     return id;
   },
 

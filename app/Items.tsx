@@ -11,6 +11,7 @@ import { useBudgetStore } from '../src/store';
 import { useCurrency } from '../src/hooks';
 import { TransactionWithDetails } from '../src/types';
 import { getTransactions } from '../src/database';
+import { format as formatDate, subDays } from 'date-fns';
 
 export const ItemsScreen: React.FC = () => {
     const router = useRouter();
@@ -24,29 +25,36 @@ export const ItemsScreen: React.FC = () => {
     const parsedSubcategoryId = subcategoryId ? Number(subcategoryId) : undefined;
     const titleText = typeof title === 'string' ? title : '';
     const { colors, spacing, textStyles, borderRadius } = useTheme();
-    const { format } = useCurrency();
+    const { format: formatCurrency } = useCurrency();
     const { dateRange, removeTransaction } = useBudgetStore();
 
     const [transactions, setTransactions] = useState<TransactionWithDetails[]>([]);
+    const [yesterdayTransactions, setYesterdayTransactions] = useState<TransactionWithDetails[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const loadData = async () => {
         setIsLoading(true);
         let allTransactions = await getTransactions(dateRange.start, dateRange.end);
+        const yesterdayDateStr = formatDate(subDays(new Date(), 1), 'yyyy-MM-dd');
+        let yesterday = await getTransactions(yesterdayDateStr, yesterdayDateStr);
 
         // Filter by category
         if (parsedCategoryId) {
             allTransactions = allTransactions.filter(t => t.category_id === parsedCategoryId);
+            yesterday = yesterday.filter(t => t.category_id === parsedCategoryId);
         }
 
         // Filter by subcategory if provided
         if (parsedSubcategoryId === -1) {
             allTransactions = allTransactions.filter(t => t.subcategory_id === null);
+            yesterday = yesterday.filter(t => t.subcategory_id === null);
         } else if (parsedSubcategoryId) {
             allTransactions = allTransactions.filter(t => t.subcategory_id === parsedSubcategoryId);
+            yesterday = yesterday.filter(t => t.subcategory_id === parsedSubcategoryId);
         }
 
         setTransactions(allTransactions);
+        setYesterdayTransactions(yesterday);
         setIsLoading(false);
     };
 
@@ -79,6 +87,22 @@ export const ItemsScreen: React.FC = () => {
     };
 
     const totalSpent = transactions.reduce((sum, t) => sum + t.amount, 0);
+    const todayStr = formatDate(new Date(), 'yyyy-MM-dd');
+
+    const handleRepeat = (transaction: TransactionWithDetails) => {
+        const repeatName = transaction.item_name || transaction.subcategory_name || transaction.category_name;
+        router.push({
+            pathname: '/AddTransaction',
+            params: {
+                categoryId: String(transaction.category_id),
+                subcategoryId: transaction.subcategory_id === null ? '-1' : String(transaction.subcategory_id),
+                itemName: repeatName,
+                amount: String(transaction.amount),
+                notes: transaction.notes || '',
+                date: todayStr,
+            },
+        });
+    };
 
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>
@@ -110,7 +134,7 @@ export const ItemsScreen: React.FC = () => {
                         Total ({transactions.length} transactions)
                     </Text>
                     <Text style={[textStyles.currency, { color: colors.text }]}>
-                        {format(totalSpent)}
+                        {formatCurrency(totalSpent)}
                     </Text>
                 </View>
 
@@ -123,6 +147,51 @@ export const ItemsScreen: React.FC = () => {
                         paddingTop: spacing.md,
                         paddingBottom: 100,
                     }}
+                    ListHeaderComponent={
+                        yesterdayTransactions.length > 0 ? (
+                            <View style={{ marginBottom: spacing.lg }}>
+                                <Text style={[textStyles.label, { color: colors.textSecondary, marginBottom: spacing.sm }]}>Yesterday</Text>
+                                {yesterdayTransactions.map((item) => (
+                                    <TouchableOpacity
+                                        key={`y-${item.id}`}
+                                        style={[
+                                            styles.transactionItem,
+                                            {
+                                                backgroundColor: colors.card,
+                                                borderRadius: borderRadius.md,
+                                                padding: spacing.md,
+                                                marginBottom: spacing.sm,
+                                                borderWidth: 1,
+                                                borderStyle: 'dashed',
+                                                borderColor: colors.textSecondary,
+                                            },
+                                        ]}
+                                        onPress={() => handleRepeat(item)}
+                                    >
+                                        <View style={styles.transactionInfo}>
+                                            <View
+                                                style={[
+                                                    styles.transactionIcon,
+                                                    { backgroundColor: `${item.category_color}20` },
+                                                ]}
+                                            >
+                                                <Feather name={item.category_icon as any} size={16} color={item.category_color} />
+                                            </View>
+                                            <View style={{ flex: 1, marginLeft: spacing.sm }}>
+                                                <Text style={[textStyles.body, { color: colors.text }]}>
+                                                    {item.item_name || item.subcategory_name || item.category_name}
+                                                </Text>
+                                                <Text style={[textStyles.caption, { color: colors.textSecondary, marginTop: 2 }]}>Tap to repeat today</Text>
+                                            </View>
+                                        </View>
+                                        <Text style={[textStyles.body, { color: colors.text, fontWeight: '600' }]}>
+                                            {formatCurrency(item.amount)}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        ) : null
+                    }
                     ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
                     renderItem={({ item }) => (
                         <SwipeableTransaction
@@ -197,6 +266,23 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.05,
         shadowRadius: 8,
         elevation: 2,
+    },
+    transactionItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    transactionInfo: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+    },
+    transactionIcon: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     fab: {
         position: 'absolute',

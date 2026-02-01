@@ -236,10 +236,12 @@ export const getTransactionById = async (id: number): Promise<TransactionWithDet
 
 export const createTransaction = async (transaction: Omit<Transaction, 'id' | 'created_at'>): Promise<number> => {
   const db = await getDatabase();
+  console.log('[Database] createTransaction called with:', JSON.stringify(transaction, null, 2));
   const result = await db.runAsync(
     'INSERT INTO transactions (item_id, category_id, subcategory_id, amount, date, notes) VALUES (?, ?, ?, ?, ?, ?)',
     [transaction.item_id, transaction.category_id, transaction.subcategory_id, transaction.amount, transaction.date, transaction.notes]
   );
+  console.log('[Database] Transaction inserted, lastInsertRowId:', result.lastInsertRowId);
   return result.lastInsertRowId;
 };
 

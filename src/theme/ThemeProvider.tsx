@@ -1,4 +1,4 @@
-import React, { createContext, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode, useMemo } from 'react';
 import { useColorScheme } from 'react-native';
 import { lightColors, darkColors, ThemeColors } from './colors';
 import { spacing, borderRadius, iconSize, heights } from './spacing';
@@ -24,12 +24,16 @@ interface ThemeProviderProps {
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     const systemColorScheme = useColorScheme();
-    const { darkMode } = useSettingsStore();
+    const { darkMode, isLoading } = useSettingsStore();
 
     // Use stored preference, fallback to system
-    const isDark = darkMode ?? (systemColorScheme === 'dark');
+    // When loading, use system theme to avoid flash
+    const isDark = isLoading
+        ? (systemColorScheme === 'dark')
+        : (darkMode ?? (systemColorScheme === 'dark'));
 
-    const theme: Theme = {
+    // Memoize theme object to prevent unnecessary re-renders
+    const theme: Theme = useMemo(() => ({
         colors: isDark ? darkColors : lightColors,
         spacing,
         borderRadius,
@@ -38,7 +42,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         typography,
         textStyles,
         isDark,
-    };
+    }), [isDark]);
 
     return (
         <ThemeContext.Provider value={theme}>

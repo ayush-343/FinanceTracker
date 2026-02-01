@@ -1,20 +1,23 @@
-import React, { useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Platform, ActionSheetIOS, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { BarChart } from 'react-native-gifted-charts';
 import { useTheme } from '../../src/theme';
-import { CategoryCard, ProgressBar, EmptyState } from '../../src/components';
+import { CategoryCard, ProgressBar, EmptyState, PendingItemsBanner, ScanningModal } from '../../src/components';
 import { useBudgetStore, useSettingsStore } from '../../src/store';
-import { useCurrency } from '../../src/hooks';
+import { useScanStore } from '../../src/store/scanStore';
+import { useCurrency, useHaptics } from '../../src/hooks';
+import { useReceiptScanner } from '../../src/hooks/useReceiptScanner';
 import { getMonthRangeString, getWeekRangeString } from '../../src/utils';
 
 const HomeScreen: React.FC = () => {
     const router = useRouter();
     const { colors, spacing, textStyles, borderRadius } = useTheme();
     const { format, formatCompact } = useCurrency();
+    const { light } = useHaptics();
     const { budgetPeriod } = useSettingsStore();
     const {
         categoriesWithSpending,
@@ -27,9 +30,26 @@ const HomeScreen: React.FC = () => {
         refreshData,
     } = useBudgetStore();
 
+    // Scan store for pending items banner
+    const pendingItems = useScanStore((state) => state.pendingItems);
+    const [bannerDismissed, setBannerDismissed] = useState(false);
+
+    // Receipt scanner hook
+    const {
+        isScanning,
+        error: scanError,
+        showModal,
+        pickImage,
+        retry,
+        goToManualEntry,
+        closeModal,
+    } = useReceiptScanner();
+
     useFocusEffect(
         useCallback(() => {
             loadSpendingData();
+            // Reset banner dismissal when screen is focused (in case items changed)
+            setBannerDismissed(false);
         }, [])
     );
 
@@ -58,6 +78,36 @@ const HomeScreen: React.FC = () => {
         router.push('/AddTransaction');
     };
 
+    const handleFabPress = () => {
+        light();
+        if (Platform.OS === 'ios') {
+            ActionSheetIOS.showActionSheetWithOptions(
+                {
+                    options: ['Cancel', 'Add Manually', 'Scan Receipt'],
+                    cancelButtonIndex: 0,
+                },
+                (buttonIndex) => {
+                    if (buttonIndex === 1) {
+                        handleAddTransaction();
+                    } else if (buttonIndex === 2) {
+                        pickImage();
+                    }
+                }
+            );
+        } else {
+            // Android fallback
+            Alert.alert(
+                'Add Transaction',
+                'Choose how to add a transaction',
+                [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Add Manually', onPress: handleAddTransaction },
+                    { text: 'Scan Receipt', onPress: pickImage },
+                ]
+            );
+        }
+    };
+
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             <ScrollView
@@ -82,6 +132,11 @@ const HomeScreen: React.FC = () => {
                         </Text>
                     </View>
                 </View>
+
+                {/* Pending Items Banner */}
+                {pendingItems.length > 0 && !bannerDismissed && (
+                    <PendingItemsBanner onDismiss={() => setBannerDismissed(true)} />
+                )}
 
                 {/* Summary Card */}
                 <View
@@ -202,10 +257,20 @@ const HomeScreen: React.FC = () => {
             {/* FAB */}
             <TouchableOpacity
                 style={[styles.fab, { backgroundColor: colors.primary }]}
-                onPress={handleAddTransaction}
+                onPress={handleFabPress}
             >
                 <Feather name="plus" size={28} color="#FFF" />
             </TouchableOpacity>
+
+            {/* Scanning Modal */}
+            <ScanningModal
+                visible={showModal}
+                isLoading={isScanning}
+                error={scanError}
+                onRetry={retry}
+                onManualEntry={goToManualEntry}
+                onClose={closeModal}
+            />
         </SafeAreaView>
     );
 };
