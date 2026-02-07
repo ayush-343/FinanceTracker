@@ -26,14 +26,11 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false,
+      "predictiveBackGestureEnabled": true,
       "package": "com.financetracker.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    },
-    "statusBar": {
-      "style": "auto"
     },
     "plugins": [
       "expo-sqlite",

@@ -1,5 +1,5 @@
-import React, { useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated as RNAnimated } from 'react-native';
+import React, { useRef, memo, useCallback } from 'react';
+import { View, Text, StyleSheet, Pressable, Animated as RNAnimated, Platform } from 'react-native';
 import { Swipeable, RectButton } from 'react-native-gesture-handler';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../theme';
@@ -14,7 +14,7 @@ interface SwipeableTransactionProps {
     onPress?: () => void;
 }
 
-export const SwipeableTransaction: React.FC<SwipeableTransactionProps> = ({
+const SwipeableTransactionComponent: React.FC<SwipeableTransactionProps> = ({
     transaction,
     onEdit,
     onDelete,
@@ -25,17 +25,23 @@ export const SwipeableTransaction: React.FC<SwipeableTransactionProps> = ({
     const { light, error } = useHaptics();
     const swipeableRef = useRef<Swipeable>(null);
 
-    const handleEdit = () => {
+    const handleEdit = useCallback(() => {
         light();
         swipeableRef.current?.close();
         onEdit();
-    };
+    }, [light, onEdit]);
 
-    const handleDelete = () => {
+    const handleDelete = useCallback(() => {
         error();
         swipeableRef.current?.close();
         onDelete();
-    };
+    }, [error, onDelete]);
+
+    const handlePress = useCallback(() => {
+        if (onPress) {
+            onPress();
+        }
+    }, [onPress]);
 
     const renderRightActions = (
         progress: RNAnimated.AnimatedInterpolation<number>,
@@ -82,17 +88,22 @@ export const SwipeableTransaction: React.FC<SwipeableTransactionProps> = ({
             rightThreshold={40}
             onSwipeableWillOpen={() => light()}
         >
-            <TouchableOpacity
-                style={[
+            <Pressable
+                style={({ pressed }) => [
                     styles.container,
                     {
                         backgroundColor: colors.card,
                         padding: spacing.lg,
                         borderRadius: borderRadius.lg,
+                        opacity: Platform.OS === 'ios' && pressed && onPress ? 0.7 : 1,
                     },
                 ]}
-                onPress={onPress}
-                activeOpacity={onPress ? 0.7 : 1}
+                onPress={handlePress}
+                disabled={!onPress}
+                android_ripple={{
+                    color: `${transaction.category_color}30`,
+                    borderless: false,
+                }}
             >
                 <View style={styles.leftContent}>
                     <View
@@ -128,10 +139,12 @@ export const SwipeableTransaction: React.FC<SwipeableTransactionProps> = ({
                         {formatDate(transaction.date, 'MMM d')}
                     </Text>
                 </View>
-            </TouchableOpacity>
+            </Pressable>
         </Swipeable>
     );
 };
+
+export const SwipeableTransaction = memo(SwipeableTransactionComponent);
 
 const styles = StyleSheet.create({
     container: {

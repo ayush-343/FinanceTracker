@@ -1,2 +1,2 @@
-export { getDatabase, closeDatabase, initDatabase } from './database';
+export { getDatabase, closeDatabase, initDatabase, isDatabaseReady, withDatabase } from './database';
 export * from './queries';

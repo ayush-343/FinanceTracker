@@ -1,29 +1,33 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Platform, ActionSheetIOS, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Platform, ActionSheetIOS, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-import { BarChart } from 'react-native-gifted-charts';
 import { useTheme } from '../../src/theme';
-import { CategoryCard, ProgressBar, EmptyState, PendingItemsBanner, ScanningModal } from '../../src/components';
+import { CategoryCard, EmptyState, PendingItemsBanner, ScanningModal, BarcodeScannerModal, showActionSheet } from '../../src/components';
+import { BudgetSummaryCard } from '../../src/components/BudgetSummaryCard';
 import { useBudgetStore, useSettingsStore } from '../../src/store';
 import { useScanStore } from '../../src/store/scanStore';
 import { useCurrency, useHaptics } from '../../src/hooks';
 import { useReceiptScanner } from '../../src/hooks/useReceiptScanner';
 import { getMonthRangeString, getWeekRangeString } from '../../src/utils';
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const CARD_GAP = 16;
+const HORIZONTAL_PADDING = 16;
+const CARD_WIDTH = (SCREEN_WIDTH - HORIZONTAL_PADDING * 2 - CARD_GAP) / 2;
+
 const HomeScreen: React.FC = () => {
     const router = useRouter();
-    const { colors, spacing, textStyles, borderRadius } = useTheme();
-    const { format, formatCompact } = useCurrency();
+    const { colors, spacing } = useTheme();
+    const { format } = useCurrency();
     const { light } = useHaptics();
     const { budgetPeriod } = useSettingsStore();
     const {
         categoriesWithSpending,
         totalSpending,
         totalBudget,
-        dailySpending,
         currentDate,
         isLoading,
         loadSpendingData,
@@ -39,33 +43,25 @@ const HomeScreen: React.FC = () => {
         isScanning,
         error: scanError,
         showModal,
+        showBarcodeScanner,
         pickImage,
         retry,
         goToManualEntry,
         closeModal,
+        closeBarcodeScanner,
+        handleBarcodeScanComplete,
     } = useReceiptScanner();
 
     useFocusEffect(
         useCallback(() => {
             loadSpendingData();
-            // Reset banner dismissal when screen is focused (in case items changed)
             setBannerDismissed(false);
         }, [])
     );
 
-    const overallPercentage = totalBudget > 0 ? (totalSpending / totalBudget) * 100 : 0;
-    const remaining = totalBudget - totalSpending;
-
     const periodLabel = budgetPeriod === 'weekly'
         ? getWeekRangeString(currentDate)
         : getMonthRangeString(currentDate);
-
-    // Prepare chart data
-    const chartData = dailySpending.slice(-7).map((day) => ({
-        value: day.total,
-        label: new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 2),
-        frontColor: colors.primary,
-    }));
 
     const handleCategoryPress = (categoryId: number, categoryName: string) => {
         router.push({
@@ -74,44 +70,15 @@ const HomeScreen: React.FC = () => {
         });
     };
 
-    const handleAddTransaction = () => {
-        router.push('/AddTransaction');
-    };
-
-    const handleFabPress = () => {
+    const handleSearchPress = () => {
         light();
-        if (Platform.OS === 'ios') {
-            ActionSheetIOS.showActionSheetWithOptions(
-                {
-                    options: ['Cancel', 'Add Manually', 'Scan Receipt'],
-                    cancelButtonIndex: 0,
-                },
-                (buttonIndex) => {
-                    if (buttonIndex === 1) {
-                        handleAddTransaction();
-                    } else if (buttonIndex === 2) {
-                        pickImage();
-                    }
-                }
-            );
-        } else {
-            // Android fallback
-            Alert.alert(
-                'Add Transaction',
-                'Choose how to add a transaction',
-                [
-                    { text: 'Cancel', style: 'cancel' },
-                    { text: 'Add Manually', onPress: handleAddTransaction },
-                    { text: 'Scan Receipt', onPress: pickImage },
-                ]
-            );
-        }
+        // Could navigate to a search screen or open a search modal
     };
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             <ScrollView
-                contentContainerStyle={{ paddingBottom: 100 }}
+                contentContainerStyle={{ paddingBottom: 120 }}
                 refreshControl={
                     <RefreshControl
                         refreshing={isLoading}
@@ -120,16 +87,33 @@ const HomeScreen: React.FC = () => {
                     />
                 }
                 showsVerticalScrollIndicator={false}
+                stickyHeaderIndices={[0]}
             >
-                {/* Header */}
-                <View style={[styles.header, { paddingHorizontal: spacing.lg }]}>
-                    <View>
-                        <Text style={[textStyles.label, { color: colors.textSecondary }]}>
-                            {periodLabel}
-                        </Text>
-                        <Text style={[textStyles.h2, { color: colors.text, marginTop: spacing.xs }]}>
-                            Budget Overview
-                        </Text>
+                {/* Sticky Header */}
+                <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
+                    <View style={styles.headerTop}>
+                        <View>
+                            <Text style={styles.headerTitle}>Home</Text>
+                            <Text style={[styles.headerSubtitle, { color: colors.textTertiary }]}>
+                                {periodLabel}
+                            </Text>
+                        </View>
+                        <TouchableOpacity
+                            style={[styles.searchButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+                            onPress={handleSearchPress}
+                            activeOpacity={0.7}
+                        >
+                            <Feather name="search" size={20} color="#FFFFFF" />
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Budget Summary */}
+                    <View style={styles.budgetContainer}>
+                        <BudgetSummaryCard
+                            totalSpending={totalSpending}
+                            totalBudget={totalBudget}
+                            periodLabel={periodLabel}
+                        />
                     </View>
                 </View>
 
@@ -138,109 +122,36 @@ const HomeScreen: React.FC = () => {
                     <PendingItemsBanner onDismiss={() => setBannerDismissed(true)} />
                 )}
 
-                {/* Summary Card */}
-                <View
-                    style={[
-                        styles.summaryCard,
-                        {
-                            backgroundColor: colors.card,
-                            marginHorizontal: spacing.lg,
-                            marginTop: spacing.lg,
-                            borderRadius: borderRadius.xl,
-                            padding: spacing.xl,
-                        },
-                    ]}
-                >
-                    <View style={styles.summaryRow}>
-                        <View>
-                            <Text style={[textStyles.label, { color: colors.textSecondary }]}>Total Spent</Text>
-                            <Text style={[textStyles.currencyLarge, { color: colors.text }]}>
-                                {formatCompact(totalSpending)}
-                            </Text>
-                        </View>
-                        <View style={{ alignItems: 'flex-end' }}>
-                            <Text style={[textStyles.label, { color: colors.textSecondary }]}>Budget</Text>
-                            <Text style={[textStyles.h3, { color: colors.textSecondary }]}>
-                                {formatCompact(totalBudget)}
-                            </Text>
-                        </View>
-                    </View>
-
-                    <ProgressBar
-                        progress={overallPercentage}
-                        height={12}
-                        style={{ marginTop: spacing.lg }}
-                    />
-
-                    {totalBudget > 0 && (
-                        <Text
-                            style={[
-                                textStyles.body,
-                                {
-                                    color: remaining >= 0 ? colors.success : colors.error,
-                                    marginTop: spacing.md,
-                                },
-                            ]}
-                        >
-                            {remaining >= 0
-                                ? `${format(remaining)} remaining`
-                                : `${format(Math.abs(remaining))} over budget`}
-                        </Text>
-                    )}
-                </View>
-
-                {/* Spending Chart */}
-                {chartData.length > 0 && (
-                    <View
-                        style={[
-                            styles.chartCard,
-                            {
-                                backgroundColor: colors.card,
-                                marginHorizontal: spacing.lg,
-                                marginTop: spacing.lg,
-                                borderRadius: borderRadius.xl,
-                                padding: spacing.lg,
-                            },
-                        ]}
-                    >
-                        <Text style={[textStyles.h3, { color: colors.text, marginBottom: spacing.md }]}>Last 7 Days</Text>
-                        <BarChart
-                            data={chartData}
-                            barWidth={28}
-                            spacing={20}
-                            roundedTop
-                            roundedBottom
-                            hideRules
-                            xAxisThickness={0}
-                            yAxisThickness={0}
-                            yAxisTextStyle={{ color: colors.textTertiary, fontSize: 10 }}
-                            xAxisLabelTextStyle={{ color: colors.textSecondary, fontSize: 11 }}
-                            noOfSections={4}
-                            maxValue={Math.max(...chartData.map(d => d.value), 100)}
-                            isAnimated
-                            animationDuration={500}
-                        />
-                    </View>
-                )}
-
-                {/* Categories */}
-                <View style={[styles.section, { paddingHorizontal: spacing.lg, marginTop: spacing.xl }]}>
-                    <View style={styles.sectionHeader}>
-                        <Text style={[textStyles.h3, { color: colors.text }]}>Categories</Text>
-                        <TouchableOpacity onPress={() => router.push('/AddCategory')}>
-                            <Feather name="plus" size={24} color={colors.primary} />
-                        </TouchableOpacity>
-                    </View>
-
+                {/* Category Grid */}
+                <View style={styles.gridContainer}>
                     {categoriesWithSpending.length > 0 ? (
-                        categoriesWithSpending.map((category) => (
-                            <CategoryCard
-                                key={category.id}
-                                category={category}
-                                onPress={() => handleCategoryPress(category.id, category.name)}
-                                style={{ marginTop: spacing.md }}
-                            />
-                        ))
+                        <View style={styles.grid}>
+                            {categoriesWithSpending.map((category) => (
+                                <CategoryCard
+                                    key={category.id}
+                                    category={category}
+                                    onPress={() => handleCategoryPress(category.id, category.name)}
+                                    style={{ width: CARD_WIDTH }}
+                                />
+                            ))}
+
+                            {/* Add New Card */}
+                            <TouchableOpacity
+                                style={[styles.addNewCard, { width: CARD_WIDTH }]}
+                                onPress={() => {
+                                    light();
+                                    router.push('/AddCategory');
+                                }}
+                                activeOpacity={0.7}
+                            >
+                                <View style={styles.addNewIconContainer}>
+                                    <Feather name="plus" size={28} color={colors.textTertiary} />
+                                </View>
+                                <Text style={[styles.addNewText, { color: colors.textTertiary }]}>
+                                    Add New
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
                     ) : (
                         <EmptyState
                             icon="folder"
@@ -254,14 +165,6 @@ const HomeScreen: React.FC = () => {
                 </View>
             </ScrollView>
 
-            {/* FAB */}
-            <TouchableOpacity
-                style={[styles.fab, { backgroundColor: colors.primary }]}
-                onPress={handleFabPress}
-            >
-                <Feather name="plus" size={28} color="#FFF" />
-            </TouchableOpacity>
-
             {/* Scanning Modal */}
             <ScanningModal
                 visible={showModal}
@@ -270,6 +173,13 @@ const HomeScreen: React.FC = () => {
                 onRetry={retry}
                 onManualEntry={goToManualEntry}
                 onClose={closeModal}
+            />
+
+            {/* Barcode Scanner Modal */}
+            <BarcodeScannerModal
+                visible={showBarcodeScanner}
+                onClose={closeBarcodeScanner}
+                onScanComplete={handleBarcodeScanComplete}
             />
         </SafeAreaView>
     );
@@ -280,47 +190,73 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     header: {
-        paddingTop: 16,
+        paddingHorizontal: HORIZONTAL_PADDING,
+        paddingTop: 8,
+        paddingBottom: 8,
+        borderBottomWidth: 1,
     },
-    summaryCard: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.08,
-        shadowRadius: 12,
-        elevation: 4,
-    },
-    summaryRow: {
+    headerTop: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'flex-start',
+        marginBottom: 16,
     },
-    chartCard: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-        elevation: 2,
+    headerTitle: {
+        fontSize: 26,
+        fontWeight: '700',
+        color: '#FFFFFF',
+        letterSpacing: -0.3,
     },
-    section: {},
-    sectionHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
+    headerSubtitle: {
+        fontSize: 14,
+        fontWeight: '500',
+        marginTop: 2,
     },
-    fab: {
-        position: 'absolute',
-        bottom: 100,
-        right: 20,
-        width: 56,
-        height: 56,
-        borderRadius: 28,
+    searchButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
         justifyContent: 'center',
         alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 8,
+        borderWidth: 1,
+    },
+    budgetContainer: {
+        marginBottom: 8,
+    },
+    gridContainer: {
+        paddingHorizontal: HORIZONTAL_PADDING,
+        paddingTop: 16,
+    },
+    grid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: CARD_GAP,
+    },
+    addNewCard: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 20,
+        paddingHorizontal: 12,
+        minHeight: 190,
+        borderRadius: 16,
+        borderWidth: 2,
+        borderStyle: 'dashed',
+        borderColor: '#404040',
+    },
+    addNewIconContainer: {
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        backgroundColor: '#1E1E1E',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 12,
+        borderWidth: 1,
+        borderColor: '#262626',
+    },
+    addNewText: {
+        fontSize: 16,
+        fontWeight: '700',
     },
 });
 

@@ -1,13 +1,18 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { Platform, BackHandler } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SheetProvider } from 'react-native-actions-sheet';
 import { ThemeProvider, useTheme } from '../src/theme';
 import { initDatabase } from '../src/database';
 import { LoadingScreen } from '../src/components';
 import { useSettingsStore } from '../src/store';
 import { useBiometricAuth } from '../src/hooks';
+
+// Import sheets registration
+import '../src/components/sheets';
 
 const AppShell: React.FC = () => {
     const { colors, isDark } = useTheme();
@@ -37,30 +42,29 @@ const AppShell: React.FC = () => {
     const [isSettingsReady, setIsSettingsReady] = useState(false);
 
     useEffect(() => {
-        const initializeDatabase = async () => {
+        const initialize = async () => {
             try {
+                // First: Initialize database
                 await initDatabase();
                 setIsDbReady(true);
+                
+                // Then: Load settings (requires database)
+                await loadSettings();
+                setIsSettingsReady(true);
             } catch (error) {
-                console.error('Database initialization failed:', error);
-                setDbError('Failed to initialize database');
+                console.error('Initialization failed:', error);
+                setDbError('Failed to initialize app');
             }
         };
 
-        const initializeSettings = async () => {
-            await loadSettings();
-            setIsSettingsReady(true);
-        };
-
-        initializeDatabase();
-        initializeSettings();
+        initialize();
     }, [loadSettings]);
 
     useEffect(() => {
         if (!isSettingsReady) return;
 
         if (!isOnboardingCompleted && !isInOnboarding) {
-            router.replace('/(onboarding)/Welcome');
+            router.replace('/(onboarding)/AnimatedOnboarding');
             return;
         }
 
@@ -68,6 +72,19 @@ const AppShell: React.FC = () => {
             router.replace('/(tabs)/Home');
         }
     }, [isOnboardingCompleted, isSettingsReady, router, isInOnboarding]);
+
+    // Android back button handler
+    useEffect(() => {
+        if (Platform.OS !== 'android') return;
+
+        const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+            // Allow default behavior for most screens
+            // Can be extended to show confirmation dialogs for forms
+            return false;
+        });
+
+        return () => backHandler.remove();
+    }, []);
 
     const handleBiometricAuth = async () => {
         if (!isAuthenticating) {
@@ -138,7 +155,9 @@ export default function RootLayout() {
         <GestureHandlerRootView style={{ flex: 1 }}>
             <SafeAreaProvider>
                 <ThemeProvider>
-                    <AppShell />
+                    <SheetProvider>
+                        <AppShell />
+                    </SheetProvider>
                 </ThemeProvider>
             </SafeAreaProvider>
         </GestureHandlerRootView>

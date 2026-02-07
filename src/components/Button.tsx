@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { memo, useCallback } from 'react';
 import {
-    TouchableOpacity,
+    Pressable,
     Text,
     StyleSheet,
     ViewStyle,
     TextStyle,
     ActivityIndicator,
+    Platform,
 } from 'react-native';
 import { useTheme } from '../theme';
 import { useHaptics } from '../hooks';
@@ -22,7 +23,7 @@ interface ButtonProps {
     fullWidth?: boolean;
 }
 
-export const Button: React.FC<ButtonProps> = ({
+const ButtonComponent: React.FC<ButtonProps> = ({
     title,
     onPress,
     variant = 'primary',
@@ -97,9 +98,24 @@ export const Button: React.FC<ButtonProps> = ({
         }
     };
 
+    // Get ripple color based on variant
+    const getRippleColor = useCallback(() => {
+        switch (variant) {
+            case 'primary':
+            case 'danger':
+                return 'rgba(255, 255, 255, 0.3)';
+            case 'secondary':
+            case 'outline':
+            case 'ghost':
+                return `${colors.primary}30`;
+            default:
+                return 'rgba(255, 255, 255, 0.3)';
+        }
+    }, [variant, colors.primary]);
+
     return (
-        <TouchableOpacity
-            style={[
+        <Pressable
+            style={({ pressed }) => [
                 styles.button,
                 {
                     backgroundColor: getBackgroundColor(),
@@ -108,14 +124,17 @@ export const Button: React.FC<ButtonProps> = ({
                     paddingHorizontal: spacing.xl,
                     borderWidth: variant === 'outline' ? 2 : 0,
                     borderColor: variant === 'outline' ? colors.primary : undefined,
-                    opacity: disabled ? 0.6 : 1,
+                    opacity: disabled ? 0.6 : Platform.OS === 'ios' && pressed ? 0.7 : 1,
                 },
                 fullWidth && styles.fullWidth,
                 style,
             ]}
             onPress={handlePress}
-            activeOpacity={0.7}
             disabled={disabled || loading}
+            android_ripple={{
+                color: getRippleColor(),
+                borderless: false,
+            }}
         >
             {loading ? (
                 <ActivityIndicator color={getTextColor()} />
@@ -124,9 +143,11 @@ export const Button: React.FC<ButtonProps> = ({
                     {title}
                 </Text>
             )}
-        </TouchableOpacity>
+        </Pressable>
     );
 };
+
+export const Button = memo(ButtonComponent);
 
 const styles = StyleSheet.create({
     button: {

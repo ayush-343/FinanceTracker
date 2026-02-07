@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Platform } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -139,9 +140,11 @@ export const ItemsScreen: React.FC = () => {
                 </View>
 
                 {/* Transactions List */}
-                <FlatList
+                <FlashList
                     data={transactions}
                     keyExtractor={(item) => item.id.toString()}
+                    estimatedItemSize={76}
+                    drawDistance={300}
                     contentContainerStyle={{
                         paddingHorizontal: spacing.lg,
                         paddingTop: spacing.md,
@@ -190,7 +193,7 @@ export const ItemsScreen: React.FC = () => {
                                     </TouchableOpacity>
                                 ))}
                             </View>
-                        ) : null
+                        ) : undefined
                     }
                     ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
                     renderItem={({ item }) => (

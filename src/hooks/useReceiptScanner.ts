@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { Alert, Platform, ActionSheetIOS } from 'react-native';
-import { scanReceiptImage, ReceiptScanError } from '../services/receiptService';
+import { scanReceiptImage, ReceiptScanError, ScannedItem } from '../services/receiptService';
 import { useScanStore } from '../store/scanStore';
 import { useHaptics } from './useHaptics';
 
@@ -10,10 +10,13 @@ interface UseReceiptScannerReturn {
     isScanning: boolean;
     error: string | null;
     showModal: boolean;
+    showBarcodeScanner: boolean;
     pickImage: () => void;
     retry: () => void;
     goToManualEntry: () => void;
     closeModal: () => void;
+    closeBarcodeScanner: () => void;
+    handleBarcodeScanComplete: (items: ScannedItem[]) => void;
 }
 
 // Store the last used image URI for retry
@@ -27,6 +30,7 @@ export const useReceiptScanner = (): UseReceiptScannerReturn => {
     const [isScanning, setIsScanning] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showModal, setShowModal] = useState(false);
+    const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
 
     const processImage = useCallback(async (imageUri: string) => {
         lastImageUri = imageUri;
@@ -62,12 +66,12 @@ export const useReceiptScanner = (): UseReceiptScannerReturn => {
         if (Platform.OS === 'ios') {
             ActionSheetIOS.showActionSheetWithOptions(
                 {
-                    options: ['Cancel', 'Take Photo', 'Choose from Library'],
+                    options: ['Cancel', 'Scan Barcode', 'Choose from Library'],
                     cancelButtonIndex: 0,
                 },
                 async (buttonIndex) => {
                     if (buttonIndex === 1) {
-                        launchCamera();
+                        launchBarcodeScanner();
                     } else if (buttonIndex === 2) {
                         launchLibrary();
                     }
@@ -76,39 +80,35 @@ export const useReceiptScanner = (): UseReceiptScannerReturn => {
         } else {
             // For Android, show a simple alert with options
             Alert.alert(
-                'Select Image Source',
-                'Choose where to get the receipt image from',
+                'Select Option',
+                'Choose how to add items',
                 [
                     { text: 'Cancel', style: 'cancel' },
-                    { text: 'Camera', onPress: launchCamera },
-                    { text: 'Library', onPress: launchLibrary },
+                    { text: 'Scan Barcode', onPress: launchBarcodeScanner },
+                    { text: 'Choose from Library', onPress: launchLibrary },
                 ]
             );
         }
     }, []);
 
-    const launchCamera = useCallback(async () => {
-        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    const launchBarcodeScanner = useCallback(() => {
+        setShowBarcodeScanner(true);
+    }, []);
 
-        if (status !== 'granted') {
-            Alert.alert(
-                'Permission Required',
-                'Camera permission is required to take photos of receipts.',
-                [{ text: 'OK' }]
-            );
-            return;
+    const closeBarcodeScanner = useCallback(() => {
+        setShowBarcodeScanner(false);
+    }, []);
+
+    const handleBarcodeScanComplete = useCallback((items: ScannedItem[]) => {
+        setShowBarcodeScanner(false);
+        
+        if (items.length > 0) {
+            const today = new Date().toISOString().split('T')[0];
+            addPendingItems(items, today);
+            success();
+            router.push('/ReviewScannedItems');
         }
-
-        const result = await ImagePicker.launchCameraAsync({
-            mediaTypes: ['images'],
-            quality: 0.8,
-            allowsEditing: false,
-        });
-
-        if (!result.canceled && result.assets[0]) {
-            processImage(result.assets[0].uri);
-        }
-    }, [processImage]);
+    }, [addPendingItems, router, success]);
 
     const launchLibrary = useCallback(async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -165,9 +165,12 @@ export const useReceiptScanner = (): UseReceiptScannerReturn => {
         isScanning,
         error,
         showModal,
+        showBarcodeScanner,
         pickImage,
         retry,
         goToManualEntry,
         closeModal,
+        closeBarcodeScanner,
+        handleBarcodeScanComplete,
     };
 };

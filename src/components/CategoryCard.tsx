@@ -1,138 +1,120 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
+import React, { memo, useCallback } from 'react';
+import { View, Text, StyleSheet, Pressable, ViewStyle, Platform } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../theme';
 import { useCurrency, useHaptics } from '../hooks';
-import { ProgressBar } from './ProgressBar';
+import { CircularProgress } from './CircularProgress';
 import { CategoryWithSpending } from '../types';
 
 interface CategoryCardProps {
     category: CategoryWithSpending;
     onPress: () => void;
     style?: ViewStyle;
+    compact?: boolean;
 }
 
-export const CategoryCard: React.FC<CategoryCardProps> = ({
+const CategoryCardComponent: React.FC<CategoryCardProps> = ({
     category,
     onPress,
     style,
+    compact = false,
 }) => {
-    const { colors, spacing, borderRadius, textStyles } = useTheme();
+    const { colors, spacing, borderRadius } = useTheme();
     const { format } = useCurrency();
     const { light } = useHaptics();
 
-    const handlePress = () => {
+    const handlePress = useCallback(() => {
         light();
         onPress();
-    };
+    }, [light, onPress]);
 
-    const hasBudget = category.budget_limit > 0;
-    const remaining = category.budget_limit - category.spent;
-    const isOverBudget = remaining < 0;
+    const percentage = Math.min(category.percentage, 100);
 
     return (
-        <TouchableOpacity
-            style={[
+        <Pressable
+            style={({ pressed }) => [
                 styles.container,
                 {
                     backgroundColor: colors.card,
-                    borderRadius: borderRadius.lg,
-                    padding: spacing.lg,
-                    borderLeftWidth: 4,
-                    borderLeftColor: category.color,
+                    borderRadius: 16,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    opacity: Platform.OS === 'ios' && pressed ? 0.7 : 1,
                 },
                 style,
             ]}
             onPress={handlePress}
-            activeOpacity={0.7}
+            android_ripple={{
+                color: `${category.color}20`,
+                borderless: false,
+            }}
         >
-            <View style={styles.header}>
-                <View style={styles.titleRow}>
+            <View style={styles.ringContainer}>
+                <CircularProgress
+                    size={96}
+                    strokeWidth={6}
+                    progress={percentage}
+                    color={category.color}
+                    trackColor={colors.backgroundTertiary}
+                >
                     <View
                         style={[
-                            styles.iconContainer,
-                            { backgroundColor: `${category.color}20` }
+                            styles.iconCircle,
+                            { backgroundColor: `${category.color}15` },
                         ]}
                     >
                         <Feather
                             name={category.icon_name as any}
-                            size={20}
+                            size={28}
                             color={category.color}
                         />
                     </View>
-                    <Text
-                        style={[
-                            textStyles.bodyLarge,
-                            { color: colors.text, fontWeight: '600', marginLeft: spacing.md }
-                        ]}
-                    >
-                        {category.name}
-                    </Text>
-                </View>
-                <Feather name="chevron-right" size={20} color={colors.textTertiary} />
+                </CircularProgress>
             </View>
-
-            <View style={[styles.amounts, { marginTop: spacing.md }]}>
-                <Text style={[textStyles.h3, { color: colors.text }]}>
-                    {format(category.spent)}
-                </Text>
-                <Text style={[textStyles.bodySmall, { color: colors.textSecondary }]}>
-                    of {format(category.budget_limit)}
-                </Text>
-            </View>
-
-            <ProgressBar
-                progress={category.percentage}
-                style={{ marginTop: spacing.md }}
-            />
-
-            {hasBudget && (
-                <Text
-                    style={[
-                        textStyles.labelSmall,
-                        {
-                            color: isOverBudget ? colors.error : colors.textSecondary,
-                            marginTop: spacing.sm,
-                        }
-                    ]}
-                >
-                    {isOverBudget
-                        ? `Over budget by ${format(Math.abs(remaining))}`
-                        : `${format(remaining)} remaining`
-                    }
-                </Text>
-            )}
-        </TouchableOpacity>
+            <Text style={styles.categoryName} numberOfLines={1}>
+                {category.name}
+            </Text>
+            <Text style={[styles.amounts, { color: colors.textTertiary }]}>
+                {format(category.spent)} / {format(category.budget_limit)}
+            </Text>
+        </Pressable>
     );
 };
 
+export const CategoryCard = memo(CategoryCardComponent);
+
 const styles = StyleSheet.create({
     container: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 20,
+        paddingHorizontal: 12,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-        elevation: 2,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+        elevation: 4,
     },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
+    ringContainer: {
+        marginBottom: 12,
     },
-    titleRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    iconContainer: {
-        width: 36,
-        height: 36,
-        borderRadius: 8,
+    iconCircle: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
         justifyContent: 'center',
         alignItems: 'center',
     },
+    categoryName: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#F3F4F6',
+        textAlign: 'center',
+    },
     amounts: {
-        flexDirection: 'row',
-        alignItems: 'baseline',
-        gap: 8,
+        fontSize: 12,
+        fontWeight: '500',
+        marginTop: 4,
+        textAlign: 'center',
     },
 });

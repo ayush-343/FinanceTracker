@@ -9,7 +9,7 @@ export default function OnboardingLayout() {
                 animation: 'slide_from_right',
             }}
         >
-            <Stack.Screen name="Welcome" />
+            <Stack.Screen name="AnimatedOnboarding" />
             <Stack.Screen name="CurrencySetup" />
             <Stack.Screen name="BiometricSetup" />
             <Stack.Screen name="CategorySetup" />

@@ -1,117 +1,83 @@
-import React, { useEffect, useRef, useMemo } from 'react';
-import { Appearance } from 'react-native';
-import { NativeTabs, Icon, Label, VectorIcon } from 'expo-router/unstable-native-tabs';
-import { useSegments } from 'expo-router';
-import { Feather } from '@expo/vector-icons';
+import React, { useCallback } from 'react';
+import { Platform, ActionSheetIOS } from 'react-native';
+import { Tabs, useRouter } from 'expo-router';
 import { useTheme } from '../../src/theme';
-import { useSettingsStore } from '../../src/store';
+import { CustomTabBar } from '../../src/components/CustomTabBar';
+import { showActionSheet } from '../../src/components/ActionSheet';
+import { useHaptics } from '../../src/hooks';
 import * as Haptics from 'expo-haptics';
 
 export default function TabsLayout() {
-    const { colors, isDark } = useTheme();
-    const { darkMode } = useSettingsStore();
-    const segments = useSegments();
-    const lastTabRef = useRef<string | null>(null);
+    const { colors } = useTheme();
+    const router = useRouter();
+    const { light } = useHaptics();
 
-    // Extract primitive values to avoid re-renders on segment array changes
-    const segmentFirst = segments[0];
-    const segmentSecond = (segments as string[])[1];
-
-    // Force native appearance to match our theme
-    useEffect(() => {
-        // When darkMode is explicitly set (not system/null), override the native appearance
-        if (darkMode !== null) {
-            Appearance.setColorScheme(darkMode ? 'dark' : 'light');
+    const handleFabPress = useCallback(() => {
+        light();
+        if (Platform.OS === 'ios') {
+            ActionSheetIOS.showActionSheetWithOptions(
+                {
+                    options: ['Cancel', 'Add Manually', 'Scan Receipt'],
+                    cancelButtonIndex: 0,
+                },
+                (buttonIndex) => {
+                    if (buttonIndex === 1) {
+                        router.push('/AddTransaction');
+                    } else if (buttonIndex === 2) {
+                        router.push('/AddTransaction');
+                    }
+                }
+            );
         } else {
-            // Reset to system default
-            Appearance.setColorScheme(null);
+            showActionSheet(
+                'Add Transaction',
+                'Choose how to add a transaction',
+                [
+                    {
+                        id: 'manual',
+                        label: 'Add Manually',
+                        icon: 'edit-3',
+                        onPress: () => router.push('/AddTransaction'),
+                    },
+                    {
+                        id: 'scan',
+                        label: 'Scan Receipt',
+                        icon: 'camera',
+                        onPress: () => router.push('/AddTransaction'),
+                    },
+                ]
+            );
         }
-    }, [darkMode]);
-
-    useEffect(() => {
-        const isInTabs = segmentFirst === '(tabs)';
-        const currentTab = isInTabs && typeof segmentSecond === 'string' ? segmentSecond : null;
-
-        if (currentTab && lastTabRef.current && lastTabRef.current !== currentTab) {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
-        }
-
-        if (currentTab) {
-            lastTabRef.current = currentTab;
-        }
-    }, [segmentFirst, segmentSecond]);
-
-    // Memoize screen options with tab bar styling
-    const screenOptions = useMemo(() => ({
-        headerShown: false,
-        tabBarStyle: {
-            backgroundColor: colors.tabBar,
-            borderTopColor: colors.tabBarBorder,
-        },
-        tabBarActiveTintColor: colors.tabBarActive,
-        tabBarInactiveTintColor: colors.tabBarInactive,
-    }), [colors.tabBar, colors.tabBarBorder, colors.tabBarActive, colors.tabBarInactive]);
-
-    // Memoize tab options to prevent unnecessary re-renders
-    const tabOptions = useMemo(() => ({
-        iconColor: colors.tabBarInactive,
-        selectedIconColor: colors.tabBarActive,
-        labelStyle: { fontSize: 11, fontWeight: '500' as const, color: colors.tabBarInactive },
-    }), [colors.tabBarInactive, colors.tabBarActive]);
-
-    const selectedLabelStyle = useMemo(() => ({ color: colors.tabBarActive }), [colors.tabBarActive]);
-
-    // Use key to force NativeTabs to completely re-mount when theme changes
-    // NativeTabs uses UITabBarController which caches its appearance
-    // We need to destroy and recreate it when theme changes
-    const tabBarKey = useMemo(() => {
-        // Create a unique key based on the actual theme state
-        const themeKey = darkMode === null ? 'system' : darkMode ? 'dark' : 'light';
-        const resolvedTheme = isDark ? 'resolved-dark' : 'resolved-light';
-        return `nativetabs-${themeKey}-${resolvedTheme}`;
-    }, [darkMode, isDark]);
+    }, [light, router]);
 
     return (
-        <NativeTabs
-            key={tabBarKey}
+        <Tabs
             initialRouteName="Home"
-            screenOptions={screenOptions}
+            tabBar={(props) => (
+                <CustomTabBar
+                    currentRoute={props.state.routes[props.state.index]?.name ?? 'Home'}
+                    onTabPress={(name) => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
+                        router.push(`/(tabs)/${name}` as any);
+                    }}
+                    onFabPress={handleFabPress}
+                />
+            )}
+            screenOptions={{
+                headerShown: false,
+                tabBarStyle: { display: 'none' },
+            }}
         >
-            <NativeTabs.Trigger
-                name="Home"
-                options={tabOptions}
-            >
-                <Icon src={<VectorIcon family={Feather} name="home" />} />
-                <Label selectedStyle={selectedLabelStyle}>Home</Label>
-            </NativeTabs.Trigger>
-            <NativeTabs.Trigger
-                name="Calendar"
-                options={tabOptions}
-            >
-                <Icon src={<VectorIcon family={Feather} name="calendar" />} />
-                <Label selectedStyle={selectedLabelStyle}>Calendar</Label>
-            </NativeTabs.Trigger>
-            <NativeTabs.Trigger
-                name="Analytics"
-                options={tabOptions}
-            >
-                <Icon src={<VectorIcon family={Feather} name="bar-chart-2" />} />
-                <Label selectedStyle={selectedLabelStyle}>Analytics</Label>
-            </NativeTabs.Trigger>
-            <NativeTabs.Trigger
+            <Tabs.Screen name="Home" options={{ title: 'Home' }} />
+            <Tabs.Screen name="Analytics" options={{ title: 'Insights' }} />
+            <Tabs.Screen name="Calendar" options={{ title: 'Calendar' }} />
+            <Tabs.Screen name="Settings" options={{ title: 'Settings' }} />
+            <Tabs.Screen
                 name="Subscriptions"
-                options={tabOptions}
-            >
-                <Icon src={<VectorIcon family={Feather} name="repeat" />} />
-                <Label selectedStyle={selectedLabelStyle}>Subscriptions</Label>
-            </NativeTabs.Trigger>
-            <NativeTabs.Trigger
-                name="Settings"
-                options={tabOptions}
-            >
-                <Icon src={<VectorIcon family={Feather} name="settings" />} />
-                <Label selectedStyle={selectedLabelStyle}>Settings</Label>
-            </NativeTabs.Trigger>
-        </NativeTabs>
+                options={{
+                    href: null,
+                }}
+            />
+        </Tabs>
     );
 }

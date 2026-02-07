@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Platform } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
@@ -162,15 +163,17 @@ const SubscriptionsScreen: React.FC = () => {
                 </View>
 
                 {/* Subscription List */}
-                <FlatList
+                <FlashList
                     data={subsWithCategory}
                     keyExtractor={(item) => item.id.toString()}
+                    estimatedItemSize={90}
                     contentContainerStyle={{
                         paddingHorizontal: spacing.lg,
                         paddingTop: spacing.lg,
                         paddingBottom: 100,
                     }}
                     ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
+                    drawDistance={200}
                     renderItem={({ item }) => (
                         <Swipeable
                             renderRightActions={renderRightActions(item)}

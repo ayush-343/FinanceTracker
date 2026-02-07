@@ -50,13 +50,13 @@ const ReviewScannedItemsScreen: React.FC = () => {
             const today = new Date();
             const thirtyDaysAgo = new Date();
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-            
+
             if (!Number.isNaN(parsed.getTime())) {
                 // If the date is in the future or more than 30 days old, use today's date
                 if (parsed > today || parsed < thirtyDaysAgo) {
                     console.log('[ReviewScannedItems] Receipt date out of range, using today:', receiptDate);
                     setDate(today);
-                    setReceiptDate(format(today, 'yyyy-MM-dd'));
+                    setReceiptDate(format(today, 'yyyy-MM-dd')); 2
                     // Alert user about the date correction
                     Alert.alert(
                         'Date Adjusted',
@@ -171,11 +171,11 @@ const ReviewScannedItemsScreen: React.FC = () => {
                 notes: `Scanned from receipt`,
                 date: format(date, 'yyyy-MM-dd'),
             };
-            
+
             console.log('[ReviewScannedItems] Adding transaction:', JSON.stringify(transactionData, null, 2));
-            
+
             const transactionId = await addTransaction(transactionData);
-            
+
             console.log('[ReviewScannedItems] Transaction added with ID:', transactionId);
 
             success();

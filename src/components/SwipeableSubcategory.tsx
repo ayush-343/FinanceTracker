@@ -1,5 +1,5 @@
-import React, { useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated as RNAnimated } from 'react-native';
+import React, { useRef, memo, useCallback } from 'react';
+import { View, Text, StyleSheet, Pressable, Animated as RNAnimated, Platform } from 'react-native';
 import { Swipeable, RectButton } from 'react-native-gesture-handler';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../theme';
@@ -15,7 +15,7 @@ interface SwipeableSubcategoryProps {
     disableActions?: boolean;
 }
 
-export const SwipeableSubcategory: React.FC<SwipeableSubcategoryProps> = ({
+const SwipeableSubcategoryComponent: React.FC<SwipeableSubcategoryProps> = ({
     subcategory,
     onPress,
     onEdit,
@@ -27,17 +27,23 @@ export const SwipeableSubcategory: React.FC<SwipeableSubcategoryProps> = ({
     const { light, error } = useHaptics();
     const swipeableRef = useRef<Swipeable>(null);
 
-    const handleEdit = () => {
+    const handleEdit = useCallback(() => {
         light();
         swipeableRef.current?.close();
         onEdit();
-    };
+    }, [light, onEdit]);
 
-    const handleDelete = () => {
+    const handleDelete = useCallback(() => {
         error();
         swipeableRef.current?.close();
         onDelete();
-    };
+    }, [error, onDelete]);
+
+    const handlePress = useCallback(() => {
+        if (onPress) {
+            onPress();
+        }
+    }, [onPress]);
 
     const renderRightActions = (
         progress: RNAnimated.AnimatedInterpolation<number>,
@@ -72,17 +78,22 @@ export const SwipeableSubcategory: React.FC<SwipeableSubcategoryProps> = ({
     };
 
     const content = (
-        <TouchableOpacity
-            style={[
+        <Pressable
+            style={({ pressed }) => [
                 styles.container,
                 {
                     backgroundColor: colors.card,
                     padding: spacing.lg,
                     borderRadius: borderRadius.lg,
+                    opacity: Platform.OS === 'ios' && pressed && onPress ? 0.7 : 1,
                 },
             ]}
-            onPress={onPress}
-            activeOpacity={onPress ? 0.7 : 1}
+            onPress={handlePress}
+            disabled={!onPress}
+            android_ripple={{
+                color: `${colors.primary}30`,
+                borderless: false,
+            }}
         >
             <View style={styles.leftContent}>
                 <Text style={[textStyles.body, { color: colors.text, fontWeight: '500' }]}>
@@ -95,7 +106,7 @@ export const SwipeableSubcategory: React.FC<SwipeableSubcategoryProps> = ({
                 )}
             </View>
             <Feather name="chevron-right" size={20} color={colors.textTertiary} />
-        </TouchableOpacity>
+        </Pressable>
     );
 
     if (disableActions) {
@@ -115,6 +126,8 @@ export const SwipeableSubcategory: React.FC<SwipeableSubcategoryProps> = ({
         </Swipeable>
     );
 };
+
+export const SwipeableSubcategory = memo(SwipeableSubcategoryComponent);
 
 const styles = StyleSheet.create({
     container: {

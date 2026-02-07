@@ -1,10 +1,12 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Dimensions, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import { BarChart, PieChart } from 'react-native-gifted-charts';
+import { PieChart, BarChart } from 'react-native-gifted-charts';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../src/theme';
-import { TimeframePicker } from '../../src/components';
+import { TimeframePicker, CategoryDistribution } from '../../src/components';
 import { useBudgetStore, useSettingsStore } from '../../src/store';
 import { useCurrency } from '../../src/hooks';
 import { Timeframe } from '../../src/types';
@@ -24,17 +26,16 @@ import {
 import { getDailySpending, getCategoriesWithSpending } from '../../src/database';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CHART_WIDTH = SCREEN_WIDTH - 64;
 
 const AnalyticsScreen: React.FC = () => {
     const { colors, spacing, textStyles, borderRadius } = useTheme();
     const { format: formatCurrency } = useCurrency();
     const { currency } = useSettingsStore();
-    const { totalSpending, categoriesWithSpending } = useBudgetStore();
+    const { totalSpending, totalBudget } = useBudgetStore();
 
     const [timeframe, setTimeframe] = useState<Timeframe>('monthly');
     const [spendingData, setSpendingData] = useState<{ label: string; value: number }[]>([]);
-    const [categoryData, setCategoryData] = useState<{ name: string; color: string; amount: number }[]>([]);
+    const [categoryData, setCategoryData] = useState<{ name: string; icon: string; color: string; amount: number }[]>([]);
     const [totalSpent, setTotalSpent] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -48,28 +49,24 @@ const AnalyticsScreen: React.FC = () => {
 
         switch (timeframe) {
             case 'daily':
-                // Last 7 days
                 startDate = subDays(now, 6);
                 endDate = now;
                 intervals = eachDayOfInterval({ start: startDate, end: endDate });
                 labels = intervals.map(d => format(d, 'EEE'));
                 break;
             case 'weekly':
-                // Last 4 weeks
                 startDate = subWeeks(now, 3);
                 endDate = now;
                 intervals = eachWeekOfInterval({ start: startDate, end: endDate });
                 labels = intervals.map((d, i) => `W${i + 1}`);
                 break;
             case 'monthly':
-                // This month by day
                 startDate = startOfMonth(now);
                 endDate = endOfMonth(now);
                 intervals = eachDayOfInterval({ start: startDate, end: endDate });
                 labels = intervals.map(d => format(d, 'd'));
                 break;
             case 'annually':
-                // Last 12 months
                 startDate = subMonths(now, 11);
                 endDate = now;
                 intervals = eachMonthOfInterval({ start: startDate, end: endDate });
@@ -80,10 +77,8 @@ const AnalyticsScreen: React.FC = () => {
         const startStr = format(startDate, 'yyyy-MM-dd');
         const endStr = format(endDate, 'yyyy-MM-dd');
 
-        // Get daily spending data
         const dailyData = await getDailySpending(startStr, endStr);
 
-        // Aggregate based on timeframe
         const aggregated = intervals.map((intervalDate, i) => {
             let sum = 0;
             dailyData.forEach(d => {
@@ -109,12 +104,12 @@ const AnalyticsScreen: React.FC = () => {
 
         setSpendingData(aggregated);
 
-        // Get category breakdown
         const categories = await getCategoriesWithSpending(startStr, endStr);
         const categoriesWithSpend = categories
             .filter(c => c.spent > 0)
             .map(c => ({
                 name: c.name,
+                icon: c.icon || 'tag',
                 color: c.color,
                 amount: c.spent,
             }))
@@ -122,7 +117,6 @@ const AnalyticsScreen: React.FC = () => {
 
         setCategoryData(categoriesWithSpend);
         setTotalSpent(categoriesWithSpend.reduce((sum, c) => sum + c.amount, 0));
-
         setIsLoading(false);
     };
 
@@ -132,42 +126,67 @@ const AnalyticsScreen: React.FC = () => {
         }, [timeframe])
     );
 
+    // Donut chart data
+    const pieChartData = useMemo(() => {
+        if (totalSpent === 0) return [];
+        return categoryData.slice(0, 6).map(c => ({
+            value: c.amount,
+            color: c.color,
+            text: '',
+        }));
+    }, [categoryData, totalSpent]);
+
+    // Category distribution data with percentages
+    const distributionData = useMemo(() => {
+        if (totalSpent === 0) return [];
+        return categoryData.map(c => ({
+            name: c.name,
+            icon: c.icon,
+            color: c.color,
+            amount: c.amount,
+            percentage: (c.amount / totalSpent) * 100,
+        }));
+    }, [categoryData, totalSpent]);
+
+    // Weekly comparison data (last 2 weeks)
+    const weeklyComparisonData = useMemo(() => {
+        if (timeframe !== 'weekly' && timeframe !== 'monthly') return [];
+        // Use the spending data to create pairs for comparison
+        const data = spendingData.slice(-7);
+        return data.map((d, i) => ({
+            label: d.label,
+            thisWeek: d.value,
+            lastWeek: Math.max(0, d.value * (0.7 + Math.random() * 0.6)), // simulated last period
+        }));
+    }, [spendingData, timeframe]);
+
     const barChartData = useMemo(() => {
+        if (spendingData.length === 0) return [];
+        // For weekly comparison: paired bars
         return spendingData.map((d) => ({
             value: d.value,
             label: d.label,
             frontColor: colors.primary,
-            topLabelComponent: () => (
-                d.value > 0 ? (
-                    <Text style={{ fontSize: 8, color: colors.textSecondary }}>
-                        {Math.round(d.value)}
-                    </Text>
-                ) : null
-            ),
+            topLabelComponent: () => null,
         }));
     }, [spendingData, colors]);
 
-    const pieChartData = useMemo(() => {
-        const total = categoryData.reduce((sum, c) => sum + c.amount, 0);
-        if (total === 0) return [];
-        return categoryData.slice(0, 6).map(c => ({
-            value: c.amount,
-            color: c.color,
-            text: `${Math.round((c.amount / total) * 100)}%`,
-            shiftTextX: -5,
-        }));
-    }, [categoryData]);
-
-    const maxSpending = Math.max(...spendingData.map(d => d.value), 1);
-    const avgSpending = spendingData.length > 0
-        ? spendingData.reduce((sum, d) => sum + d.value, 0) / spendingData.length
-        : 0;
+    const netSavings = totalBudget - totalSpent;
+    const savingsPercentage = totalBudget > 0 ? ((netSavings / totalBudget) * 100) : 0;
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             {/* Header */}
             <View style={[styles.header, { paddingHorizontal: spacing.lg }]}>
-                <Text style={[textStyles.h2, { color: colors.text }]}>Analytics</Text>
+                <View>
+                    <Text style={[styles.headerTitle, { color: colors.text }]}>Financial Insights</Text>
+                    <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
+                        {format(new Date(), 'MMMM yyyy')}
+                    </Text>
+                </View>
+                <View style={[styles.profileButton, { backgroundColor: colors.card }]}>
+                    <Feather name="user" size={20} color={colors.textSecondary} />
+                </View>
             </View>
 
             <ScrollView
@@ -177,218 +196,243 @@ const AnalyticsScreen: React.FC = () => {
             >
                 {/* Timeframe Picker */}
                 <View style={{ marginHorizontal: spacing.lg, marginTop: spacing.md }}>
-                    <TimeframePicker
-                        selected={timeframe}
-                        onSelect={setTimeframe}
-                    />
+                    <TimeframePicker selected={timeframe} onSelect={setTimeframe} />
                 </View>
 
-                {/* Stats Summary */}
+                {/* Spending Breakdown Donut */}
                 <View
                     style={[
-                        styles.statsGrid,
-                        { marginHorizontal: spacing.lg, marginTop: spacing.lg },
-                    ]}
-                >
-                    <View
-                        style={[
-                            styles.statCard,
-                            {
-                                backgroundColor: colors.card,
-                                borderRadius: borderRadius.lg,
-                                padding: spacing.lg,
-                            },
-                        ]}
-                    >
-                        <Text style={[textStyles.labelSmall, { color: colors.textSecondary }]}>Total Spent</Text>
-                        <Text style={[textStyles.h3, { color: colors.text }]}>
-                            {formatCurrency(totalSpent)}
-                        </Text>
-                    </View>
-                    <View
-                        style={[
-                            styles.statCard,
-                            {
-                                backgroundColor: colors.card,
-                                borderRadius: borderRadius.lg,
-                                padding: spacing.lg,
-                            },
-                        ]}
-                    >
-                        <Text style={[textStyles.labelSmall, { color: colors.textSecondary }]}>Average</Text>
-                        <Text style={[textStyles.h3, { color: colors.text }]}>
-                            {formatCurrency(avgSpending)}
-                        </Text>
-                    </View>
-                    <View
-                        style={[
-                            styles.statCard,
-                            {
-                                backgroundColor: colors.card,
-                                borderRadius: borderRadius.lg,
-                                padding: spacing.lg,
-                            },
-                        ]}
-                    >
-                        <Text style={[textStyles.labelSmall, { color: colors.textSecondary }]}>Highest</Text>
-                        <Text style={[textStyles.h3, { color: colors.text }]}>
-                            {formatCurrency(maxSpending)}
-                        </Text>
-                    </View>
-                    <View
-                        style={[
-                            styles.statCard,
-                            {
-                                backgroundColor: colors.card,
-                                borderRadius: borderRadius.lg,
-                                padding: spacing.lg,
-                            },
-                        ]}
-                    >
-                        <Text style={[textStyles.labelSmall, { color: colors.textSecondary }]}>Categories</Text>
-                        <Text style={[textStyles.h3, { color: colors.text }]}>
-                            {categoryData.length}
-                        </Text>
-                    </View>
-                </View>
-
-                {/* Spending Chart */}
-                <View
-                    style={[
-                        styles.chartCard,
+                        styles.card,
                         {
                             backgroundColor: colors.card,
                             marginHorizontal: spacing.lg,
-                            marginTop: spacing.xl,
+                            marginTop: spacing.lg,
                             borderRadius: borderRadius.xl,
                             padding: spacing.lg,
                         },
                     ]}
                 >
-                    <Text style={[textStyles.h4, { color: colors.text, marginBottom: spacing.md }]}>Spending Over Time</Text>
-                    {spendingData.length > 0 && (
-                        <BarChart
-                            data={barChartData}
-                            width={CHART_WIDTH - 40}
-                            height={180}
-                            barWidth={timeframe === 'monthly' ? 8 : 24}
-                            spacing={timeframe === 'monthly' ? 4 : 16}
-                            noOfSections={4}
-                            xAxisThickness={0}
-                            yAxisThickness={0}
-                            yAxisTextStyle={{ color: colors.textSecondary, fontSize: 10 }}
-                            xAxisLabelTextStyle={{
-                                color: colors.textSecondary,
-                                fontSize: timeframe === 'monthly' ? 8 : 10,
-                            }}
-                            hideRules
-                            isAnimated
-                            animationDuration={500}
-                        />
+                    <Text style={[styles.cardTitle, { color: colors.text, marginBottom: spacing.lg }]}>
+                        Spending Breakdown
+                    </Text>
+
+                    {pieChartData.length > 0 ? (
+                        <View style={styles.donutContainer}>
+                            <PieChart
+                                data={pieChartData}
+                                donut
+                                radius={90}
+                                innerRadius={62}
+                                centerLabelComponent={() => (
+                                    <View style={styles.donutCenter}>
+                                        <Text style={[styles.donutAmount, { color: colors.text }]}>
+                                            {formatCurrency(totalSpent)}
+                                        </Text>
+                                        <Text style={[styles.donutLabel, { color: colors.textSecondary }]}>
+                                            Total Spent
+                                        </Text>
+                                    </View>
+                                )}
+                            />
+                        </View>
+                    ) : (
+                        <View style={styles.emptyChart}>
+                            <Feather name="pie-chart" size={48} color={colors.textTertiary} />
+                            <Text style={{ color: colors.textSecondary, marginTop: spacing.sm, fontSize: 14 }}>
+                                No spending data yet
+                            </Text>
+                        </View>
+                    )}
+
+                    {/* Legend */}
+                    {pieChartData.length > 0 && (
+                        <View style={[styles.legendGrid, { marginTop: spacing.lg }]}>
+                            {categoryData.slice(0, 6).map((c, i) => (
+                                <View key={i} style={styles.legendItem}>
+                                    <View style={[styles.legendDot, { backgroundColor: c.color }]} />
+                                    <Text style={[styles.legendText, { color: colors.textSecondary }]} numberOfLines={1}>
+                                        {c.name}
+                                    </Text>
+                                </View>
+                            ))}
+                        </View>
                     )}
                 </View>
 
-                {/* Category Breakdown */}
-                {categoryData.length > 0 && (
+                {/* Net Savings Card */}
+                <View style={{ marginHorizontal: spacing.lg, marginTop: spacing.lg }}>
+                    <LinearGradient
+                        colors={netSavings >= 0 ? ['#1E40AF', '#3B82F6'] : ['#991B1B', '#EF4444']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={[styles.savingsCard, { borderRadius: borderRadius.xl, padding: spacing.lg }]}
+                    >
+                        <View style={styles.savingsRow}>
+                            <View>
+                                <Text style={styles.savingsLabel}>Net Savings</Text>
+                                <Text style={styles.savingsAmount}>
+                                    {netSavings >= 0 ? '+' : ''}{formatCurrency(Math.abs(netSavings))}
+                                </Text>
+                            </View>
+                            <View style={styles.savingsBadge}>
+                                <Feather
+                                    name={netSavings >= 0 ? 'trending-up' : 'trending-down'}
+                                    size={14}
+                                    color={netSavings >= 0 ? '#34D399' : '#FCA5A5'}
+                                />
+                                <Text style={[styles.savingsPercent, { color: netSavings >= 0 ? '#34D399' : '#FCA5A5' }]}>
+                                    {Math.abs(savingsPercentage).toFixed(1)}%
+                                </Text>
+                            </View>
+                        </View>
+
+                        {/* Progress bar */}
+                        <View style={styles.savingsProgressBg}>
+                            <View
+                                style={[
+                                    styles.savingsProgressFill,
+                                    { width: `${Math.min(Math.max((totalSpent / Math.max(totalBudget, 1)) * 100, 0), 100)}%` },
+                                ]}
+                            />
+                        </View>
+                        <View style={styles.savingsProgressLabels}>
+                            <Text style={styles.savingsProgressText}>
+                                {formatCurrency(totalSpent)} spent
+                            </Text>
+                            <Text style={styles.savingsProgressText}>
+                                {formatCurrency(totalBudget)} budget
+                            </Text>
+                        </View>
+                    </LinearGradient>
+                </View>
+
+                {/* Category Distribution */}
+                {distributionData.length > 0 && (
                     <View
                         style={[
-                            styles.chartCard,
+                            styles.card,
                             {
                                 backgroundColor: colors.card,
                                 marginHorizontal: spacing.lg,
-                                marginTop: spacing.xl,
+                                marginTop: spacing.lg,
                                 borderRadius: borderRadius.xl,
                                 padding: spacing.lg,
                             },
                         ]}
                     >
-                        <Text style={[textStyles.h4, { color: colors.text, marginBottom: spacing.lg }]}>Category Breakdown</Text>
-                        <View style={styles.pieContainer}>
-                            <PieChart
-                                data={pieChartData}
-                                donut
-                                radius={80}
-                                innerRadius={50}
-                                centerLabelComponent={() => (
-                                    <View style={styles.pieCenter}>
-                                        <Text style={[textStyles.labelSmall, { color: colors.textSecondary }]}>Total</Text>
-                                        <Text style={[textStyles.body, { color: colors.text, fontWeight: '600' }]}>
-                                            {formatCurrency(totalSpent)}
-                                        </Text>
-                                    </View>
-                                )}
-                            />
-                            <View style={styles.pieLegend}>
-                                {categoryData.slice(0, 6).map((c, i) => (
-                                    <View key={i} style={styles.legendItem}>
-                                        <View style={[styles.legendDot, { backgroundColor: c.color }]} />
-                                        <Text
-                                            style={[textStyles.labelSmall, { color: colors.text, flex: 1 }]}
-                                            numberOfLines={1}
-                                        >
-                                            {c.name}
-                                        </Text>
-                                        <Text style={[textStyles.labelSmall, { color: colors.textSecondary }]}>
-                                            {formatCurrency(c.amount)}
-                                        </Text>
-                                    </View>
-                                ))}
-                            </View>
-                        </View>
+                        <CategoryDistribution
+                            categories={distributionData}
+                            formatCurrency={formatCurrency}
+                            initialCount={5}
+                        />
                     </View>
                 )}
 
-                {/* Top Categories */}
+                {/* Spending Over Time Chart */}
                 <View
                     style={[
-                        styles.chartCard,
+                        styles.card,
                         {
                             backgroundColor: colors.card,
                             marginHorizontal: spacing.lg,
-                            marginTop: spacing.xl,
+                            marginTop: spacing.lg,
                             borderRadius: borderRadius.xl,
                             padding: spacing.lg,
                         },
                     ]}
                 >
-                    <Text style={[textStyles.h4, { color: colors.text, marginBottom: spacing.lg }]}>Top Spending Categories</Text>
-                    {categoryData.slice(0, 5).map((c, i) => {
-                        const percentage = (c.amount / totalSpent) * 100;
-                        return (
-                            <View key={i} style={{ marginBottom: spacing.md }}>
-                                <View style={styles.categoryRow}>
-                                    <Text style={[textStyles.body, { color: colors.text }]}>
-                                        {i + 1}. {c.name}
-                                    </Text>
-                                    <Text style={[textStyles.body, { color: colors.textSecondary }]}>
-                                        {formatCurrency(c.amount)} ({percentage.toFixed(1)}%)
-                                    </Text>
-                                </View>
-                                <View
-                                    style={[
-                                        styles.progressBg,
-                                        { backgroundColor: colors.border, borderRadius: borderRadius.sm },
-                                    ]}
-                                >
-                                    <View
-                                        style={[
-                                            styles.progressFill,
-                                            {
-                                                width: `${percentage}%`,
-                                                backgroundColor: c.color,
-                                                borderRadius: borderRadius.sm,
-                                            },
-                                        ]}
-                                    />
-                                </View>
-                            </View>
-                        );
-                    })}
-                    {categoryData.length === 0 && (
-                        <Text style={[textStyles.body, { color: colors.textSecondary, textAlign: 'center' }]}>
-                            No spending data yet
-                        </Text>
+                    <Text style={[styles.cardTitle, { color: colors.text, marginBottom: spacing.md }]}>
+                        Spending Over Time
+                    </Text>
+                    {barChartData.length > 0 ? (
+                        <BarChart
+                            data={barChartData}
+                            width={SCREEN_WIDTH - 96}
+                            height={160}
+                            barWidth={timeframe === 'monthly' ? 6 : 20}
+                            spacing={timeframe === 'monthly' ? 3 : 14}
+                            noOfSections={4}
+                            xAxisThickness={0}
+                            yAxisThickness={0}
+                            yAxisTextStyle={{ color: colors.textTertiary, fontSize: 10 }}
+                            xAxisLabelTextStyle={{
+                                color: colors.textTertiary,
+                                fontSize: timeframe === 'monthly' ? 7 : 10,
+                            }}
+                            hideRules
+                            isAnimated
+                            animationDuration={500}
+                            barBorderTopLeftRadius={3}
+                            barBorderTopRightRadius={3}
+                        />
+                    ) : (
+                        <View style={styles.emptyChart}>
+                            <Feather name="bar-chart-2" size={48} color={colors.textTertiary} />
+                            <Text style={{ color: colors.textSecondary, marginTop: spacing.sm, fontSize: 14 }}>
+                                No data for this period
+                            </Text>
+                        </View>
                     )}
+                </View>
+
+                {/* Quick Stats */}
+                <View style={[styles.statsRow, { marginHorizontal: spacing.lg, marginTop: spacing.lg }]}>
+                    <View
+                        style={[
+                            styles.statCard,
+                            {
+                                backgroundColor: colors.card,
+                                borderRadius: borderRadius.xl,
+                                padding: spacing.lg,
+                            },
+                        ]}
+                    >
+                        <Feather name="trending-up" size={20} color={colors.primary} />
+                        <Text style={[styles.statValue, { color: colors.text, marginTop: spacing.sm }]}>
+                            {formatCurrency(
+                                spendingData.length > 0
+                                    ? Math.max(...spendingData.map(d => d.value))
+                                    : 0
+                            )}
+                        </Text>
+                        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Highest</Text>
+                    </View>
+                    <View
+                        style={[
+                            styles.statCard,
+                            {
+                                backgroundColor: colors.card,
+                                borderRadius: borderRadius.xl,
+                                padding: spacing.lg,
+                            },
+                        ]}
+                    >
+                        <Feather name="minus" size={20} color={colors.accentGreen} />
+                        <Text style={[styles.statValue, { color: colors.text, marginTop: spacing.sm }]}>
+                            {formatCurrency(
+                                spendingData.length > 0
+                                    ? spendingData.reduce((s, d) => s + d.value, 0) / spendingData.length
+                                    : 0
+                            )}
+                        </Text>
+                        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Average</Text>
+                    </View>
+                    <View
+                        style={[
+                            styles.statCard,
+                            {
+                                backgroundColor: colors.card,
+                                borderRadius: borderRadius.xl,
+                                padding: spacing.lg,
+                            },
+                        ]}
+                    >
+                        <Feather name="layers" size={20} color={colors.warning} />
+                        <Text style={[styles.statValue, { color: colors.text, marginTop: spacing.sm }]}>
+                            {categoryData.length}
+                        </Text>
+                        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Categories</Text>
+                    </View>
                 </View>
             </ScrollView>
         </SafeAreaView>
@@ -400,64 +444,156 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
         paddingTop: 16,
+    },
+    headerTitle: {
+        fontSize: 28,
+        fontWeight: '700',
+    },
+    headerSubtitle: {
+        fontSize: 14,
+        marginTop: 2,
+    },
+    profileButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     scrollView: {
         flex: 1,
     },
-    statsGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 12,
-    },
-    statCard: {
-        width: (SCREEN_WIDTH - 64 - 12) / 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-        elevation: 2,
-    },
-    chartCard: {
+    card: {
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.08,
         shadowRadius: 12,
         elevation: 4,
     },
-    pieContainer: {
+    cardTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+    },
+    // Donut
+    donutContainer: {
+        alignItems: 'center',
+        paddingVertical: 8,
+    },
+    donutCenter: {
+        alignItems: 'center',
+    },
+    donutAmount: {
+        fontSize: 18,
+        fontWeight: '700',
+    },
+    donutLabel: {
+        fontSize: 11,
+        marginTop: 2,
+    },
+    emptyChart: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: 160,
+    },
+    // Legend
+    legendGrid: {
         flexDirection: 'row',
-        alignItems: 'center',
-    },
-    pieCenter: {
-        alignItems: 'center',
-    },
-    pieLegend: {
-        flex: 1,
-        marginLeft: 20,
+        flexWrap: 'wrap',
     },
     legendItem: {
         flexDirection: 'row',
         alignItems: 'center',
+        width: '50%',
         marginBottom: 8,
     },
     legendDot: {
-        width: 10,
-        height: 10,
-        borderRadius: 5,
-        marginRight: 8,
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        marginRight: 6,
     },
-    categoryRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 4,
+    legendText: {
+        fontSize: 12,
+        flex: 1,
     },
-    progressBg: {
-        height: 6,
+    // Savings
+    savingsCard: {
         overflow: 'hidden',
     },
-    progressFill: {
+    savingsRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+    },
+    savingsLabel: {
+        fontSize: 14,
+        color: 'rgba(255,255,255,0.7)',
+    },
+    savingsAmount: {
+        fontSize: 28,
+        fontWeight: '700',
+        color: '#FFFFFF',
+        marginTop: 4,
+    },
+    savingsBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255,255,255,0.15)',
+        borderRadius: 12,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        gap: 4,
+    },
+    savingsPercent: {
+        fontSize: 13,
+        fontWeight: '600',
+    },
+    savingsProgressBg: {
+        height: 6,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        borderRadius: 3,
+        marginTop: 16,
+        overflow: 'hidden',
+    },
+    savingsProgressFill: {
         height: '100%',
+        backgroundColor: 'rgba(255,255,255,0.8)',
+        borderRadius: 3,
+    },
+    savingsProgressLabels: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 6,
+    },
+    savingsProgressText: {
+        fontSize: 11,
+        color: 'rgba(255,255,255,0.6)',
+    },
+    // Stats
+    statsRow: {
+        flexDirection: 'row',
+        gap: 10,
+    },
+    statCard: {
+        flex: 1,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        elevation: 2,
+    },
+    statValue: {
+        fontSize: 16,
+        fontWeight: '700',
+    },
+    statLabel: {
+        fontSize: 11,
+        marginTop: 2,
     },
 });
 
