@@ -5,12 +5,27 @@ import { useTheme } from '../../src/theme';
 import { CustomTabBar } from '../../src/components/CustomTabBar';
 import { showActionSheet } from '../../src/components/ActionSheet';
 import { useHaptics } from '../../src/hooks';
+import { useReceiptScanner } from '../../src/hooks/useReceiptScanner';
+import { ScanningModal } from '../../src/components/ScanningModal';
+import { BarcodeScannerModal } from '../../src/components/BarcodeScannerModal';
 import * as Haptics from 'expo-haptics';
 
 export default function TabsLayout() {
     const { colors } = useTheme();
     const router = useRouter();
     const { light } = useHaptics();
+    const {
+        isScanning,
+        error,
+        showModal,
+        showBarcodeScanner,
+        pickImage,
+        retry,
+        goToManualEntry,
+        closeModal,
+        closeBarcodeScanner,
+        handleBarcodeScanComplete,
+    } = useReceiptScanner();
 
     const handleFabPress = useCallback(() => {
         light();
@@ -24,7 +39,7 @@ export default function TabsLayout() {
                     if (buttonIndex === 1) {
                         router.push('/AddTransaction');
                     } else if (buttonIndex === 2) {
-                        router.push('/AddTransaction');
+                        pickImage();
                     }
                 }
             );
@@ -43,7 +58,7 @@ export default function TabsLayout() {
                         id: 'scan',
                         label: 'Scan Receipt',
                         icon: 'camera',
-                        onPress: () => router.push('/AddTransaction'),
+                        onPress: () => pickImage(),
                     },
                 ]
             );
@@ -51,33 +66,50 @@ export default function TabsLayout() {
     }, [light, router]);
 
     return (
-        <Tabs
-            initialRouteName="Home"
-            tabBar={(props) => (
-                <CustomTabBar
-                    currentRoute={props.state.routes[props.state.index]?.name ?? 'Home'}
-                    onTabPress={(name) => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
-                        router.push(`/(tabs)/${name}` as any);
-                    }}
-                    onFabPress={handleFabPress}
-                />
-            )}
-            screenOptions={{
-                headerShown: false,
-                tabBarStyle: { display: 'none' },
-            }}
-        >
-            <Tabs.Screen name="Home" options={{ title: 'Home' }} />
-            <Tabs.Screen name="Analytics" options={{ title: 'Insights' }} />
-            <Tabs.Screen name="Calendar" options={{ title: 'Calendar' }} />
-            <Tabs.Screen name="Settings" options={{ title: 'Settings' }} />
-            <Tabs.Screen
-                name="Subscriptions"
-                options={{
-                    href: null,
+        <>
+            <Tabs
+                initialRouteName="Home"
+                tabBar={(props) => (
+                    <CustomTabBar
+                        currentRoute={props.state.routes[props.state.index]?.name ?? 'Home'}
+                        onTabPress={(name) => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
+                            router.push(`/(tabs)/${name}` as any);
+                        }}
+                        onFabPress={handleFabPress}
+                    />
+                )}
+                screenOptions={{
+                    headerShown: false,
+                    tabBarStyle: { display: 'none' },
                 }}
+            >
+                <Tabs.Screen name="Home" options={{ title: 'Home' }} />
+                <Tabs.Screen name="Analytics" options={{ title: 'Insights' }} />
+                <Tabs.Screen name="Calendar" options={{ title: 'Calendar' }} />
+                <Tabs.Screen name="Settings" options={{ title: 'Settings' }} />
+                <Tabs.Screen
+                    name="Subscriptions"
+                    options={{
+                        href: null,
+                    }}
+                />
+            </Tabs>
+
+            <ScanningModal
+                visible={showModal}
+                isLoading={isScanning}
+                error={error}
+                onRetry={retry}
+                onManualEntry={goToManualEntry}
+                onClose={closeModal}
             />
-        </Tabs>
+
+            <BarcodeScannerModal
+                visible={showBarcodeScanner}
+                onClose={closeBarcodeScanner}
+                onScanComplete={handleBarcodeScanComplete}
+            />
+        </>
     );
 }

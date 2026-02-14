@@ -1,10 +1,12 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Platform, BackHandler } from 'react-native';
+import { Platform, BackHandler, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { SheetProvider } from 'react-native-actions-sheet';
+import { Feather } from '@expo/vector-icons';
 import { ThemeProvider, useTheme } from '../src/theme';
 import { initDatabase } from '../src/database';
 import { LoadingScreen } from '../src/components';
@@ -17,7 +19,7 @@ import '../src/components/sheets';
 const AppShell: React.FC = () => {
     const { colors, isDark } = useTheme();
     const { isOnboardingCompleted, isBiometricEnabled, loadSettings } = useSettingsStore();
-    const { authenticate, isAuthenticated, isAuthenticating } = useBiometricAuth();
+    const { authenticate, isAuthenticated, isAuthenticating, isLocked } = useBiometricAuth();
     const router = useRouter();
     const segments = useSegments();
 
@@ -78,8 +80,6 @@ const AppShell: React.FC = () => {
         if (Platform.OS !== 'android') return;
 
         const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
-            // Allow default behavior for most screens
-            // Can be extended to show confirmation dialogs for forms
             return false;
         });
 
@@ -100,19 +100,9 @@ const AppShell: React.FC = () => {
         return <LoadingScreen message="Loading..." />;
     }
 
-    if (isOnboardingCompleted && isBiometricEnabled && !isInSettings && isAuthenticating) {
-        return <LoadingScreen message="Authenticating..." />;
-    }
-
-    if (isOnboardingCompleted && isBiometricEnabled && !isInSettings && !isAuthenticated) {
-        return (
-            <LoadingScreen
-                message="Tap to unlock"
-                showUnlock
-                onUnlock={handleBiometricAuth}
-            />
-        );
-    }
+    // Determine if we should show the biometric overlay
+    const showBiometricOverlay = isOnboardingCompleted && isBiometricEnabled && !isInSettings && isLocked;
+    const needsAuth = showBiometricOverlay && !isAuthenticated;
 
     return (
         <>
@@ -146,9 +136,95 @@ const AppShell: React.FC = () => {
                 />
                 <Stack.Screen name="EditSubscription" options={{ animation: 'slide_from_right' }} />
             </Stack>
+
+            {/* Biometric privacy/lock overlay — renders ON TOP of the app */}
+            {showBiometricOverlay && (
+                <View style={StyleSheet.absoluteFill} pointerEvents={needsAuth ? 'auto' : 'none'}>
+                    <BlurView
+                        intensity={60}
+                        tint={isDark ? 'dark' : 'light'}
+                        style={StyleSheet.absoluteFill}
+                    />
+                    {/* Solid background layer for extra privacy */}
+                    <View
+                        style={[
+                            StyleSheet.absoluteFill,
+                            {
+                                backgroundColor: isDark
+                                    ? 'rgba(13, 13, 13, 0.85)'
+                                    : 'rgba(255, 255, 255, 0.85)',
+                            },
+                        ]}
+                    />
+                    {/* Lock screen UI — only shown when auth is actually needed */}
+                    {needsAuth && (
+                        <View style={lockStyles.container}>
+                            <View style={[lockStyles.iconCircle, { backgroundColor: `${colors.primary}15` }]}>
+                                <Feather name="lock" size={32} color={colors.primary} />
+                            </View>
+                            <Text style={[lockStyles.title, { color: colors.text }]}>
+                                Finance Tracker
+                            </Text>
+                            <Text style={[lockStyles.subtitle, { color: colors.textSecondary }]}>
+                                {isAuthenticating ? 'Authenticating...' : 'Tap to unlock'}
+                            </Text>
+                            {!isAuthenticating && (
+                                <TouchableOpacity
+                                    style={[lockStyles.unlockButton, { backgroundColor: colors.primary }]}
+                                    onPress={handleBiometricAuth}
+                                    activeOpacity={0.8}
+                                >
+                                    <Feather name="unlock" size={20} color="#FFFFFF" />
+                                    <Text style={lockStyles.unlockText}>Unlock</Text>
+                                </TouchableOpacity>
+                            )}
+                        </View>
+                    )}
+                </View>
+            )}
         </>
     );
 };
+
+const lockStyles = StyleSheet.create({
+    container: {
+        ...StyleSheet.absoluteFillObject,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 40,
+    },
+    iconCircle: {
+        width: 72,
+        height: 72,
+        borderRadius: 36,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    title: {
+        fontSize: 22,
+        fontWeight: '700',
+        letterSpacing: -0.3,
+        marginBottom: 6,
+    },
+    subtitle: {
+        fontSize: 14,
+        marginBottom: 32,
+    },
+    unlockButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 14,
+        paddingHorizontal: 32,
+        borderRadius: 16,
+        gap: 8,
+    },
+    unlockText: {
+        color: '#FFFFFF',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+});
 
 export default function RootLayout() {
     return (

@@ -19,13 +19,13 @@ export const getTodayForDB = (): string => {
 // Get relative date string
 export const getRelativeDateString = (date: Date | string): string => {
   const d = typeof date === 'string' ? parseISO(date) : date;
-  
+
   if (isToday(d)) return 'Today';
   if (isYesterday(d)) return 'Yesterday';
-  
+
   const daysAgo = differenceInDays(new Date(), d);
   if (daysAgo > 0 && daysAgo < 7) return `${daysAgo} days ago`;
-  
+
   return formatDate(d, 'MMM d');
 };
 
@@ -33,7 +33,7 @@ export const getRelativeDateString = (date: Date | string): string => {
 export const getWeekRangeString = (date: Date): string => {
   const start = startOfWeek(date, { weekStartsOn: 1 });
   const end = endOfWeek(date, { weekStartsOn: 1 });
-  
+
   if (isSameMonth(start, end)) {
     return `${format(start, 'MMM d')} - ${format(end, 'd, yyyy')}`;
   }
@@ -52,14 +52,14 @@ export const getYearRangeString = (date: Date): string => {
 
 // Navigate dates
 export const navigateDate = (
-  date: Date, 
-  direction: 'prev' | 'next', 
+  date: Date,
+  direction: 'prev' | 'next',
   period: 'day' | 'week' | 'month'
 ): Date => {
-  const fn = direction === 'next' 
+  const fn = direction === 'next'
     ? { day: addDays, week: addWeeks, month: addMonths }
     : { day: subDays, week: subWeeks, month: subMonths };
-  
+
   return fn[period](date, 1);
 };
 
@@ -68,13 +68,13 @@ export const getDaysInMonth = (date: Date): Date[] => {
   const start = startOfMonth(date);
   const end = endOfMonth(date);
   const days: Date[] = [];
-  
+
   let current = start;
   while (current <= end) {
     days.push(current);
     current = addDays(current, 1);
   }
-  
+
   return days;
 };
 
@@ -82,25 +82,25 @@ export const getDaysInMonth = (date: Date): Date[] => {
 export const getCalendarGrid = (date: Date): (Date | null)[] => {
   const start = startOfMonth(date);
   const end = endOfMonth(date);
-  const startWeek = startOfWeek(start, { weekStartsOn: 1 });
-  const endWeek = endOfWeek(end, { weekStartsOn: 1 });
-  
+  const startWeek = startOfWeek(start, { weekStartsOn: 0 });
+  const endWeek = endOfWeek(end, { weekStartsOn: 0 });
+
   const grid: (Date | null)[] = [];
   let current = startWeek;
-  
+
   while (current <= endWeek) {
     grid.push(current);
     current = addDays(current, 1);
   }
-  
+
   return grid;
 };
 
 // Get weekday labels
 export const getWeekdayLabels = (short: boolean = true): string[] => {
-  return short 
-    ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-    : ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  return short
+    ? ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+    : ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 };
 
 export {

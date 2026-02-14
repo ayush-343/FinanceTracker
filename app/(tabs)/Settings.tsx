@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
     View, Text, StyleSheet, ScrollView, TouchableOpacity,
     Switch, Alert, TextInput, KeyboardAvoidingView, Platform, Modal,
@@ -62,6 +62,7 @@ export const SettingsScreen: React.FC = () => {
     const [isExporting, setIsExporting] = useState(false);
     const [isSavingBudget, setIsSavingBudget] = useState(false);
     const [pendingTheme, setPendingTheme] = useState<boolean | null>(darkMode);
+    const pendingThemeToApply = useRef<{ mode: boolean | null } | null>(null);
 
     const currencyName = CURRENCIES.find(c => c.code === currency)?.name || currency;
     const periodName = BUDGET_PERIODS.find(p => p.key === budgetPeriod)?.label || budgetPeriod;
@@ -72,22 +73,34 @@ export const SettingsScreen: React.FC = () => {
         await setBiometricEnabled(value);
     };
 
-    const handleCurrencyChange = async (code: string) => {
-        light();
-        await setCurrency(code);
+    const handleCurrencyChange = (code: string) => {
         setShowCurrencyPicker(false);
+        setTimeout(async () => {
+            light();
+            await setCurrency(code);
+        }, 400);
     };
 
-    const handlePeriodChange = async (period: BudgetPeriod) => {
-        light();
-        await setBudgetPeriod(period);
+    const handlePeriodChange = (period: BudgetPeriod) => {
         setShowPeriodPicker(false);
+        setTimeout(async () => {
+            light();
+            await setBudgetPeriod(period);
+        }, 400);
     };
 
-    const handleThemeChange = async (mode: boolean | null) => {
+    const handleThemeChange = (mode: boolean | null) => {
         light();
-        await setDarkMode(mode);
+        pendingThemeToApply.current = { mode };
         setShowThemePicker(false);
+    };
+
+    const handleThemeModalDismiss = async () => {
+        if (pendingThemeToApply.current) {
+            const { mode } = pendingThemeToApply.current;
+            pendingThemeToApply.current = null;
+            await setDarkMode(mode);
+        }
     };
 
     const handleOpenBudgetEditor = () => {
@@ -117,12 +130,15 @@ export const SettingsScreen: React.FC = () => {
                 }
             }
 
-            const { loadCategories, loadSpendingData } = useBudgetStore.getState();
-            await loadCategories();
-            await loadSpendingData();
-
             success();
             setShowBudgetEditor(false);
+
+            // Reload data after modal closes to avoid freeze
+            setTimeout(async () => {
+                const { loadCategories, loadSpendingData } = useBudgetStore.getState();
+                await loadCategories();
+                await loadSpendingData();
+            }, 400);
         } catch (error) {
             console.error('Failed to update budget:', error);
             Alert.alert('Error', 'Failed to update budget. Please try again.');
@@ -453,7 +469,7 @@ export const SettingsScreen: React.FC = () => {
                                 <Switch
                                     value={isBiometricEnabled}
                                     onValueChange={handleBiometricToggle}
-                                    trackColor={{ false: colors.border, true: colors.accentGreen }}
+                                    trackColor={{ false: colors.border, true: '#34D399' }}
                                     thumbColor="#FFFFFF"
                                 />
                             }
@@ -559,44 +575,59 @@ export const SettingsScreen: React.FC = () => {
                 ))}
             </PickerModal>
 
-            {/* Theme Picker */}
-            <PickerModal
+            {/* Theme Picker — inline Modal to avoid unmount/remount issues with theme changes */}
+            <Modal
                 visible={showThemePicker}
-                onClose={() => setShowThemePicker(false)}
-                title="Appearance"
+                animationType="slide"
+                transparent
+                onRequestClose={() => setShowThemePicker(false)}
+                onDismiss={handleThemeModalDismiss}
             >
-                {[
-                    { key: true, label: 'Dark', icon: 'moon' },
-                    { key: false, label: 'Light', icon: 'sun' },
-                    { key: null, label: 'Use device theme', icon: 'smartphone' },
-                ].map((theme) => (
-                    <TouchableOpacity
-                        key={String(theme.key)}
-                        style={[
-                            styles.pickerOption,
-                            {
-                                backgroundColor: pendingTheme === theme.key ? `${colors.primary}15` : 'transparent',
-                                borderRadius: borderRadius.lg,
-                            },
-                        ]}
-                        onPress={() => setPendingTheme(theme.key)}
-                    >
-                        <Feather name={theme.icon as any} size={18} color={colors.text} style={{ marginRight: spacing.sm }} />
-                        <Text style={[styles.pickerOptionText, { color: colors.text }]}>
-                            {theme.label}
-                        </Text>
-                        {pendingTheme === theme.key && (
-                            <Feather name="check" size={18} color={colors.primary} />
-                        )}
-                    </TouchableOpacity>
-                ))}
-                <TouchableOpacity
-                    style={[styles.themeSaveButton, { backgroundColor: colors.primary, borderRadius: borderRadius.lg }]}
-                    onPress={() => handleThemeChange(pendingTheme)}
-                >
-                    <Text style={styles.themeSaveText}>Save preference</Text>
-                </TouchableOpacity>
-            </PickerModal>
+                <View style={styles.modalOverlay}>
+                    <TouchableOpacity style={styles.modalBackdrop} onPress={() => setShowThemePicker(false)} activeOpacity={1} />
+                    <View style={[styles.modalSheet, { backgroundColor: colors.card, borderRadius: borderRadius.xl }]}>
+                        <View style={[styles.modalHandle, { backgroundColor: colors.border }]} />
+                        <Text style={[styles.modalTitle, { color: colors.text }]}>Appearance</Text>
+                        {[
+                            { key: true, label: 'Dark', icon: 'moon' },
+                            { key: false, label: 'Light', icon: 'sun' },
+                            { key: null, label: 'Use device theme', icon: 'smartphone' },
+                        ].map((theme) => (
+                            <TouchableOpacity
+                                key={String(theme.key)}
+                                style={[
+                                    styles.pickerOption,
+                                    {
+                                        backgroundColor: pendingTheme === theme.key ? `${colors.primary}15` : 'transparent',
+                                        borderRadius: borderRadius.lg,
+                                    },
+                                ]}
+                                onPress={() => setPendingTheme(theme.key)}
+                            >
+                                <Feather name={theme.icon as any} size={18} color={colors.text} style={{ marginRight: spacing.sm }} />
+                                <Text style={[styles.pickerOptionText, { color: colors.text }]}>
+                                    {theme.label}
+                                </Text>
+                                {pendingTheme === theme.key && (
+                                    <Feather name="check" size={18} color={colors.primary} />
+                                )}
+                            </TouchableOpacity>
+                        ))}
+                        <TouchableOpacity
+                            style={[styles.themeSaveButton, { backgroundColor: colors.primary, borderRadius: borderRadius.lg }]}
+                            onPress={() => handleThemeChange(pendingTheme)}
+                        >
+                            <Text style={styles.themeSaveText}>Save preference</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.modalCancelButton, { backgroundColor: colors.background, borderRadius: borderRadius.lg }]}
+                            onPress={() => setShowThemePicker(false)}
+                        >
+                            <Text style={[styles.modalCancelText, { color: colors.text }]}>Cancel</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
 
             {/* Budget Editor Modal */}
             <Modal

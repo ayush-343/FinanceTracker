@@ -36,7 +36,9 @@ const HomeScreen: React.FC = () => {
 
     // Scan store for pending items banner
     const pendingItems = useScanStore((state) => state.pendingItems);
+    const clearAllPending = useScanStore((state) => state.clearAll);
     const [bannerDismissed, setBannerDismissed] = useState(false);
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
     // Receipt scanner hook
     const {
@@ -55,9 +57,14 @@ const HomeScreen: React.FC = () => {
     useFocusEffect(
         useCallback(() => {
             loadSpendingData();
-            setBannerDismissed(false);
         }, [])
     );
+
+    const handleRefresh = useCallback(async () => {
+        setIsRefreshing(true);
+        await refreshData();
+        setIsRefreshing(false);
+    }, [refreshData]);
 
     const periodLabel = budgetPeriod === 'weekly'
         ? getWeekRangeString(currentDate)
@@ -81,8 +88,8 @@ const HomeScreen: React.FC = () => {
                 contentContainerStyle={{ paddingBottom: 120 }}
                 refreshControl={
                     <RefreshControl
-                        refreshing={isLoading}
-                        onRefresh={refreshData}
+                        refreshing={isRefreshing}
+                        onRefresh={handleRefresh}
                         tintColor={colors.primary}
                     />
                 }
@@ -119,7 +126,10 @@ const HomeScreen: React.FC = () => {
 
                 {/* Pending Items Banner */}
                 {pendingItems.length > 0 && !bannerDismissed && (
-                    <PendingItemsBanner onDismiss={() => setBannerDismissed(true)} />
+                    <PendingItemsBanner onDismiss={() => {
+                        setBannerDismissed(true);
+                        clearAllPending();
+                    }} />
                 )}
 
                 {/* Category Grid */}
