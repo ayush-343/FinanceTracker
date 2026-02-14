@@ -43,10 +43,6 @@ export const lightColors = {
 
   // Shadow (iOS)
   shadow: '#000000',
-
-  // Extended palette
-  accentGreen: '#22C55E',
-  cardDark: '#FFFFFF',
 };
 
 export const darkColors: typeof lightColors = {
@@ -93,10 +89,6 @@ export const darkColors: typeof lightColors = {
 
   // Shadow (iOS)
   shadow: '#000000',
-
-  // Extended palette
-  accentGreen: '#34D399',
-  cardDark: '#1C1C1E',
 };
 
 export type ThemeColors = typeof lightColors;

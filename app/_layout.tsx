@@ -47,7 +47,7 @@ const AppShell: React.FC = () => {
                 // First: Initialize database
                 await initDatabase();
                 setIsDbReady(true);
-                
+
                 // Then: Load settings (requires database)
                 await loadSettings();
                 setIsSettingsReady(true);

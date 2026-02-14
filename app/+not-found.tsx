@@ -23,7 +23,7 @@ const NotFoundScreen: React.FC = () => {
                 </Text>
                 <View style={{ marginTop: spacing.xl, width: '100%' }}>
                     <Link href="/" asChild>
-                        <Button title="Go to Home" fullWidth />
+                        <Button title="Go to Home" fullWidth onPress={() => {}} />
                     </Link>
                 </View>
             </View>
