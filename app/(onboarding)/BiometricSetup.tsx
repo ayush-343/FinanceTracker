@@ -110,7 +110,7 @@ export const BiometricSetupScreen: React.FC = () => {
                             { icon: 'lock', text: 'Secure when app is in background' },
                         ].map((feature, index) => (
                             <View
-                                key={index}
+                                key={feature.icon}
                                 style={[styles.featureRow, { marginTop: index > 0 ? spacing.md : 0 }]}
                             >
                                 <View

@@ -1,9 +1,12 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
     View, Text, StyleSheet, ScrollView, TouchableOpacity,
     Switch, Alert, TextInput, KeyboardAvoidingView, Platform, Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+
+import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import * as Print from 'expo-print';
@@ -31,6 +34,117 @@ const ICON_COLORS: Record<string, string> = {
     info: '#6B7280',
     'refresh-cw': '#F97316',
     'log-out': '#EF4444',
+};
+
+// SettingRow — extracted to module scope
+const SettingRow = ({
+    icon,
+    title,
+    subtitle,
+    onPress,
+    rightComponent,
+    isLast = false,
+}: {
+    icon: string;
+    title: string;
+    subtitle?: string;
+    onPress?: () => void;
+    rightComponent?: React.ReactNode;
+    isLast?: boolean;
+}) => {
+    const { colors } = useTheme();
+    const iconColor = ICON_COLORS[icon] || colors.primary;
+    return (
+        <TouchableOpacity
+            style={[
+                styles.settingRow,
+                !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
+            ]}
+            onPress={onPress}
+            disabled={!onPress && !rightComponent}
+            activeOpacity={0.6}
+        >
+            <View style={[styles.iconBadge, { backgroundColor: `${iconColor}15` }]}>
+                <Feather name={icon as any} size={18} color={iconColor} />
+            </View>
+            <View style={styles.settingContent}>
+                <Text style={[styles.settingTitle, { color: colors.text }]}>{title}</Text>
+                {subtitle && (
+                    <Text style={[styles.settingSubtitle, { color: colors.textSecondary }]}>
+                        {subtitle}
+                    </Text>
+                )}
+            </View>
+            {rightComponent || (
+                onPress && <Feather name="chevron-right" size={18} color={colors.textTertiary} />
+            )}
+        </TouchableOpacity>
+    );
+};
+
+// SettingsGroup — extracted to module scope
+const SettingsGroup = ({
+    title,
+    children,
+}: {
+    title?: string;
+    children: React.ReactNode;
+}) => {
+    const { colors, spacing, borderRadius } = useTheme();
+    return (
+        <View style={{ marginTop: spacing.lg }}>
+            {title && (
+                <Text style={[styles.groupTitle, { color: colors.textTertiary, marginBottom: spacing.sm, marginLeft: spacing.xs }]}>
+                    {title}
+                </Text>
+            )}
+            <View
+                style={[
+                    styles.groupCard,
+                    {
+                        backgroundColor: colors.card,
+                        borderRadius: borderRadius.xl,
+                        overflow: 'hidden',
+                    },
+                ]}
+            >
+                {children}
+            </View>
+        </View>
+    );
+};
+
+// PickerModal — extracted to module scope
+const PickerModal = ({
+    visible,
+    onClose,
+    title,
+    children,
+}: {
+    visible: boolean;
+    onClose: () => void;
+    title: string;
+    children: React.ReactNode;
+}) => {
+    const { colors, borderRadius } = useTheme();
+    return (
+        <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+            <View style={styles.modalOverlay}>
+                <TouchableOpacity style={styles.modalBackdrop} onPress={onClose} activeOpacity={1} />
+                <View style={[styles.modalSheet, { backgroundColor: colors.card, borderRadius: borderRadius.xl }]}>
+                    <View style={[styles.modalHandle, { backgroundColor: colors.border }]} />
+                    <Text style={[styles.modalTitle, { color: colors.text }]}>{title}</Text>
+                    {children}
+                    <TouchableOpacity
+                        style={[styles.modalCancelButton, { backgroundColor: colors.background, borderRadius: borderRadius.lg }]}
+                        onPress={onClose}
+                    >
+                        <Text style={[styles.modalCancelText, { color: colors.text }]}>Cancel</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        </Modal>
+    );
 };
 
 export const SettingsScreen: React.FC = () => {
@@ -62,7 +176,12 @@ export const SettingsScreen: React.FC = () => {
     const [isExporting, setIsExporting] = useState(false);
     const [isSavingBudget, setIsSavingBudget] = useState(false);
     const [pendingTheme, setPendingTheme] = useState<boolean | null>(darkMode);
-    const pendingThemeToApply = useRef<{ mode: boolean | null } | null>(null);
+
+    useFocusEffect(
+        useCallback(() => {
+            useBudgetStore.getState().loadCategories();
+        }, [])
+    );
 
     const currencyName = CURRENCIES.find(c => c.code === currency)?.name || currency;
     const periodName = BUDGET_PERIODS.find(p => p.key === budgetPeriod)?.label || budgetPeriod;
@@ -89,21 +208,17 @@ export const SettingsScreen: React.FC = () => {
         }, 400);
     };
 
-    const handleThemeChange = (mode: boolean | null) => {
+    const handleThemeChange = async (mode: boolean | null) => {
         light();
-        pendingThemeToApply.current = { mode };
+        await setDarkMode(mode);
         setShowThemePicker(false);
     };
 
-    const handleThemeModalDismiss = async () => {
-        if (pendingThemeToApply.current) {
-            const { mode } = pendingThemeToApply.current;
-            pendingThemeToApply.current = null;
-            await setDarkMode(mode);
-        }
-    };
-
     const handleOpenBudgetEditor = () => {
+        if (categories.length === 0) {
+            Alert.alert('No Categories', 'Please create at least one category before setting a budget.');
+            return;
+        }
         setBudgetInput(totalBudget.toString());
         setShowBudgetEditor(true);
     };
@@ -128,6 +243,9 @@ export const SettingsScreen: React.FC = () => {
                 for (const category of categories) {
                     await updateCategory(category.id, { budget_limit: perCategory });
                 }
+            } else {
+                Alert.alert('No Categories', 'Please create at least one category before setting a budget.');
+                return;
             }
 
             success();
@@ -295,110 +413,6 @@ export const SettingsScreen: React.FC = () => {
             ]
         );
     };
-
-    // SettingRow with colored icon badge
-    const SettingRow = ({
-        icon,
-        title,
-        subtitle,
-        onPress,
-        rightComponent,
-        isLast = false,
-    }: {
-        icon: string;
-        title: string;
-        subtitle?: string;
-        onPress?: () => void;
-        rightComponent?: React.ReactNode;
-        isLast?: boolean;
-    }) => {
-        const iconColor = ICON_COLORS[icon] || colors.primary;
-        return (
-            <TouchableOpacity
-                style={[
-                    styles.settingRow,
-                    !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
-                ]}
-                onPress={onPress}
-                disabled={!onPress && !rightComponent}
-                activeOpacity={0.6}
-            >
-                <View style={[styles.iconBadge, { backgroundColor: `${iconColor}15` }]}>
-                    <Feather name={icon as any} size={18} color={iconColor} />
-                </View>
-                <View style={styles.settingContent}>
-                    <Text style={[styles.settingTitle, { color: colors.text }]}>{title}</Text>
-                    {subtitle && (
-                        <Text style={[styles.settingSubtitle, { color: colors.textSecondary }]}>
-                            {subtitle}
-                        </Text>
-                    )}
-                </View>
-                {rightComponent || (
-                    onPress && <Feather name="chevron-right" size={18} color={colors.textTertiary} />
-                )}
-            </TouchableOpacity>
-        );
-    };
-
-    // Grouped card wrapper
-    const SettingsGroup = ({
-        title,
-        children,
-    }: {
-        title?: string;
-        children: React.ReactNode;
-    }) => (
-        <View style={{ marginTop: spacing.lg }}>
-            {title && (
-                <Text style={[styles.groupTitle, { color: colors.textTertiary, marginBottom: spacing.sm, marginLeft: spacing.xs }]}>
-                    {title}
-                </Text>
-            )}
-            <View
-                style={[
-                    styles.groupCard,
-                    {
-                        backgroundColor: colors.card,
-                        borderRadius: borderRadius.xl,
-                        overflow: 'hidden',
-                    },
-                ]}
-            >
-                {children}
-            </View>
-        </View>
-    );
-
-    // Picker Modal
-    const PickerModal = ({
-        visible,
-        onClose,
-        title,
-        children,
-    }: {
-        visible: boolean;
-        onClose: () => void;
-        title: string;
-        children: React.ReactNode;
-    }) => (
-        <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-            <View style={styles.modalOverlay}>
-                <TouchableOpacity style={styles.modalBackdrop} onPress={onClose} activeOpacity={1} />
-                <View style={[styles.modalSheet, { backgroundColor: colors.card, borderRadius: borderRadius.xl }]}>
-                    <View style={[styles.modalHandle, { backgroundColor: colors.border }]} />
-                    <Text style={[styles.modalTitle, { color: colors.text }]}>{title}</Text>
-                    {children}
-                    <TouchableOpacity
-                        style={[styles.modalCancelButton, { backgroundColor: colors.background, borderRadius: borderRadius.lg }]}
-                        onPress={onClose}
-                    >
-                        <Text style={[styles.modalCancelText, { color: colors.text }]}>Cancel</Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
-        </Modal>
-    );
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
@@ -581,7 +595,6 @@ export const SettingsScreen: React.FC = () => {
                 animationType="slide"
                 transparent
                 onRequestClose={() => setShowThemePicker(false)}
-                onDismiss={handleThemeModalDismiss}
             >
                 <View style={styles.modalOverlay}>
                     <TouchableOpacity style={styles.modalBackdrop} onPress={() => setShowThemePicker(false)} activeOpacity={1} />
@@ -664,7 +677,6 @@ export const SettingsScreen: React.FC = () => {
                             keyboardType="decimal-pad"
                             placeholder="Enter budget amount"
                             placeholderTextColor={colors.textTertiary}
-                            autoFocus
                         />
 
                         <Text style={[styles.budgetModalHint, { color: colors.textTertiary }]}>

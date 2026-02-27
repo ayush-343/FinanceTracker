@@ -76,7 +76,7 @@ export const AnimatedPageIndicator: React.FC<AnimatedPageIndicatorProps> = ({
     return (
         <View style={styles.container}>
             {Array.from({ length: totalPages }).map((_, index) => (
-                <Dot key={index} index={index} scrollX={scrollX} />
+                <Dot key={`dot-${index}`} index={index} scrollX={scrollX} />
             ))}
         </View>
     );
@@ -94,5 +94,3 @@ const styles = StyleSheet.create({
         borderRadius: 4,
     },
 });
-
-export default AnimatedPageIndicator;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useReducer, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, Alert, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -16,6 +16,152 @@ const FREQUENCIES: { value: SubscriptionFrequency; label: string }[] = [
     { value: 'monthly', label: 'Monthly' },
 ];
 
+// --- Extracted sub-component: Category Picker ---
+const SubscriptionCategoryPicker: React.FC<{
+    categories: Category[];
+    selectedCategory: Category | null;
+    showCategoryPicker: boolean;
+    onTogglePicker: () => void;
+    onSelectCategory: (category: Category) => void;
+}> = ({ categories, selectedCategory, showCategoryPicker, onTogglePicker, onSelectCategory }) => {
+    const { colors, spacing, textStyles, borderRadius } = useTheme();
+
+    return (
+        <View style={{ marginTop: spacing.xl }}>
+            <Text style={[textStyles.label, { color: colors.textSecondary, marginBottom: spacing.sm }]}>
+                Category
+            </Text>
+            <TouchableOpacity
+                style={[
+                    styles.pickerButton,
+                    {
+                        backgroundColor: colors.card,
+                        borderRadius: borderRadius.lg,
+                        padding: spacing.lg,
+                        borderLeftWidth: selectedCategory ? 4 : 0,
+                        borderLeftColor: selectedCategory?.color,
+                    },
+                ]}
+                onPress={onTogglePicker}
+            >
+                {selectedCategory ? (
+                    <>
+                        <View
+                            style={[
+                                styles.iconContainer,
+                                { backgroundColor: `${selectedCategory.color}20` },
+                            ]}
+                        >
+                            <Feather
+                                name={selectedCategory.icon_name as any}
+                                size={20}
+                                color={selectedCategory.color}
+                            />
+                        </View>
+                        <Text style={[textStyles.body, { color: colors.text, marginLeft: spacing.md, flex: 1 }]}>
+                            {selectedCategory.name}
+                        </Text>
+                    </>
+                ) : (
+                    <>
+                        <Feather name="folder" size={20} color={colors.textSecondary} />
+                        <Text style={[textStyles.body, { color: colors.textSecondary, marginLeft: spacing.md, flex: 1 }]}>
+                            Select a category
+                        </Text>
+                    </>
+                )}
+                <Feather name={showCategoryPicker ? 'chevron-up' : 'chevron-down'} size={20} color={colors.textSecondary} />
+            </TouchableOpacity>
+
+            {showCategoryPicker && (
+                <View
+                    style={[
+                        styles.dropdown,
+                        {
+                            backgroundColor: colors.card,
+                            borderRadius: borderRadius.lg,
+                            marginTop: spacing.sm,
+                            padding: spacing.sm,
+                        },
+                    ]}
+                >
+                    {categories.map((category) => (
+                        <TouchableOpacity
+                            key={category.id}
+                            style={[
+                                styles.dropdownItem,
+                                {
+                                    backgroundColor: selectedCategory?.id === category.id ? `${colors.primary}10` : 'transparent',
+                                    borderRadius: borderRadius.md,
+                                    padding: spacing.md,
+                                },
+                            ]}
+                            onPress={() => onSelectCategory(category)}
+                        >
+                            <View
+                                style={[
+                                    styles.iconContainerSmall,
+                                    { backgroundColor: `${category.color}20` },
+                                ]}
+                            >
+                                <Feather name={category.icon_name as any} size={16} color={category.color} />
+                            </View>
+                            <Text style={[textStyles.body, { color: colors.text, marginLeft: spacing.sm, flex: 1 }]}>
+                                {category.name}
+                            </Text>
+                            {selectedCategory?.id === category.id && (
+                                <Feather name="check" size={18} color={colors.primary} />
+                            )}
+                        </TouchableOpacity>
+                    ))}
+                </View>
+            )}
+        </View>
+    );
+};
+
+// --- useReducer state & actions ---
+type EditSubscriptionState = {
+    subscription: Subscription | null;
+    name: string;
+    amount: string;
+    frequency: SubscriptionFrequency;
+    isActive: boolean;
+    selectedCategory: Category | null;
+    categories: Category[];
+    showCategoryPicker: boolean;
+    isSubmitting: boolean;
+    isLoading: boolean;
+};
+
+type EditSubscriptionAction =
+    | { type: 'SET_FIELD'; field: keyof EditSubscriptionState; value: any }
+    | { type: 'LOAD_DATA'; payload: Partial<EditSubscriptionState> };
+
+const initialState: EditSubscriptionState = {
+    subscription: null,
+    name: '',
+    amount: '',
+    frequency: 'monthly',
+    isActive: true,
+    selectedCategory: null,
+    categories: [],
+    showCategoryPicker: false,
+    isSubmitting: false,
+    isLoading: true,
+};
+
+function editSubscriptionReducer(state: EditSubscriptionState, action: EditSubscriptionAction): EditSubscriptionState {
+    switch (action.type) {
+        case 'SET_FIELD':
+            return { ...state, [action.field]: action.value };
+        case 'LOAD_DATA':
+            return { ...state, ...action.payload };
+        default:
+            return state;
+    }
+}
+
 export const EditSubscriptionScreen: React.FC = () => {
     const router = useRouter();
     const { subscriptionId } = useLocalSearchParams<{ subscriptionId?: string }>();
@@ -24,16 +170,8 @@ export const EditSubscriptionScreen: React.FC = () => {
     const { success, error: errorHaptic, light } = useHaptics();
     const { loadSubscriptions } = useSubscriptionStore();
 
-    const [subscription, setSubscription] = useState<Subscription | null>(null);
-    const [name, setName] = useState('');
-    const [amount, setAmount] = useState('');
-    const [frequency, setFrequency] = useState<SubscriptionFrequency>('monthly');
-    const [isActive, setIsActive] = useState(true);
-    const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [showCategoryPicker, setShowCategoryPicker] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
+    const [state, dispatch] = useReducer(editSubscriptionReducer, initialState);
+    const { subscription, name, amount, frequency, isActive, selectedCategory, categories, showCategoryPicker, isSubmitting, isLoading } = state;
 
     useEffect(() => {
         if (Number.isFinite(parsedSubscriptionId)) {
@@ -42,36 +180,33 @@ export const EditSubscriptionScreen: React.FC = () => {
     }, [parsedSubscriptionId]);
 
     const loadData = async () => {
-        setIsLoading(true);
+        dispatch({ type: 'SET_FIELD', field: 'isLoading', value: true });
         try {
-            // Load subscription
             const sub = await getSubscriptionById(parsedSubscriptionId);
-            if (sub) {
-                setSubscription(sub);
-                setName(sub.name);
-                setAmount(sub.amount.toString());
-                setFrequency(sub.frequency as SubscriptionFrequency);
-                setIsActive(sub.is_active);
-            }
-
-            // Load categories
             const cats = await getCategories();
-            setCategories(cats);
+            const selectedCat = sub ? cats.find(c => c.id === sub.category_id) || null : null;
 
-            // Set selected category
-            if (sub) {
-                const cat = cats.find(c => c.id === sub.category_id);
-                setSelectedCategory(cat || null);
-            }
-        } finally {
-            setIsLoading(false);
+            dispatch({
+                type: 'LOAD_DATA',
+                payload: {
+                    subscription: sub,
+                    name: sub?.name || '',
+                    amount: sub?.amount.toString() || '',
+                    frequency: (sub?.frequency as SubscriptionFrequency) || 'monthly',
+                    isActive: sub?.is_active ?? true,
+                    categories: cats,
+                    selectedCategory: selectedCat,
+                    isLoading: false,
+                },
+            });
+        } catch {
+            dispatch({ type: 'SET_FIELD', field: 'isLoading', value: false });
         }
     };
 
     const handleCategorySelect = (category: Category) => {
         light();
-        setSelectedCategory(category);
-        setShowCategoryPicker(false);
+        dispatch({ type: 'LOAD_DATA', payload: { selectedCategory: category, showCategoryPicker: false } });
     };
 
     const handleSubmit = async () => {
@@ -94,7 +229,7 @@ export const EditSubscriptionScreen: React.FC = () => {
             return;
         }
 
-        setIsSubmitting(true);
+        dispatch({ type: 'SET_FIELD', field: 'isSubmitting', value: true });
         try {
             await updateSubscription(parsedSubscriptionId, {
                 category_id: selectedCategory.id,
@@ -110,7 +245,7 @@ export const EditSubscriptionScreen: React.FC = () => {
             errorHaptic();
             Alert.alert('Error', 'Failed to update subscription. Please try again.');
         } finally {
-            setIsSubmitting(false);
+            dispatch({ type: 'SET_FIELD', field: 'isSubmitting', value: false });
         }
     };
 
@@ -197,7 +332,7 @@ export const EditSubscriptionScreen: React.FC = () => {
                             value={isActive}
                             onValueChange={(value) => {
                                 light();
-                                setIsActive(value);
+                                dispatch({ type: 'SET_FIELD', field: 'isActive', value });
                             }}
                             trackColor={{ false: colors.border, true: colors.primary }}
                         />
@@ -210,7 +345,7 @@ export const EditSubscriptionScreen: React.FC = () => {
                         </Text>
                         <CustomTextInput
                             value={name}
-                            onChangeText={setName}
+                            onChangeText={(v) => dispatch({ type: 'SET_FIELD', field: 'name', value: v })}
                             placeholder="e.g., Netflix, Gym Membership"
                             autoCapitalize="words"
                         />
@@ -223,7 +358,7 @@ export const EditSubscriptionScreen: React.FC = () => {
                         </Text>
                         <CustomTextInput
                             value={amount}
-                            onChangeText={setAmount}
+                            onChangeText={(v) => dispatch({ type: 'SET_FIELD', field: 'amount', value: v })}
                             placeholder="0.00"
                             keyboardType="decimal-pad"
                         />
@@ -249,7 +384,7 @@ export const EditSubscriptionScreen: React.FC = () => {
                                     ]}
                                     onPress={() => {
                                         light();
-                                        setFrequency(f.value);
+                                        dispatch({ type: 'SET_FIELD', field: 'frequency', value: f.value });
                                     }}
                                 >
                                     <Text
@@ -269,97 +404,13 @@ export const EditSubscriptionScreen: React.FC = () => {
                         </View>
                     </View>
 
-                    {/* Category Picker */}
-                    <View style={{ marginTop: spacing.xl }}>
-                        <Text style={[textStyles.label, { color: colors.textSecondary, marginBottom: spacing.sm }]}>
-                            Category
-                        </Text>
-                        <TouchableOpacity
-                            style={[
-                                styles.pickerButton,
-                                {
-                                    backgroundColor: colors.card,
-                                    borderRadius: borderRadius.lg,
-                                    padding: spacing.lg,
-                                    borderLeftWidth: selectedCategory ? 4 : 0,
-                                    borderLeftColor: selectedCategory?.color,
-                                },
-                            ]}
-                            onPress={() => setShowCategoryPicker(!showCategoryPicker)}
-                        >
-                            {selectedCategory ? (
-                                <>
-                                    <View
-                                        style={[
-                                            styles.iconContainer,
-                                            { backgroundColor: `${selectedCategory.color}20` },
-                                        ]}
-                                    >
-                                        <Feather
-                                            name={selectedCategory.icon_name as any}
-                                            size={20}
-                                            color={selectedCategory.color}
-                                        />
-                                    </View>
-                                    <Text style={[textStyles.body, { color: colors.text, marginLeft: spacing.md, flex: 1 }]}>
-                                        {selectedCategory.name}
-                                    </Text>
-                                </>
-                            ) : (
-                                <>
-                                    <Feather name="folder" size={20} color={colors.textSecondary} />
-                                    <Text style={[textStyles.body, { color: colors.textSecondary, marginLeft: spacing.md, flex: 1 }]}>
-                                        Select a category
-                                    </Text>
-                                </>
-                            )}
-                            <Feather name={showCategoryPicker ? 'chevron-up' : 'chevron-down'} size={20} color={colors.textSecondary} />
-                        </TouchableOpacity>
-
-                        {showCategoryPicker && (
-                            <View
-                                style={[
-                                    styles.dropdown,
-                                    {
-                                        backgroundColor: colors.card,
-                                        borderRadius: borderRadius.lg,
-                                        marginTop: spacing.sm,
-                                        padding: spacing.sm,
-                                    },
-                                ]}
-                            >
-                                {categories.map((category) => (
-                                    <TouchableOpacity
-                                        key={category.id}
-                                        style={[
-                                            styles.dropdownItem,
-                                            {
-                                                backgroundColor: selectedCategory?.id === category.id ? `${colors.primary}10` : 'transparent',
-                                                borderRadius: borderRadius.md,
-                                                padding: spacing.md,
-                                            },
-                                        ]}
-                                        onPress={() => handleCategorySelect(category)}
-                                    >
-                                        <View
-                                            style={[
-                                                styles.iconContainerSmall,
-                                                { backgroundColor: `${category.color}20` },
-                                            ]}
-                                        >
-                                            <Feather name={category.icon_name as any} size={16} color={category.color} />
-                                        </View>
-                                        <Text style={[textStyles.body, { color: colors.text, marginLeft: spacing.sm, flex: 1 }]}>
-                                            {category.name}
-                                        </Text>
-                                        {selectedCategory?.id === category.id && (
-                                            <Feather name="check" size={18} color={colors.primary} />
-                                        )}
-                                    </TouchableOpacity>
-                                ))}
-                            </View>
-                        )}
-                    </View>
+                    <SubscriptionCategoryPicker
+                        categories={categories}
+                        selectedCategory={selectedCategory}
+                        showCategoryPicker={showCategoryPicker}
+                        onTogglePicker={() => dispatch({ type: 'SET_FIELD', field: 'showCategoryPicker', value: !showCategoryPicker })}
+                        onSelectCategory={handleCategorySelect}
+                    />
 
                     {/* Submit Button */}
                     <View style={{ marginTop: spacing.xxl }}>

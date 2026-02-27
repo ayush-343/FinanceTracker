@@ -15,6 +15,48 @@ interface SwipeableSubcategoryProps {
     disableActions?: boolean;
 }
 
+// Extracted to module scope to avoid re-creation on each render
+const SwipeRightActions = ({
+    dragX,
+    onEdit,
+    onDelete,
+    editColor,
+    deleteColor,
+}: {
+    dragX: RNAnimated.AnimatedInterpolation<number>;
+    onEdit: () => void;
+    onDelete: () => void;
+    editColor: string;
+    deleteColor: string;
+}) => {
+    const scale = dragX.interpolate({
+        inputRange: [-100, 0],
+        outputRange: [1, 0.5],
+        extrapolate: 'clamp',
+    });
+
+    return (
+        <View style={styles.rightActions}>
+            <RectButton
+                style={[styles.actionButton, { backgroundColor: editColor }]}
+                onPress={onEdit}
+            >
+                <RNAnimated.View style={{ transform: [{ scale }] }}>
+                    <Feather name="edit-2" size={20} color="#FFF" />
+                </RNAnimated.View>
+            </RectButton>
+            <RectButton
+                style={[styles.actionButton, { backgroundColor: deleteColor }]}
+                onPress={onDelete}
+            >
+                <RNAnimated.View style={{ transform: [{ scale }] }}>
+                    <Feather name="trash-2" size={20} color="#FFF" />
+                </RNAnimated.View>
+            </RectButton>
+        </View>
+    );
+};
+
 const SwipeableSubcategoryComponent: React.FC<SwipeableSubcategoryProps> = ({
     subcategory,
     onPress,
@@ -45,37 +87,18 @@ const SwipeableSubcategoryComponent: React.FC<SwipeableSubcategoryProps> = ({
         }
     }, [onPress]);
 
-    const renderRightActions = (
-        progress: RNAnimated.AnimatedInterpolation<number>,
-        dragX: RNAnimated.AnimatedInterpolation<number>
-    ) => {
-        const scale = dragX.interpolate({
-            inputRange: [-100, 0],
-            outputRange: [1, 0.5],
-            extrapolate: 'clamp',
-        });
-
-        return (
-            <View style={styles.rightActions}>
-                <RectButton
-                    style={[styles.actionButton, { backgroundColor: colors.primary }]}
-                    onPress={handleEdit}
-                >
-                    <RNAnimated.View style={{ transform: [{ scale }] }}>
-                        <Feather name="edit-2" size={20} color="#FFF" />
-                    </RNAnimated.View>
-                </RectButton>
-                <RectButton
-                    style={[styles.actionButton, { backgroundColor: colors.error }]}
-                    onPress={handleDelete}
-                >
-                    <RNAnimated.View style={{ transform: [{ scale }] }}>
-                        <Feather name="trash-2" size={20} color="#FFF" />
-                    </RNAnimated.View>
-                </RectButton>
-            </View>
-        );
-    };
+    const renderRightActions = useCallback(
+        (_progress: RNAnimated.AnimatedInterpolation<number>, dragX: RNAnimated.AnimatedInterpolation<number>) => (
+            <SwipeRightActions
+                dragX={dragX}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                editColor={colors.primary}
+                deleteColor={colors.error}
+            />
+        ),
+        [handleEdit, handleDelete, colors.primary, colors.error]
+    );
 
     const content = (
         <Pressable

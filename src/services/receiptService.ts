@@ -8,11 +8,11 @@ const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/
 export interface ScannedItem {
     name: string;
     amount: number;
-    suggestedCategoryId: number | null; 
+    suggestedCategoryId: number | null;
     suggestedSubcategoryId: number | null;
 }
 
-export interface ScanReceiptResponse {
+interface ScanReceiptResponse {
     items: ScannedItem[];
     receiptDate: string;
 }
@@ -272,7 +272,7 @@ export const scanReceiptImage = async (imageUri: string): Promise<ScanReceiptRes
  * Test the Gemini API connection
  * @returns Promise<boolean> - true if connection is successful
  */
-export const testApiConnection = async (): Promise<boolean> => {
+const testApiConnection = async (): Promise<boolean> => {
     if (!GEMINI_API_KEY) {
         return false;
     }

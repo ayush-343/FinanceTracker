@@ -21,6 +21,81 @@ interface CategoryDistributionProps {
     initialCount?: number;
 }
 
+// Masonry layout: first item takes full width, rest in 2-column grid
+const CollapsedLayout: React.FC<{
+    displayed: CategoryItem[];
+    formatCurrency: (amount: number) => string;
+    getTileColor: (color: string) => string;
+    getIconBgColor: (color: string) => string;
+}> = ({ displayed, formatCurrency, getTileColor, getIconBgColor }) => {
+    const { colors, spacing, borderRadius } = useTheme();
+    const first = displayed[0];
+    const rest = displayed.slice(1);
+
+    return (
+        <View style={styles.masonryContainer}>
+            {/* Featured / largest category - full width */}
+            {first && (
+                <View
+                    style={[
+                        styles.featuredTile,
+                        {
+                            backgroundColor: getTileColor(first.color),
+                            borderRadius: borderRadius.xl,
+                            padding: spacing.lg,
+                            marginBottom: spacing.sm,
+                        },
+                    ]}
+                >
+                    <View style={[styles.tileIconBg, { backgroundColor: getIconBgColor(first.color), borderRadius: borderRadius.lg }]}>
+                        <Feather name={first.icon as any} size={24} color={first.color} />
+                    </View>
+                    <Text style={[styles.tileName, { color: colors.text, marginTop: spacing.sm }]} numberOfLines={1}>
+                        {first.name}
+                    </Text>
+                    <Text style={[styles.tileAmount, { color: colors.text, marginTop: 4 }]}>
+                        {formatCurrency(first.amount)}
+                    </Text>
+                    <Text style={[styles.tilePercent, { color: colors.textSecondary, marginTop: 2 }]}>
+                        {first.percentage.toFixed(1)}%
+                    </Text>
+                </View>
+            )}
+
+            {/* 2-column grid for remaining */}
+            <View style={styles.gridContainer}>
+                {rest.map((cat) => (
+                    <View
+                        key={cat.name}
+                        style={[
+                            styles.gridTile,
+                            {
+                                backgroundColor: getTileColor(cat.color),
+                                borderRadius: borderRadius.xl,
+                                padding: spacing.md,
+                                marginBottom: spacing.sm,
+                            },
+                        ]}
+                    >
+                        <View style={[styles.tileIconBgSmall, { backgroundColor: getIconBgColor(cat.color), borderRadius: borderRadius.md }]}>
+                            <Feather name={cat.icon as any} size={18} color={cat.color} />
+                        </View>
+                        <Text style={[styles.tileName, { color: colors.text, marginTop: spacing.xs, fontSize: 13 }]} numberOfLines={1}>
+                            {cat.name}
+                        </Text>
+                        <Text style={[styles.tileAmount, { color: colors.text, marginTop: 2, fontSize: 15 }]}>
+                            {formatCurrency(cat.amount)}
+                        </Text>
+                        <Text style={[styles.tilePercent, { color: colors.textSecondary, marginTop: 1 }]}>
+                            {cat.percentage.toFixed(1)}%
+                        </Text>
+                    </View>
+                ))}
+            </View>
+        </View>
+    );
+};
+
 export const CategoryDistribution: React.FC<CategoryDistributionProps> = ({
     categories,
     formatCurrency,
@@ -54,75 +129,6 @@ export const CategoryDistribution: React.FC<CategoryDistributionProps> = ({
         );
     }
 
-    // Masonry layout: first item takes full width, rest in 2-column grid
-    const renderCollapsedLayout = () => {
-        const first = displayed[0];
-        const rest = displayed.slice(1);
-
-        return (
-            <View style={styles.masonryContainer}>
-                {/* Featured / largest category - full width */}
-                {first && (
-                    <View
-                        style={[
-                            styles.featuredTile,
-                            {
-                                backgroundColor: getTileColor(first.color),
-                                borderRadius: borderRadius.xl,
-                                padding: spacing.lg,
-                                marginBottom: spacing.sm,
-                            },
-                        ]}
-                    >
-                        <View style={[styles.tileIconBg, { backgroundColor: getIconBgColor(first.color), borderRadius: borderRadius.lg }]}>
-                            <Feather name={first.icon as any} size={24} color={first.color} />
-                        </View>
-                        <Text style={[styles.tileName, { color: colors.text, marginTop: spacing.sm }]} numberOfLines={1}>
-                            {first.name}
-                        </Text>
-                        <Text style={[styles.tileAmount, { color: colors.text, marginTop: 4 }]}>
-                            {formatCurrency(first.amount)}
-                        </Text>
-                        <Text style={[styles.tilePercent, { color: colors.textSecondary, marginTop: 2 }]}>
-                            {first.percentage.toFixed(1)}%
-                        </Text>
-                    </View>
-                )}
-
-                {/* 2-column grid for remaining */}
-                <View style={styles.gridContainer}>
-                    {rest.map((cat, index) => (
-                        <View
-                            key={`${cat.name}-${index}`}
-                            style={[
-                                styles.gridTile,
-                                {
-                                    backgroundColor: getTileColor(cat.color),
-                                    borderRadius: borderRadius.xl,
-                                    padding: spacing.md,
-                                    marginBottom: spacing.sm,
-                                },
-                            ]}
-                        >
-                            <View style={[styles.tileIconBgSmall, { backgroundColor: getIconBgColor(cat.color), borderRadius: borderRadius.md }]}>
-                                <Feather name={cat.icon as any} size={18} color={cat.color} />
-                            </View>
-                            <Text style={[styles.tileName, { color: colors.text, marginTop: spacing.xs, fontSize: 13 }]} numberOfLines={1}>
-                                {cat.name}
-                            </Text>
-                            <Text style={[styles.tileAmount, { color: colors.text, marginTop: 2, fontSize: 15 }]}>
-                                {formatCurrency(cat.amount)}
-                            </Text>
-                            <Text style={[styles.tilePercent, { color: colors.textSecondary, marginTop: 1 }]}>
-                                {cat.percentage.toFixed(1)}%
-                            </Text>
-                        </View>
-                    ))}
-                </View>
-            </View>
-        );
-    };
-
     return (
         <View>
             <View style={[styles.header, { marginBottom: spacing.md }]}>
@@ -138,7 +144,12 @@ export const CategoryDistribution: React.FC<CategoryDistributionProps> = ({
                 )}
             </View>
 
-            {renderCollapsedLayout()}
+            <CollapsedLayout
+                displayed={displayed}
+                formatCurrency={formatCurrency}
+                getTileColor={getTileColor}
+                getIconBgColor={getIconBgColor}
+            />
 
             {/* Footer */}
             <View style={[styles.footer, { marginTop: spacing.sm }]}>

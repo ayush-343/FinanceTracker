@@ -1,7 +1,8 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Dimensions, Platform, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import { PieChart } from 'react-native-gifted-charts';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
@@ -95,6 +96,7 @@ const compStyles = StyleSheet.create({
 // ─── Main Screen ─────────────────────────────────────────────
 const AnalyticsScreen: React.FC = () => {
     const { colors, spacing, borderRadius } = useTheme();
+    const router = useRouter();
     const { format: formatCurrency } = useCurrency();
     const { totalSpending, totalBudget } = useBudgetStore();
 
@@ -356,9 +358,12 @@ const AnalyticsScreen: React.FC = () => {
             {/* Header */}
             <View style={[styles.header, { paddingHorizontal: spacing.lg }]}>
                 <Text style={[styles.headerTitle, { color: colors.text }]}>Financial Insights</Text>
-                <View style={[styles.profileButton, { backgroundColor: colors.card }]}>
+                <TouchableOpacity
+                    onPress={() => router.push('/(tabs)/Settings')}
+                    style={[styles.profileButton, { backgroundColor: colors.card }]}
+                >
                     <Feather name="user" size={20} color={colors.textSecondary} />
-                </View>
+                </TouchableOpacity>
             </View>
 
             <ScrollView
@@ -386,9 +391,10 @@ const AnalyticsScreen: React.FC = () => {
                 >
                     <View style={styles.cardHeaderRow}>
                         <Text style={[styles.cardTitle, { color: colors.text }]}>Spending Breakdown</Text>
-                        <View style={[styles.moreBtn, { backgroundColor: colors.background }]}>
+                        {/* TODO: Add this button to show specific breakdown */}
+                        {/* <View style={[styles.moreBtn, { backgroundColor: colors.background }]}>
                             <Feather name="more-horizontal" size={16} color={colors.textTertiary} />
-                        </View>
+                        </View> */}
                     </View>
 
                     {pieChartData.length > 0 ? (
@@ -443,7 +449,7 @@ const AnalyticsScreen: React.FC = () => {
                     {topCategories.length > 0 && (
                         <View style={{ marginTop: spacing.lg }}>
                             {topCategories.map((cat, idx) => (
-                                <View key={idx}>
+                                <View key={cat.name}>
                                     {idx > 0 && (
                                         <View style={{ height: 1, backgroundColor: colors.border || colors.background, marginHorizontal: 4 }} />
                                     )}
@@ -587,9 +593,9 @@ const AnalyticsScreen: React.FC = () => {
                     {/* Bar chart area */}
                     <View style={styles.comparisonChart}>
                         {comparisonData.length > 0 ? (
-                            comparisonData.map((d, i) => (
+                            comparisonData.map((d) => (
                                 <ComparisonBar
-                                    key={i}
+                                    key={d.label}
                                     label={d.label}
                                     current={d.current}
                                     previous={d.previous}

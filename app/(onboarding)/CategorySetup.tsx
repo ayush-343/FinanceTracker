@@ -112,7 +112,7 @@ export const CategorySetupScreen: React.FC = () => {
                 {/* Added categories */}
                 {categories.map((category, index) => (
                     <View
-                        key={index}
+                        key={category.name}
                         style={[
                             styles.categoryCard,
                             {

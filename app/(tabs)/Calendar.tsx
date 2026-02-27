@@ -188,7 +188,7 @@ const CalendarScreen: React.FC = () => {
             <View style={[styles.weekdayRow, { paddingHorizontal: spacing.lg, marginTop: spacing.md }]}>
                 {weekdayLabels.map((label, index) => (
                     <Text
-                        key={`${label}-${index}`}
+                        key={index}
                         style={[styles.weekdayLabel, { color: isDark ? '#64748b' : '#94a3b8' }]}
                     >
                         {label}
@@ -200,7 +200,7 @@ const CalendarScreen: React.FC = () => {
             <View style={[styles.calendarGrid, { paddingHorizontal: spacing.md, marginTop: spacing.xs }]}>
                 {calendarGrid.map((date, index) => (
                     <CalendarDay
-                        key={index}
+                        key={date ? date.getTime() : `empty-${index}`}
                         date={date || new Date(0)}
                         currentMonth={currentMonth}
                         spending={date ? dailySpending.get(format(date, 'yyyy-MM-dd')) || 0 : 0}

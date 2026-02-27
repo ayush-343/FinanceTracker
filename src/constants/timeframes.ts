@@ -12,7 +12,7 @@ export const BUDGET_PERIODS = [
   { key: 'monthly', label: 'Monthly' },
 ] as const;
 
-export const SUBSCRIPTION_FREQUENCIES = [
+const SUBSCRIPTION_FREQUENCIES = [
   { key: 'daily', label: 'Daily' },
   { key: 'weekly', label: 'Weekly' },
   { key: 'monthly', label: 'Monthly' },

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -42,52 +42,52 @@ export const AddTransactionScreen: React.FC = () => {
     const [showSubcategoryPicker, setShowSubcategoryPicker] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // Initialize form fields from URL params (one-time setup, not reactive)
+    const paramsInitialized = useRef(false);
+
     useEffect(() => {
         loadCategories();
     }, []);
 
     useEffect(() => {
-        if (typeof itemNameParam === 'string') {
-            setItemName(itemNameParam);
-        }
-        if (typeof amountParam === 'string') {
-            setAmount(amountParam);
-        }
-        if (typeof notesParam === 'string') {
-            setDescription(notesParam);
-        }
+        if (paramsInitialized.current) return;
+        if (categories.length === 0) return;
+
+        paramsInitialized.current = true;
+
+        // Apply URL params
+        if (typeof itemNameParam === 'string') setItemName(itemNameParam);
+        if (typeof amountParam === 'string') setAmount(amountParam);
+        if (typeof notesParam === 'string') setDescription(notesParam);
         if (typeof dateParam === 'string') {
             const parsed = new Date(`${dateParam}T00:00:00`);
-            if (!Number.isNaN(parsed.getTime())) {
-                setDate(parsed);
-            }
+            if (!Number.isNaN(parsed.getTime())) setDate(parsed);
         }
-    }, [itemNameParam, amountParam, notesParam, dateParam]);
 
-    useEffect(() => {
+        // Pre-select category/subcategory from URL params
         if (parsedCategoryId) {
             const category = categories.find(c => c.id === parsedCategoryId);
             if (category) {
                 setSelectedCategory(category);
-                loadSubcategories(category.id);
+                loadSubcategories(category.id).then(subs => {
+                    if (parsedSubcategoryId) {
+                        const subcategory = subs.find(s => s.id === parsedSubcategoryId);
+                        if (subcategory) setSelectedSubcategory(subcategory);
+                    }
+                });
             }
         }
-        if (parsedSubcategoryId) {
-            const subcategory = subcategories.find(s => s.id === parsedSubcategoryId);
-            if (subcategory) {
-                setSelectedSubcategory(subcategory);
-            }
-        }
-    }, [parsedCategoryId, parsedSubcategoryId, categories, subcategories]);
+    }, [categories, parsedCategoryId, parsedSubcategoryId, itemNameParam, amountParam, notesParam, dateParam]);
 
     const loadCategories = async () => {
         const cats = await getCategories();
         setCategories(cats);
     };
 
-    const loadSubcategories = async (categoryId: number) => {
+    const loadSubcategories = async (categoryId: number): Promise<Subcategory[]> => {
         const subs = await getSubcategories(categoryId);
         setSubcategories(subs);
+        return subs;
     };
 
     const handleCategorySelect = (category: Category) => {

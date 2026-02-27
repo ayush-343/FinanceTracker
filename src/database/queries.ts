@@ -125,9 +125,6 @@ export const createSubcategory = async (subcategory: Omit<Subcategory, 'id'>): P
   });
 };
 
-// Alias for createSubcategory for backward compatibility
-export const insertSubcategory = createSubcategory;
-
 export const updateSubcategory = async (id: number, subcategory: Partial<Omit<Subcategory, 'id'>>): Promise<void> => {
   return withDatabase(async (db) => {
     const updates: string[] = [];
@@ -170,7 +167,7 @@ export const createItem = async (item: Omit<Item, 'id'>): Promise<number> => {
   });
 };
 
-export const updateItem = async (id: number, item: Partial<Omit<Item, 'id'>>): Promise<void> => {
+const updateItem = async (id: number, item: Partial<Omit<Item, 'id'>>): Promise<void> => {
   return withDatabase(async (db) => {
     const updates: string[] = [];
     const values: any[] = [];
@@ -185,7 +182,7 @@ export const updateItem = async (id: number, item: Partial<Omit<Item, 'id'>>): P
   });
 };
 
-export const deleteItem = async (id: number): Promise<void> => {
+const deleteItem = async (id: number): Promise<void> => {
   return withDatabase(async (db) => {
     await db.runAsync('DELETE FROM items WHERE id = ?', [id]);
   });
@@ -306,16 +303,16 @@ export const getTransactionsByCategory = async (categoryId: number, startDate?: 
       LEFT JOIN items i ON t.item_id = i.id
       WHERE t.category_id = ?
     `;
-    
+
     const params: (number | string)[] = [categoryId];
-    
+
     if (startDate && endDate) {
       query += ` AND t.date >= ? AND t.date <= ?`;
       params.push(startDate, endDate);
     }
-    
+
     query += ` ORDER BY t.date DESC, t.created_at DESC`;
-    
+
     return db.getAllAsync<TransactionWithDetails>(query, params);
   });
 };
@@ -453,7 +450,7 @@ export const isSubscriptionSkipped = async (subscriptionId: number, date: string
 
 // ============ BARCODE CACHE ============
 
-export interface BarcodeCache {
+interface BarcodeCache {
   id: number;
   barcode: string;
   product_name: string;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useReducer, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -17,19 +17,50 @@ const FREQUENCIES: { value: SubscriptionFrequency; label: string; description: s
     { value: 'monthly', label: 'Monthly', description: 'Once a month' },
 ];
 
+// --- useReducer state & actions ---
+type AddSubscriptionState = {
+    name: string;
+    amount: string;
+    frequency: SubscriptionFrequency;
+    selectedCategory: Category | null;
+    categories: Category[];
+    showCategoryPicker: boolean;
+    isSubmitting: boolean;
+};
+
+type AddSubscriptionAction =
+    | { type: 'SET_FIELD'; field: keyof AddSubscriptionState; value: any }
+    | { type: 'LOAD_DATA'; payload: Partial<AddSubscriptionState> };
+
+const initialState: AddSubscriptionState = {
+    name: '',
+    amount: '',
+    frequency: 'monthly',
+    selectedCategory: null,
+    categories: [],
+    showCategoryPicker: false,
+    isSubmitting: false,
+};
+
+function addSubscriptionReducer(state: AddSubscriptionState, action: AddSubscriptionAction): AddSubscriptionState {
+    switch (action.type) {
+        case 'SET_FIELD':
+            return { ...state, [action.field]: action.value };
+        case 'LOAD_DATA':
+            return { ...state, ...action.payload };
+        default:
+            return state;
+    }
+}
+
 export const AddSubscriptionScreen: React.FC = () => {
     const router = useRouter();
     const { colors, spacing, textStyles, borderRadius } = useTheme();
     const { success, error: errorHaptic, light } = useHaptics();
     const { addSubscription } = useSubscriptionStore();
 
-    const [name, setName] = useState('');
-    const [amount, setAmount] = useState('');
-    const [frequency, setFrequency] = useState<SubscriptionFrequency>('monthly');
-    const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [showCategoryPicker, setShowCategoryPicker] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [state, dispatch] = useReducer(addSubscriptionReducer, initialState);
+    const { name, amount, frequency, selectedCategory, categories, showCategoryPicker, isSubmitting } = state;
 
     useEffect(() => {
         loadCategories();
@@ -37,13 +68,12 @@ export const AddSubscriptionScreen: React.FC = () => {
 
     const loadCategories = async () => {
         const cats = await getCategories();
-        setCategories(cats);
+        dispatch({ type: 'SET_FIELD', field: 'categories', value: cats });
     };
 
     const handleCategorySelect = (category: Category) => {
         light();
-        setSelectedCategory(category);
-        setShowCategoryPicker(false);
+        dispatch({ type: 'LOAD_DATA', payload: { selectedCategory: category, showCategoryPicker: false } });
     };
 
     const handleSubmit = async () => {
@@ -66,7 +96,7 @@ export const AddSubscriptionScreen: React.FC = () => {
             return;
         }
 
-        setIsSubmitting(true);
+        dispatch({ type: 'SET_FIELD', field: 'isSubmitting', value: true });
         try {
             await addSubscription({
                 category_id: selectedCategory.id,
@@ -81,7 +111,7 @@ export const AddSubscriptionScreen: React.FC = () => {
             errorHaptic();
             Alert.alert('Error', 'Failed to create subscription. Please try again.');
         } finally {
-            setIsSubmitting(false);
+            dispatch({ type: 'SET_FIELD', field: 'isSubmitting', value: false });
         }
     };
 
@@ -112,7 +142,7 @@ export const AddSubscriptionScreen: React.FC = () => {
                         </Text>
                         <CustomTextInput
                             value={name}
-                            onChangeText={setName}
+                            onChangeText={(v) => dispatch({ type: 'SET_FIELD', field: 'name', value: v })}
                             placeholder="e.g., Netflix, Gym Membership"
                             autoCapitalize="words"
                         />
@@ -125,7 +155,7 @@ export const AddSubscriptionScreen: React.FC = () => {
                         </Text>
                         <CustomTextInput
                             value={amount}
-                            onChangeText={setAmount}
+                            onChangeText={(v) => dispatch({ type: 'SET_FIELD', field: 'amount', value: v })}
                             placeholder="0.00"
                             keyboardType="decimal-pad"
                         />
@@ -151,7 +181,7 @@ export const AddSubscriptionScreen: React.FC = () => {
                                     ]}
                                     onPress={() => {
                                         light();
-                                        setFrequency(f.value);
+                                        dispatch({ type: 'SET_FIELD', field: 'frequency', value: f.value });
                                     }}
                                 >
                                     <Text
@@ -199,7 +229,7 @@ export const AddSubscriptionScreen: React.FC = () => {
                                     borderLeftColor: selectedCategory?.color,
                                 },
                             ]}
-                            onPress={() => setShowCategoryPicker(!showCategoryPicker)}
+                            onPress={() => dispatch({ type: 'SET_FIELD', field: 'showCategoryPicker', value: !showCategoryPicker })}
                         >
                             {selectedCategory ? (
                                 <>

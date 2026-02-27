@@ -14,7 +14,7 @@ interface ColorPickerModalProps {
 }
 
 // Inline version props
-export interface ColorPickerProps {
+interface ColorPickerProps {
     selectedColor: string;
     onSelectColor: (color: string) => void;
 }

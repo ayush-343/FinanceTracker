@@ -1,8 +1,5 @@
 export { ProgressBar } from './ProgressBar';
 export { CategoryCard } from './CategoryCard';
-export { CircularProgress } from './CircularProgress';
-export { BudgetSummaryCard } from './BudgetSummaryCard';
-export { CustomTabBar } from './CustomTabBar';
 export { SwipeableTransaction } from './SwipeableTransaction';
 export { SwipeableSubcategory } from './SwipeableSubcategory';
 export { IconPicker, IconPickerModal } from './IconPicker';
@@ -17,11 +14,7 @@ export { EmptyState } from './EmptyState';
 export { PendingItemsBanner } from './PendingItemsBanner';
 export { ScanningModal } from './ScanningModal';
 export { BarcodeScannerModal } from './BarcodeScannerModal';
-export { OnboardingSlide } from './OnboardingSlide';
-export type { OnboardingSlideData } from './OnboardingSlide';
-export { AnimatedPageIndicator } from './AnimatedPageIndicator';
-export { TransactionActionSheet, showActionSheet } from './ActionSheet';
-export type { ActionSheetOption } from './ActionSheet';
+export { showActionSheet } from './ActionSheet';
 
 // Import sheets registration (side-effect import)
 import './sheets';

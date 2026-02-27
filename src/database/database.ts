@@ -22,12 +22,12 @@ export const withDatabase = async <T>(
   operation: (db: SQLite.SQLiteDatabase) => Promise<T>
 ): Promise<T> => {
   const database = await getDatabase();
-  
+
   if (Platform.OS === 'android') {
     // Serialize operations on Android to prevent NullPointerException
     const result = operationQueue.then(async () => {
       let lastError: Error | null = null;
-      
+
       for (let attempt = 1; attempt <= 3; attempt++) {
         try {
           return await operation(database);
@@ -44,44 +44,44 @@ export const withDatabase = async <T>(
       }
       throw lastError;
     });
-    
-    operationQueue = result.catch(() => {});
+
+    operationQueue = result.catch(() => { });
     return result;
   }
-  
+
   return operation(database);
 };
 
 export const getDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
   // Return existing database if already initialized and verified
   if (db && isInitialized) return db;
-  
+
   // If currently initializing, wait for the existing promise
   if (isInitializing && initPromise) {
     return initPromise;
   }
-  
+
   // Start initialization
   isInitializing = true;
   initPromise = (async () => {
     let lastError: Error | null = null;
-    
+
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       try {
         // Add delay on Android to ensure native modules are ready
         if (Platform.OS === 'android') {
           await delay(RETRY_DELAY_MS * attempt);
         }
-        
+
         console.log(`[Database] Opening database (attempt ${attempt}/${MAX_RETRIES})...`);
         const database = await SQLite.openDatabaseAsync(DATABASE_NAME);
-        
+
         // Verify database is working with a simple query
         await database.execAsync('SELECT 1');
-        
+
         console.log('[Database] Database opened, initializing schema...');
         await initializeDatabase(database);
-        
+
         console.log('[Database] Database initialized successfully');
         db = database;
         isInitialized = true;
@@ -89,24 +89,24 @@ export const getDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
       } catch (error) {
         lastError = error as Error;
         console.warn(`[Database] Initialization attempt ${attempt} failed:`, error);
-        
+
         // Reset for retry
         if (attempt < MAX_RETRIES) {
           await delay(RETRY_DELAY_MS * attempt);
         }
       }
     }
-    
+
     // All retries failed
     isInitializing = false;
     initPromise = null;
     throw lastError || new Error('Failed to initialize database');
   })();
-  
+
   return initPromise;
 };
 
-export const isDatabaseReady = (): boolean => isInitialized;
+const isDatabaseReady = (): boolean => isInitialized;
 
 const initializeDatabase = async (database: SQLite.SQLiteDatabase): Promise<void> => {
   // Enable foreign keys
@@ -245,7 +245,7 @@ const initializeDatabase = async (database: SQLite.SQLiteDatabase): Promise<void
   `);
 };
 
-export const closeDatabase = async (): Promise<void> => {
+const closeDatabase = async (): Promise<void> => {
   if (db) {
     await db.closeAsync();
     db = null;

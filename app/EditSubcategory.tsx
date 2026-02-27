@@ -27,15 +27,15 @@ export const EditSubcategoryScreen: React.FC = () => {
     const [subcategory, setSubcategory] = useState<Subcategory | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    if (!Number.isFinite(parsedSubcategoryId) || !Number.isFinite(parsedCategoryId)) {
-        return null;
-    }
-
     useEffect(() => {
         if (Number.isFinite(parsedSubcategoryId) && Number.isFinite(parsedCategoryId)) {
             loadData();
         }
     }, [parsedSubcategoryId, parsedCategoryId]);
+
+    if (!Number.isFinite(parsedSubcategoryId) || !Number.isFinite(parsedCategoryId)) {
+        return null;
+    }
 
     const loadData = async () => {
         const category = await getCategoryById(parsedCategoryId);
@@ -158,7 +158,6 @@ export const EditSubcategoryScreen: React.FC = () => {
                             onChangeText={setName}
                             placeholder="e.g., Groceries, Restaurants"
                             autoCapitalize="words"
-                            autoFocus
                         />
                     </View>
 

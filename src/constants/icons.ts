@@ -26,4 +26,4 @@ export const CATEGORY_ICONS = [
   { name: 'activity', label: 'Fitness' },
 ] as const;
 
-export type CategoryIconName = typeof CATEGORY_ICONS[number]['name'];
+type CategoryIconName = typeof CATEGORY_ICONS[number]['name'];

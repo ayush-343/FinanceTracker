@@ -20,6 +20,49 @@ interface SubscriptionWithCategory extends Subscription {
     category_icon: string;
 }
 
+// Extracted to module scope to avoid re-creation on each render
+const SubscriptionSwipeActions = ({
+    dragX,
+    sub,
+    editColor,
+    deleteColor,
+    onEdit,
+    onDelete,
+}: {
+    dragX: RNAnimated.AnimatedInterpolation<number>;
+    sub: SubscriptionWithCategory;
+    editColor: string;
+    deleteColor: string;
+    onEdit: () => void;
+    onDelete: () => void;
+}) => {
+    const scale = dragX.interpolate({
+        inputRange: [-100, 0],
+        outputRange: [1, 0.5],
+        extrapolate: 'clamp',
+    });
+
+    return (
+        <View style={styles.rightActions}>
+            <RectButton
+                style={[styles.actionButton, { backgroundColor: editColor }]}
+                onPress={onEdit}
+            >
+                <RNAnimated.View style={{ transform: [{ scale }] }}>
+                    <Feather name="edit-2" size={20} color="#FFF" />
+                </RNAnimated.View>
+            </RectButton>
+            <RectButton
+                style={[styles.actionButton, { backgroundColor: deleteColor }]}
+                onPress={onDelete}
+            >
+                <RNAnimated.View style={{ transform: [{ scale }] }}>
+                    <Feather name="trash-2" size={20} color="#FFF" />
+                </RNAnimated.View>
+            </RectButton>
+        </View>
+    );
+};
 const SubscriptionsScreen: React.FC = () => {
     const router = useRouter();
     const { colors, spacing, textStyles, borderRadius } = useTheme();
@@ -91,46 +134,28 @@ const SubscriptionsScreen: React.FC = () => {
         }
     }, 0);
 
-    const renderRightActions = (sub: SubscriptionWithCategory) => (
-        progress: RNAnimated.AnimatedInterpolation<number>,
+    const renderRightActions = useCallback((sub: SubscriptionWithCategory) => (
+        _progress: RNAnimated.AnimatedInterpolation<number>,
         dragX: RNAnimated.AnimatedInterpolation<number>
-    ) => {
-        const scale = dragX.interpolate({
-            inputRange: [-100, 0],
-            outputRange: [1, 0.5],
-            extrapolate: 'clamp',
-        });
-
-        return (
-            <View style={styles.rightActions}>
-                <RectButton
-                    style={[styles.actionButton, { backgroundColor: colors.primary }]}
-                    onPress={() => {
-                        light();
-                        router.push({
-                            pathname: '/EditSubscription',
-                            params: { subscriptionId: String(sub.id) },
-                        });
-                    }}
-                >
-                    <RNAnimated.View style={{ transform: [{ scale }] }}>
-                        <Feather name="edit-2" size={20} color="#FFF" />
-                    </RNAnimated.View>
-                </RectButton>
-                <RectButton
-                    style={[styles.actionButton, { backgroundColor: colors.error }]}
-                    onPress={() => {
-                        error();
-                        handleDelete(sub.id, sub.name);
-                    }}
-                >
-                    <RNAnimated.View style={{ transform: [{ scale }] }}>
-                        <Feather name="trash-2" size={20} color="#FFF" />
-                    </RNAnimated.View>
-                </RectButton>
-            </View>
-        );
-    };
+    ) => (
+        <SubscriptionSwipeActions
+            dragX={dragX}
+            sub={sub}
+            editColor={colors.primary}
+            deleteColor={colors.error}
+            onEdit={() => {
+                light();
+                router.push({
+                    pathname: '/EditSubscription',
+                    params: { subscriptionId: String(sub.id) },
+                });
+            }}
+            onDelete={() => {
+                error();
+                handleDelete(sub.id, sub.name);
+            }}
+        />
+    ), [colors.primary, colors.error, light, error, router, handleDelete]);
 
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>

@@ -59,5 +59,3 @@ export const useTheme = (): Theme => {
     return context;
 };
 
-export { lightColors, darkColors };
-export type { ThemeColors };

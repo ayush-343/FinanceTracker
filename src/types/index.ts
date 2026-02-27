@@ -100,27 +100,27 @@ export interface SubscriptionWithCategory extends Subscription {
 }
 
 // Chart data types
-export interface ChartDataPoint {
+interface ChartDataPoint {
   value: number;
   label: string;
   frontColor?: string;
 }
 
-export interface PieChartDataPoint {
+interface PieChartDataPoint {
   value: number;
   color: string;
   text: string;
 }
 
 // Navigation types
-export type OnboardingStackParamList = {
+type OnboardingStackParamList = {
   Welcome: undefined;
   CurrencySetup: undefined;
   BiometricSetup: undefined;
   CategorySetup: undefined;
 };
 
-export type MainTabParamList = {
+type MainTabParamList = {
   Home: undefined;
   Calendar: undefined;
   Analytics: undefined;
@@ -128,7 +128,7 @@ export type MainTabParamList = {
   Settings: undefined;
 };
 
-export type RootStackParamList = {
+type RootStackParamList = {
   Onboarding: undefined;
   Main: undefined;
   Category: { categoryId: number; categoryName: string };

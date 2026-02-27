@@ -14,7 +14,7 @@ interface IconPickerModalProps {
 }
 
 // Inline version props
-export interface IconPickerProps {
+interface IconPickerProps {
     selectedIcon: string;
     selectedColor?: string;
     onSelectIcon: (iconName: string) => void;

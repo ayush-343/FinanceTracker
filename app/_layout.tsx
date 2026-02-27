@@ -26,11 +26,10 @@ const AppShell: React.FC = () => {
     // Memoize route checks to prevent unnecessary re-renders
     const segmentFirst = segments[0];
     const segmentSecond = (segments as string[])[1];
-    const isInOnboarding = useMemo(() => segmentFirst === '(onboarding)', [segmentFirst]);
-    const isInSettings = useMemo(() => segmentFirst === '(tabs)' && segmentSecond === 'Settings', [segmentFirst, segmentSecond]);
+    const isInOnboarding = segmentFirst === '(onboarding)';
+    const isInSettings = segmentFirst === '(tabs)' && segmentSecond === 'Settings';
 
-    // Memoize StatusBar style to prevent unnecessary updates
-    const statusBarStyle = useMemo(() => isDark ? 'light' : 'dark', [isDark]);
+    const statusBarStyle = isDark ? 'light' : 'dark';
 
     // Memoize Stack screenOptions to prevent re-renders
     const stackScreenOptions = useMemo(() => ({

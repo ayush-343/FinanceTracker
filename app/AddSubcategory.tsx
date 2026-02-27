@@ -8,7 +8,7 @@ import { Button, TextInput as CustomTextInput } from '../src/components';
 import { useBudgetStore } from '../src/store';
 import { useHaptics } from '../src/hooks';
 import { Category } from '../src/types';
-import { getCategoryById, insertSubcategory } from '../src/database';
+import { getCategoryById, createSubcategory } from '../src/database';
 
 export const AddSubcategoryScreen: React.FC = () => {
     const router = useRouter();
@@ -23,15 +23,15 @@ export const AddSubcategoryScreen: React.FC = () => {
     const [parentCategory, setParentCategory] = useState<Category | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    if (!Number.isFinite(parsedCategoryId)) {
-        return null;
-    }
-
     useEffect(() => {
         if (Number.isFinite(parsedCategoryId)) {
             loadParentCategory();
         }
     }, [parsedCategoryId]);
+
+    if (!Number.isFinite(parsedCategoryId)) {
+        return null;
+    }
 
     const loadParentCategory = async () => {
         const category = await getCategoryById(parsedCategoryId);
@@ -54,7 +54,7 @@ export const AddSubcategoryScreen: React.FC = () => {
 
         setIsSubmitting(true);
         try {
-            await insertSubcategory({
+            await createSubcategory({
                 category_id: parsedCategoryId,
                 name: name.trim(),
                 budget_limit: allocatedBudget ? parseFloat(allocatedBudget) : 0,
@@ -138,7 +138,6 @@ export const AddSubcategoryScreen: React.FC = () => {
                             onChangeText={setName}
                             placeholder="e.g., Groceries, Restaurants"
                             autoCapitalize="words"
-                            autoFocus
                         />
                         <Text style={[textStyles.labelSmall, { color: colors.textSecondary, marginTop: spacing.sm }]}>
                             Subcategories help organize transactions within a category
@@ -166,7 +165,7 @@ export const AddSubcategoryScreen: React.FC = () => {
                         <View style={styles.suggestions}>
                             {getSuggestionsForCategory(parentCategory?.name || '').map((suggestion, i) => (
                                 <TouchableOpacity
-                                    key={i}
+                                    key={suggestion}
                                     style={[
                                         styles.suggestion,
                                         {

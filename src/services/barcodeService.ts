@@ -153,7 +153,7 @@ const lookupUPCitemdb = async (barcode: string): Promise<BarcodeProduct | null> 
  */
 export const lookupBarcode = async (barcode: string): Promise<BarcodeProduct> => {
     // Clean up expired cache entries periodically
-    await cleanupExpiredCache().catch(() => {});
+    await cleanupExpiredCache().catch(() => { });
 
     // Step 1: Check local cache
     const cached = await getCachedBarcode(barcode);
@@ -201,10 +201,10 @@ export const lookupBarcode = async (barcode: string): Promise<BarcodeProduct> =>
  * Validate barcode format
  * Supports EAN-13, EAN-8, UPC-A, UPC-E
  */
-export const isValidBarcode = (barcode: string): boolean => {
+const isValidBarcode = (barcode: string): boolean => {
     // Remove any whitespace
     const cleaned = barcode.trim();
-    
+
     // Check if it's numeric and valid length
     if (!/^\d+$/.test(cleaned)) {
         return false;

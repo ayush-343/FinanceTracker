@@ -21,7 +21,7 @@ export const CATEGORY_COLORS = [
 ] as const;
 
 // Progress bar color thresholds
-export const PROGRESS_COLORS = {
+const PROGRESS_COLORS = {
   safe: '#22C55E',      // Green - 0-50%
   warning: '#EAB308',   // Yellow - 50-80%
   danger: '#EF4444',    // Red - 80-100%

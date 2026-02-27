@@ -7,7 +7,9 @@ import Animated, {
     withSpring,
 } from 'react-native-reanimated';
 import { useTheme } from '../theme';
+
 import { useCurrency } from '../hooks';
+import { useSettingsStore } from '../store';
 
 interface BudgetSummaryCardProps {
     totalSpending: number;
@@ -22,6 +24,7 @@ export const BudgetSummaryCard: React.FC<BudgetSummaryCardProps> = ({
 }) => {
     const { colors } = useTheme();
     const { format } = useCurrency();
+    const { budgetPeriod } = useSettingsStore.getState();
 
     const percentage = totalBudget > 0 ? Math.min((totalSpending / totalBudget) * 100, 100) : 0;
     const remaining = totalBudget - totalSpending;
@@ -50,7 +53,9 @@ export const BudgetSummaryCard: React.FC<BudgetSummaryCardProps> = ({
                     <View style={styles.glowLeft} />
 
                     <View style={styles.content}>
-                        <Text style={styles.label}>TOTAL MONTHLY BUDGET</Text>
+                        <Text style={styles.label}>
+                            TOTAL {budgetPeriod === 'weekly' ? 'WEEKLY' : 'MONTHLY'} BUDGET
+                        </Text>
                         <View style={styles.amountRow}>
                             <Text style={styles.amount}>{format(totalSpending)}</Text>
                             <Text style={styles.totalBudget}> / {format(totalBudget)}</Text>

@@ -43,77 +43,73 @@ const ReviewScannedItemsScreen: React.FC = () => {
     const totalItems = pendingItems.length;
 
     useEffect(() => {
-        loadCategories();
-        // Parse receipt date - validate it's reasonable (within last 30 days)
-        if (receiptDate) {
-            const parsed = new Date(`${receiptDate}T00:00:00`);
-            const today = new Date();
-            const thirtyDaysAgo = new Date();
-            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const init = async () => {
+            const cats = await loadCategories();
+            // Parse receipt date - validate it's reasonable (within last 30 days)
+            if (receiptDate) {
+                const parsed = new Date(`${receiptDate}T00:00:00`);
+                const today = new Date();
+                const thirtyDaysAgo = new Date();
+                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-            if (!Number.isNaN(parsed.getTime())) {
-                // If the date is in the future or more than 30 days old, use today's date
-                if (parsed > today || parsed < thirtyDaysAgo) {
-                    console.log('[ReviewScannedItems] Receipt date out of range, using today:', receiptDate);
-                    setDate(today);
-                    setReceiptDate(format(today, 'yyyy-MM-dd')); 2
-                    // Alert user about the date correction
-                    Alert.alert(
-                        'Date Adjusted',
-                        `The receipt date (${format(parsed, 'MMM d, yyyy')}) seems incorrect. We've set it to today's date. You can change it if needed.`,
-                        [{ text: 'OK' }]
-                    );
-                } else {
-                    setDate(parsed);
-                }
-            }
-        }
-    }, [receiptDate]);
-
-    // Pre-select category based on AI suggestion when item changes
-    useEffect(() => {
-        if (currentItem && categories.length > 0) {
-            if (currentItem.suggestedCategoryId) {
-                const suggestedCategory = categories.find(c => c.id === currentItem.suggestedCategoryId);
-                if (suggestedCategory) {
-                    setSelectedCategory(suggestedCategory);
-                    loadSubcategories(suggestedCategory.id);
-
-                    // Pre-select subcategory if suggested
-                    if (currentItem.suggestedSubcategoryId) {
-                        // Subcategories will be loaded async, so we handle this in a separate effect
+                if (!Number.isNaN(parsed.getTime())) {
+                    if (parsed > today || parsed < thirtyDaysAgo) {
+                        console.log('[ReviewScannedItems] Receipt date out of range, using today:', receiptDate);
+                        setDate(today);
+                        setReceiptDate(format(today, 'yyyy-MM-dd'));
+                        Alert.alert(
+                            'Date Adjusted',
+                            `The receipt date (${format(parsed, 'MMM d, yyyy')}) seems incorrect. We've set it to today's date. You can change it if needed.`,
+                            [{ text: 'OK' }]
+                        );
+                    } else {
+                        setDate(parsed);
                     }
-                } else {
-                    setSelectedCategory(null);
-                    setSubcategories([]);
                 }
-            } else {
-                setSelectedCategory(null);
-                setSelectedSubcategory(null);
-                setSubcategories([]);
             }
-        }
-    }, [currentItem?.id, categories]);
-
-    // Pre-select subcategory when subcategories load
-    useEffect(() => {
-        if (currentItem?.suggestedSubcategoryId && subcategories.length > 0) {
-            const suggestedSub = subcategories.find(s => s.id === currentItem.suggestedSubcategoryId);
-            if (suggestedSub) {
-                setSelectedSubcategory(suggestedSub);
+            // Pre-select category for the first item
+            if (currentItem) {
+                await preselectCategoryForItem(currentItem, cats);
             }
-        }
-    }, [subcategories, currentItem?.suggestedSubcategoryId]);
+        };
+        init();
+    }, []);
 
     const loadCategories = async () => {
         const cats = await getCategories();
         setCategories(cats);
+        return cats;
     };
 
     const loadSubcategories = async (categoryId: number) => {
         const subs = await getSubcategories(categoryId);
         setSubcategories(subs);
         setSelectedSubcategory(null);
+        return subs;
+    };
+
+    // Pre-select category/subcategory for a given item using the loaded categories
+    const preselectCategoryForItem = async (item: typeof currentItem, cats: Category[]) => {
+        if (!item || cats.length === 0) return;
+
+        if (item.suggestedCategoryId) {
+            const suggestedCategory = cats.find(c => c.id === item.suggestedCategoryId);
+            if (suggestedCategory) {
+                setSelectedCategory(suggestedCategory);
+                const subs = await loadSubcategories(suggestedCategory.id);
+                if (item.suggestedSubcategoryId) {
+                    const suggestedSub = subs.find(s => s.id === item.suggestedSubcategoryId);
+                    if (suggestedSub) setSelectedSubcategory(suggestedSub);
+                }
+            } else {
+                setSelectedCategory(null);
+                setSubcategories([]);
+            }
+        } else {
+            setSelectedCategory(null);
+            setSelectedSubcategory(null);
+            setSubcategories([]);
+        }
     };
 
     const handleCategorySelect = (category: Category) => {
@@ -181,9 +177,15 @@ const ReviewScannedItemsScreen: React.FC = () => {
             success();
             removeItem(currentItem.id);
 
-            // Reset selections for next item
+            // Reset selections for next item and pre-select category
             setShowCategoryPicker(false);
             setShowSubcategoryPicker(false);
+
+            // Pre-select for next item (after removal, pendingItems[1] becomes [0])
+            const nextItem = pendingItems.length > 1 ? pendingItems[1] : null;
+            if (nextItem) {
+                await preselectCategoryForItem(nextItem, categories);
+            }
         } catch (err) {
             console.error('[ReviewScannedItems] Error adding transaction:', err);
             errorHaptic();
@@ -193,12 +195,18 @@ const ReviewScannedItemsScreen: React.FC = () => {
         }
     };
 
-    const handleSkipItem = () => {
+    const handleSkipItem = async () => {
         if (!currentItem) return;
         light();
         removeItem(currentItem.id);
         setShowCategoryPicker(false);
         setShowSubcategoryPicker(false);
+
+        // Pre-select for next item
+        const nextItem = pendingItems.length > 1 ? pendingItems[1] : null;
+        if (nextItem) {
+            await preselectCategoryForItem(nextItem, categories);
+        }
     };
 
     const handleClearAll = () => {

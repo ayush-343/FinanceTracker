@@ -101,7 +101,7 @@ export const useReceiptScanner = (): UseReceiptScannerReturn => {
 
     const handleBarcodeScanComplete = useCallback((items: ScannedItem[]) => {
         setShowBarcodeScanner(false);
-        
+
         if (items.length > 0) {
             const today = new Date().toISOString().split('T')[0];
             addPendingItems(items, today);

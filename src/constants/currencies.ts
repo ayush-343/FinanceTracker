@@ -22,7 +22,7 @@ export const CURRENCIES = [
   { code: 'AED', symbol: 'د.إ', name: 'UAE Dirham', locale: 'ar-AE' },
 ] as const;
 
-export type CurrencyCode = typeof CURRENCIES[number]['code'];
+type CurrencyCode = typeof CURRENCIES[number]['code'];
 
 // Get currency info by code
 export const getCurrencyByCode = (code: string) => {

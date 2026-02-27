@@ -7,17 +7,17 @@ export const formatDate = (date: Date | string, formatStr: string = 'MMM d, yyyy
 };
 
 // Format date for database storage (YYYY-MM-DD)
-export const formatDateForDB = (date: Date): string => {
+const formatDateForDB = (date: Date): string => {
   return format(date, 'yyyy-MM-dd');
 };
 
 // Get today's date formatted for DB
-export const getTodayForDB = (): string => {
+const getTodayForDB = (): string => {
   return formatDateForDB(new Date());
 };
 
 // Get relative date string
-export const getRelativeDateString = (date: Date | string): string => {
+const getRelativeDateString = (date: Date | string): string => {
   const d = typeof date === 'string' ? parseISO(date) : date;
 
   if (isToday(d)) return 'Today';
@@ -46,12 +46,12 @@ export const getMonthRangeString = (date: Date): string => {
 };
 
 // Get year range string
-export const getYearRangeString = (date: Date): string => {
+const getYearRangeString = (date: Date): string => {
   return format(date, 'yyyy');
 };
 
 // Navigate dates
-export const navigateDate = (
+const navigateDate = (
   date: Date,
   direction: 'prev' | 'next',
   period: 'day' | 'week' | 'month'
@@ -64,7 +64,7 @@ export const navigateDate = (
 };
 
 // Get days in month for calendar
-export const getDaysInMonth = (date: Date): Date[] => {
+const getDaysInMonth = (date: Date): Date[] => {
   const start = startOfMonth(date);
   const end = endOfMonth(date);
   const days: Date[] = [];
@@ -104,20 +104,11 @@ export const getWeekdayLabels = (short: boolean = true): string[] => {
 };
 
 export {
-  parseISO,
-  startOfWeek,
-  endOfWeek,
   startOfMonth,
   endOfMonth,
-  startOfYear,
-  endOfYear,
   addDays,
-  addWeeks,
   addMonths,
   isToday,
   isSameDay,
-  isSameWeek,
-  isSameMonth,
-  isSameYear,
   format,
 };
