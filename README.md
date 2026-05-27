@@ -37,7 +37,7 @@
 
 ## 🎬 Demo
 
-> **Note:** To view the demo video, clone the repo and open `assets/Demo-Video.mp4`, or watch it on the [Releases](https://github.com/ayush-343/FinanceTracker/releases) page.
+https://github.com/user-attachments/assets/8d667c59-0ede-4f05-bbe8-f6817ed2c1d8
 
 *Full walkthrough — from onboarding to budget tracking, AI receipt scanning, and financial insights.*
 
