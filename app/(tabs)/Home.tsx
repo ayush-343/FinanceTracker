@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Platform, ActionSheetIOS, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -6,8 +6,9 @@ import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../src/theme';
 import { CategoryCard, EmptyState, PendingItemsBanner, ScanningModal, BarcodeScannerModal, showActionSheet } from '../../src/components';
+import { useWalkthroughContext } from '../../src/components/WalkthroughContext';
 import { BudgetSummaryCard } from '../../src/components/BudgetSummaryCard';
-import { useBudgetStore, useSettingsStore } from '../../src/store';
+import { useBudgetStore, useSettingsStore, useWalkthroughStore } from '../../src/store';
 import { useScanStore } from '../../src/store/scanStore';
 import { useCurrency, useHaptics } from '../../src/hooks';
 import { useReceiptScanner } from '../../src/hooks/useReceiptScanner';
@@ -23,7 +24,7 @@ const HomeScreen: React.FC = () => {
     const { colors, spacing } = useTheme();
     const { format } = useCurrency();
     const { light } = useHaptics();
-    const { budgetPeriod } = useSettingsStore();
+    const { budgetPeriod, isOnboardingCompleted } = useSettingsStore();
     const {
         categoriesWithSpending,
         totalSpending,
@@ -53,6 +54,32 @@ const HomeScreen: React.FC = () => {
         closeBarcodeScanner,
         handleBarcodeScanComplete,
     } = useReceiptScanner();
+
+    // Walkthrough refs (measured on-demand by overlay)
+    const { registerRef } = useWalkthroughContext();
+    const { isWalkthroughCompleted, isWalkthroughActive, startWalkthrough } = useWalkthroughStore();
+    const budgetRef = useRef<View>(null);
+    const gridRef = useRef<View>(null);
+    const addCardRef = useRef<View>(null);
+    const walkthroughTriggered = useRef(false);
+
+    // Register refs for walkthrough spotlight
+    useEffect(() => {
+        registerRef('budget-card', budgetRef);
+        registerRef('category-grid', gridRef);
+        registerRef('add-category-card', addCardRef);
+    }, [registerRef]);
+
+    // Trigger walkthrough when Home screen mounts and onboarding is done
+    useEffect(() => {
+        if (isOnboardingCompleted && !isWalkthroughCompleted && !isWalkthroughActive && !walkthroughTriggered.current) {
+            walkthroughTriggered.current = true;
+            const timer = setTimeout(() => {
+                startWalkthrough();
+            }, 600);
+            return () => clearTimeout(timer);
+        }
+    }, [isOnboardingCompleted, isWalkthroughCompleted, isWalkthroughActive, startWalkthrough]);
 
     useFocusEffect(
         useCallback(() => {
@@ -115,7 +142,11 @@ const HomeScreen: React.FC = () => {
                     </View>
 
                     {/* Budget Summary */}
-                    <View style={styles.budgetContainer}>
+                    <View
+                        style={styles.budgetContainer}
+                        ref={budgetRef}
+                        collapsable={false}
+                    >
                         <BudgetSummaryCard
                             totalSpending={totalSpending}
                             totalBudget={totalBudget}
@@ -133,9 +164,12 @@ const HomeScreen: React.FC = () => {
                 )}
 
                 {/* Category Grid */}
-                <View style={styles.gridContainer}>
+                <View style={styles.gridContainer} ref={gridRef} collapsable={false}>
                     {categoriesWithSpending.length > 0 ? (
-                        <View style={styles.grid}>
+                        <View
+                            style={styles.grid}
+                            collapsable={false}
+                        >
                             {categoriesWithSpending.map((category) => (
                                 <CategoryCard
                                     key={category.id}
@@ -146,6 +180,7 @@ const HomeScreen: React.FC = () => {
                             ))}
 
                             {/* Add New Card */}
+                            <View ref={addCardRef} collapsable={false}>
                             <TouchableOpacity
                                 style={[styles.addNewCard, { width: CARD_WIDTH }]}
                                 onPress={() => {
@@ -161,6 +196,7 @@ const HomeScreen: React.FC = () => {
                                     Add New
                                 </Text>
                             </TouchableOpacity>
+                            </View>
                         </View>
                     ) : (
                         <EmptyState
@@ -169,6 +205,7 @@ const HomeScreen: React.FC = () => {
                             description="Add categories to start tracking your spending"
                             actionLabel="Add Category"
                             onAction={() => router.push('/AddCategory')}
+                            actionRef={addCardRef}
                             style={{ marginTop: spacing.xl }}
                         />
                     )}

@@ -1,7 +1,8 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
     View, Text, StyleSheet, ScrollView, TouchableOpacity,
     Switch, Alert, TextInput, KeyboardAvoidingView, Platform, Modal,
+    ActivityIndicator
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -13,7 +14,8 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { useTheme } from '../../src/theme';
-import { useSettingsStore, useBudgetStore } from '../../src/store';
+import { useSettingsStore, useBudgetStore, useWalkthroughStore } from '../../src/store';
+import { useWalkthroughContext } from '../../src/components/WalkthroughContext';
 import { useCurrency, useBiometricAuth, useHaptics } from '../../src/hooks';
 import { BudgetPeriod } from '../../src/types';
 import { CURRENCIES, BUDGET_PERIODS } from '../../src/constants';
@@ -32,7 +34,6 @@ const ICON_COLORS: Record<string, string> = {
     target: '#EC4899',
     'file-text': '#0EA5E9',
     info: '#6B7280',
-    'refresh-cw': '#F97316',
     'log-out': '#EF4444',
 };
 
@@ -163,18 +164,31 @@ export const SettingsScreen: React.FC = () => {
         setDarkMode,
         setCurrency,
         setBudgetPeriod,
-        resetOnboarding,
+        setGeminiApiKey,
+        resetAppData,
     } = useSettingsStore();
 
     const { totalBudget, categories } = useBudgetStore();
+    const { resetWalkthrough, startWalkthrough } = useWalkthroughStore();
+    const { registerRef } = useWalkthroughContext();
+    const prefsRef = useRef<View>(null);
+    const securityDataRef = useRef<View>(null);
+
+    useEffect(() => {
+        registerRef('preferences-group', prefsRef);
+        registerRef('security-data', securityDataRef);
+    }, [registerRef]);
 
     const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
     const [showPeriodPicker, setShowPeriodPicker] = useState(false);
     const [showThemePicker, setShowThemePicker] = useState(false);
     const [showBudgetEditor, setShowBudgetEditor] = useState(false);
+    const [showApiKeyEditor, setShowApiKeyEditor] = useState(false);
     const [budgetInput, setBudgetInput] = useState('');
+    const [apiKeyInput, setApiKeyInput] = useState('');
     const [isExporting, setIsExporting] = useState(false);
     const [isSavingBudget, setIsSavingBudget] = useState(false);
+    const [isSavingApiKey, setIsSavingApiKey] = useState(false);
     const [pendingTheme, setPendingTheme] = useState<boolean | null>(darkMode);
 
     useFocusEffect(
@@ -223,6 +237,11 @@ export const SettingsScreen: React.FC = () => {
         setShowBudgetEditor(true);
     };
 
+    const handleOpenApiKeyEditor = () => {
+        setApiKeyInput(useSettingsStore.getState().geminiApiKey || '');
+        setShowApiKeyEditor(true);
+    };
+
     const handleSaveBudget = async () => {
         const newTotal = parseFloat(budgetInput);
         if (isNaN(newTotal) || newTotal <= 0) {
@@ -262,6 +281,20 @@ export const SettingsScreen: React.FC = () => {
             Alert.alert('Error', 'Failed to update budget. Please try again.');
         } finally {
             setIsSavingBudget(false);
+        }
+    };
+
+    const handleSaveApiKey = async () => {
+        setIsSavingApiKey(true);
+        try {
+            await setGeminiApiKey(apiKeyInput.trim() || null);
+            success();
+            setShowApiKeyEditor(false);
+        } catch (error) {
+            console.error('Failed to update API key:', error);
+            Alert.alert('Error', 'Failed to save API key. Please try again.');
+        } finally {
+            setIsSavingApiKey(false);
         }
     };
 
@@ -385,31 +418,21 @@ export const SettingsScreen: React.FC = () => {
         }
     };
 
-    const handleResetOnboarding = () => {
-        Alert.alert(
-            'Reset App',
-            'This will reset the app and show the onboarding screens again. Your data will be preserved.',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Reset',
-                    style: 'destructive',
-                    onPress: async () => {
-                        await resetOnboarding();
-                        router.replace('/(onboarding)/AnimatedOnboarding');
-                    },
-                },
-            ]
-        );
-    };
-
     const handleLogout = () => {
         Alert.alert(
             'Log Out',
-            'Are you sure you want to log out?',
+            'Logging out will remove all your data and reset the app. This action cannot be undone.',
             [
                 { text: 'Cancel', style: 'cancel' },
-                { text: 'Log Out', style: 'destructive', onPress: () => { /* stub */ } },
+                {
+                    text: 'Log Out',
+                    style: 'destructive',
+                    onPress: async () => {
+                        await resetAppData();
+                        await resetWalkthrough();
+                        router.replace('/(onboarding)/AnimatedOnboarding');
+                    },
+                },
             ]
         );
     };
@@ -441,6 +464,10 @@ export const SettingsScreen: React.FC = () => {
                 </SettingsGroup>
 
                 {/* Preferences */}
+                <View
+                    ref={prefsRef}
+                    collapsable={false}
+                >
                 <SettingsGroup title="PREFERENCES">
                     <SettingRow
                         icon="dollar-sign"
@@ -471,6 +498,13 @@ export const SettingsScreen: React.FC = () => {
                         isLast
                     />
                 </SettingsGroup>
+                </View>
+
+                {/* Security & Data wrapper for walkthrough */}
+                <View
+                    ref={securityDataRef}
+                    collapsable={false}
+                >
 
                 {/* Security */}
                 {biometricAvailable && (
@@ -492,6 +526,17 @@ export const SettingsScreen: React.FC = () => {
                     </SettingsGroup>
                 )}
 
+                {/* AI Scanner */}
+                <SettingsGroup title="AI SCANNER">
+                    <SettingRow
+                        icon="cpu"
+                        title="Gemini API Key"
+                        subtitle={useSettingsStore.getState().geminiApiKey ? '••••••••' : 'Not configured'}
+                        onPress={handleOpenApiKeyEditor}
+                        isLast
+                    />
+                </SettingsGroup>
+
                 {/* Data */}
                 <SettingsGroup title="DATA">
                     <SettingRow
@@ -501,13 +546,18 @@ export const SettingsScreen: React.FC = () => {
                         onPress={!isExporting ? generatePDFReport : undefined}
                     />
                     <SettingRow
-                        icon="refresh-cw"
-                        title="Reset Onboarding"
-                        subtitle="Show welcome screens again"
-                        onPress={handleResetOnboarding}
+                        icon="compass"
+                        title="Replay Walkthrough"
+                        subtitle="Take the guided tour again"
+                        onPress={async () => {
+                            light();
+                            await resetWalkthrough();
+                            startWalkthrough();
+                        }}
                         isLast
                     />
                 </SettingsGroup>
+                </View>
 
                 {/* Log Out */}
                 <TouchableOpacity
@@ -702,6 +752,72 @@ export const SettingsScreen: React.FC = () => {
                         </View>
                     </View>
                 </KeyboardAvoidingView>
+            </Modal>
+
+            {/* API Key Editor Modal */}
+            <Modal
+                visible={showApiKeyEditor}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowApiKeyEditor(false)}
+            >
+                <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+                    <KeyboardAvoidingView
+                        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                        style={{ width: '100%' }}
+                    >
+                        <View style={[styles.budgetModal, { backgroundColor: colors.card }]}>
+                            <Text style={[styles.budgetModalTitle, { color: colors.text }]}>
+                                Gemini API Key
+                            </Text>
+
+                            <Text style={[styles.budgetModalHint, { color: colors.textSecondary, marginBottom: 16, textAlign: 'center' }]}>
+                                Add your Gemini API key to enable AI receipt scanning. Leave empty to clear.
+                            </Text>
+
+                            <TextInput
+                                style={[
+                                    styles.budgetInput,
+                                    {
+                                        backgroundColor: colors.background,
+                                        color: colors.text,
+                                        borderRadius: borderRadius.lg,
+                                        borderWidth: 1,
+                                        borderColor: colors.border,
+                                        height: 50,
+                                    },
+                                ]}
+                                value={apiKeyInput}
+                                onChangeText={setApiKeyInput}
+                                placeholder="AIzaSy..."
+                                placeholderTextColor={colors.textTertiary}
+                                autoCapitalize="none"
+                                autoCorrect={false}
+                                secureTextEntry
+                            />
+
+                            <View style={styles.budgetButtons}>
+                                <TouchableOpacity
+                                    style={[styles.budgetButton, { backgroundColor: colors.background, borderRadius: borderRadius.lg }]}
+                                    onPress={() => setShowApiKeyEditor(false)}
+                                >
+                                    <Text style={[styles.budgetButtonText, { color: colors.text }]}>Cancel</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[styles.budgetButton, { backgroundColor: colors.primary, borderRadius: borderRadius.lg }]}
+                                    onPress={handleSaveApiKey}
+                                    disabled={isSavingApiKey}
+                                >
+                                    {isSavingApiKey ? (
+                                        <ActivityIndicator color="#FFFFFF" />
+                                    ) : (
+                                        <Text style={[styles.budgetButtonText, { color: '#FFF', fontWeight: '600' }]}>Save</Text>
+                                    )}
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </KeyboardAvoidingView>
+                </View>
             </Modal>
         </SafeAreaView>
     );

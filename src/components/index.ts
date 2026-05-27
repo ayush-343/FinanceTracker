@@ -15,6 +15,9 @@ export { PendingItemsBanner } from './PendingItemsBanner';
 export { ScanningModal } from './ScanningModal';
 export { BarcodeScannerModal } from './BarcodeScannerModal';
 export { showActionSheet } from './ActionSheet';
+export { WalkthroughProvider, useWalkthroughContext } from './WalkthroughContext';
+export { WalkthroughOverlay } from './WalkthroughOverlay';
+export { WalkthroughTooltip } from './WalkthroughTooltip';
 
 // Import sheets registration (side-effect import)
 import './sheets';

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Dimensions, Platform, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -8,6 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../src/theme';
 import { TimeframePicker, CategoryDistribution } from '../../src/components';
+import { useWalkthroughContext } from '../../src/components/WalkthroughContext';
 import { useBudgetStore, useSettingsStore } from '../../src/store';
 import { useCurrency } from '../../src/hooks';
 import { Timeframe } from '../../src/types';
@@ -107,6 +108,18 @@ const AnalyticsScreen: React.FC = () => {
     const [totalSpent, setTotalSpent] = useState(0);
     const [prevTotalSpent, setPrevTotalSpent] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
+
+    // Walkthrough measurement refs
+    const { registerRef } = useWalkthroughContext();
+    const timeframeRef = useRef<View>(null);
+    const donutRef = useRef<View>(null);
+    const savingsRef = useRef<View>(null);
+
+    useEffect(() => {
+        registerRef('timeframe-picker', timeframeRef);
+        registerRef('donut-chart', donutRef);
+        registerRef('savings-comparison', savingsRef);
+    }, [registerRef]);
 
     const loadAnalytics = async () => {
         setIsLoading(true);
@@ -372,12 +385,18 @@ const AnalyticsScreen: React.FC = () => {
                 showsVerticalScrollIndicator={false}
             >
                 {/* Timeframe Picker */}
-                <View style={{ marginHorizontal: spacing.lg, marginTop: spacing.md }}>
+                <View
+                    ref={timeframeRef}
+                    collapsable={false}
+                    style={{ marginHorizontal: spacing.lg, marginTop: spacing.md }}
+                >
                     <TimeframePicker selected={timeframe} onSelect={setTimeframe} />
                 </View>
 
                 {/* ═══ Spending Breakdown ═══ */}
                 <View
+                    ref={donutRef}
+                    collapsable={false}
                     style={[
                         styles.card,
                         {
@@ -505,7 +524,11 @@ const AnalyticsScreen: React.FC = () => {
                 </View>
 
                 {/* ═══ Net Savings Card ═══ */}
-                <View style={{ marginHorizontal: spacing.lg, marginTop: spacing.lg }}>
+                <View
+                    ref={savingsRef}
+                    collapsable={false}
+                    style={{ marginHorizontal: spacing.lg, marginTop: spacing.lg }}
+                >
                     <LinearGradient
                         colors={netSavings >= 0 ? ['#2563EB', '#3B82F6'] : ['#991B1B', '#EF4444']}
                         start={{ x: 0, y: 0 }}

@@ -48,6 +48,23 @@ export const updateSettings = async (settings: Partial<Omit<AppSettings, 'id'>>)
   });
 };
 
+export const resetAllData = async (): Promise<void> => {
+  return withDatabase(async (db) => {
+    await db.execAsync('PRAGMA foreign_keys = ON;');
+    await db.runAsync('DELETE FROM subscription_skips');
+    await db.runAsync('DELETE FROM subscriptions');
+    await db.runAsync('DELETE FROM transactions');
+    await db.runAsync('DELETE FROM items');
+    await db.runAsync('DELETE FROM subcategories');
+    await db.runAsync('DELETE FROM categories');
+    await db.runAsync('DELETE FROM budgets');
+    await db.runAsync('DELETE FROM barcode_cache');
+    await db.runAsync(
+      "UPDATE app_settings SET biometric_enabled = 0, dark_mode = NULL, currency_code = 'USD', budget_period = 'monthly', onboarding_completed = 0 WHERE id = 1"
+    );
+  });
+};
+
 // ============ CATEGORIES ============
 
 export const getCategories = async (): Promise<Category[]> => {

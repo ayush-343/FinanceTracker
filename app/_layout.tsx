@@ -9,8 +9,8 @@ import { SheetProvider } from 'react-native-actions-sheet';
 import { Feather } from '@expo/vector-icons';
 import { ThemeProvider, useTheme } from '../src/theme';
 import { initDatabase } from '../src/database';
-import { LoadingScreen } from '../src/components';
-import { useSettingsStore } from '../src/store';
+import { LoadingScreen, WalkthroughProvider, WalkthroughOverlay } from '../src/components';
+import { useSettingsStore, useWalkthroughStore } from '../src/store';
 import { useBiometricAuth } from '../src/hooks';
 
 // Import sheets registration
@@ -20,6 +20,7 @@ const AppShell: React.FC = () => {
     const { colors, isDark } = useTheme();
     const { isOnboardingCompleted, isBiometricEnabled, loadSettings } = useSettingsStore();
     const { authenticate, isAuthenticated, isAuthenticating, isLocked } = useBiometricAuth();
+    const { loadWalkthroughStatus } = useWalkthroughStore();
     const router = useRouter();
     const segments = useSegments();
 
@@ -51,6 +52,8 @@ const AppShell: React.FC = () => {
 
                 // Then: Load settings (requires database)
                 await loadSettings();
+                // Load walkthrough status (AsyncStorage, no DB needed)
+                await loadWalkthroughStatus();
                 setIsSettingsReady(true);
             } catch (error) {
                 console.error('Initialization failed:', error);
@@ -59,7 +62,7 @@ const AppShell: React.FC = () => {
         };
 
         initialize();
-    }, [loadSettings]);
+    }, [loadSettings, loadWalkthroughStatus]);
 
     useEffect(() => {
         if (!isSettingsReady) return;
@@ -181,6 +184,9 @@ const AppShell: React.FC = () => {
                     )}
                 </View>
             )}
+
+            {/* Walkthrough overlay — renders on top of everything */}
+            <WalkthroughOverlay />
         </>
     );
 };
@@ -230,9 +236,11 @@ export default function RootLayout() {
         <GestureHandlerRootView style={{ flex: 1 }}>
             <SafeAreaProvider>
                 <ThemeProvider>
-                    <SheetProvider>
-                        <AppShell />
-                    </SheetProvider>
+                    <WalkthroughProvider>
+                        <SheetProvider>
+                            <AppShell />
+                        </SheetProvider>
+                    </WalkthroughProvider>
                 </ThemeProvider>
             </SafeAreaProvider>
         </GestureHandlerRootView>

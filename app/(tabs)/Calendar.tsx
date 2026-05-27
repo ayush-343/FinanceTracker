@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated, PanResponder, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../src/theme';
 import { CalendarDay } from '../../src/components';
+import { useWalkthroughContext } from '../../src/components/WalkthroughContext';
 import { useCurrency } from '../../src/hooks';
 import { TransactionWithDetails } from '../../src/types';
 import {
@@ -43,6 +44,16 @@ const CalendarScreen: React.FC = () => {
     const panY = useRef(new Animated.Value(SCREEN_HEIGHT * 0.55)).current;
     const lastOffset = useRef(SCREEN_HEIGHT * 0.55);
     const [isPanelExpanded, setIsPanelExpanded] = useState(false);
+
+    // Walkthrough measurement refs
+    const { registerRef } = useWalkthroughContext();
+    const calendarGridRef = useRef<View>(null);
+    const dailyPanelRef = useRef<View>(null);
+
+    useEffect(() => {
+        registerRef('calendar-grid', calendarGridRef);
+        registerRef('daily-panel', dailyPanelRef);
+    }, [registerRef]);
 
     const panResponder = useRef(
         PanResponder.create({
@@ -197,7 +208,11 @@ const CalendarScreen: React.FC = () => {
             </View>
 
             {/* Calendar Grid */}
-            <View style={[styles.calendarGrid, { paddingHorizontal: spacing.md, marginTop: spacing.xs }]}>
+            <View
+                ref={calendarGridRef}
+                collapsable={false}
+                style={[styles.calendarGrid, { paddingHorizontal: spacing.md, marginTop: spacing.xs }]}
+            >
                 {calendarGrid.map((date, index) => (
                     <CalendarDay
                         key={date ? date.getTime() : `empty-${index}`}
@@ -214,6 +229,8 @@ const CalendarScreen: React.FC = () => {
 
             {/* Draggable Daily Summary Bottom Sheet */}
             <Animated.View
+                ref={dailyPanelRef}
+                collapsable={false}
                 style={[
                     styles.summarySection,
                     {

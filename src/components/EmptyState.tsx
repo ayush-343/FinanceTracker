@@ -10,6 +10,7 @@ interface EmptyStateProps {
     description: string;
     actionLabel?: string;
     onAction?: () => void;
+    actionRef?: React.RefObject<any>;
     style?: ViewStyle;
 }
 
@@ -19,6 +20,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
     description,
     actionLabel,
     onAction,
+    actionRef,
     style,
 }) => {
     const { colors, spacing, textStyles } = useTheme();
@@ -61,17 +63,19 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
                 {description}
             </Text>
             {actionLabel && onAction && (
-                <TouchableOpacity
-                    style={[
-                        styles.actionButton,
-                        { backgroundColor: colors.primary, marginTop: spacing.xl },
-                    ]}
-                    onPress={handleAction}
-                >
-                    <Text style={[textStyles.button, { color: '#FFF' }]}>
-                        {actionLabel}
-                    </Text>
-                </TouchableOpacity>
+                <View ref={actionRef} collapsable={false} style={{ marginTop: spacing.xl }}>
+                    <TouchableOpacity
+                        style={[
+                            styles.actionButton,
+                            { backgroundColor: colors.primary },
+                        ]}
+                        onPress={handleAction}
+                    >
+                        <Text style={[textStyles.button, { color: '#FFF' }]}>
+                            {actionLabel}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
             )}
         </View>
     );

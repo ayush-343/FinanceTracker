@@ -2,8 +2,22 @@ import { readAsStringAsync, EncodingType } from 'expo-file-system/legacy';
 import { getCategories, getSubcategories } from '../database';
 import { Category, Subcategory } from '../types';
 
-const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemma-3-4b-it:generateContent';
+import { useSettingsStore } from '../store/settingsStore';
+
+const ENV_GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
+const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
+
+// Fallback chain of models, ordered by preference and free-tier quota availability
+const GEMINI_MODELS = [
+    'gemini-2.0-flash',       // Primary — fast & multimodal
+    'gemini-2.5-flash',       // Fallback 1 — 5 RPM, 20 RPD
+    'gemini-3.5-flash',       // Fallback 2 — 5 RPM, 20 RPD
+    'gemini-3-flash',         // Fallback 3 — 5 RPM, 20 RPD
+    'gemini-3.1-flash-lite',  // Fallback 4 — 15 RPM, 500 RPD (best quota)
+    'gemini-2.5-flash-lite',  // Fallback 5 — 10 RPM, 20 RPD
+];
+
+const buildModelUrl = (model: string) => `${GEMINI_BASE_URL}/${model}:generateContent`;
 
 export interface ScannedItem {
     name: string;
@@ -145,9 +159,12 @@ const parseGeminiResponse = (responseText: string): { items: any[]; receiptDate:
  * @returns Promise with scanned items and receipt date
  */
 export const scanReceiptImage = async (imageUri: string): Promise<ScanReceiptResponse> => {
-    if (!GEMINI_API_KEY) {
+    const { geminiApiKey } = useSettingsStore.getState();
+    const apiKey = geminiApiKey || ENV_GEMINI_API_KEY;
+
+    if (!apiKey) {
         throw new ReceiptScanError(
-            'Gemini API key not configured. Please set EXPO_PUBLIC_GEMINI_API_KEY environment variable.',
+            'Gemini API key not configured. Please set it in Settings or via EXPO_PUBLIC_GEMINI_API_KEY.',
             'API_ERROR'
         );
     }
@@ -177,78 +194,103 @@ export const scanReceiptImage = async (imageUri: string): Promise<ScanReceiptRes
         // Determine MIME type from URI
         const mimeType = imageUri.toLowerCase().includes('.png') ? 'image/png' : 'image/jpeg';
 
-        // Call Gemini API
-        const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                contents: [
-                    {
-                        parts: [
-                            { text: prompt },
-                            {
-                                inline_data: {
-                                    mime_type: mimeType,
-                                    data: base64Image,
-                                },
+        // Build request body (reused across model attempts)
+        const requestBody = JSON.stringify({
+            contents: [
+                {
+                    parts: [
+                        { text: prompt },
+                        {
+                            inline_data: {
+                                mime_type: mimeType,
+                                data: base64Image,
                             },
-                        ],
-                    },
-                ],
-                generationConfig: {
-                    temperature: 0.1,
-                    topK: 32,
-                    topP: 1,
-                    maxOutputTokens: 4096,
+                        },
+                    ],
                 },
-            }),
+            ],
+            generationConfig: {
+                temperature: 0.1,
+                topK: 32,
+                topP: 1,
+                maxOutputTokens: 4096,
+            },
         });
 
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            const errorMessage = errorData.error?.message || `HTTP ${response.status}`;
-            throw new ReceiptScanError(
-                `Gemini API error: ${errorMessage}`,
-                'API_ERROR'
-            );
+        // Try each model in the fallback chain
+        let lastError = '';
+        for (const model of GEMINI_MODELS) {
+            try {
+                console.log(`[ReceiptScan] Trying model: ${model}`);
+                const url = buildModelUrl(model);
+
+                const response = await fetch(`${url}?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: requestBody,
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    const errorMessage = errorData.error?.message || `HTTP ${response.status}`;
+                    const status = response.status;
+
+                    // Quota exceeded (429) or model not found (404) — try next model
+                    if (status === 429 || status === 404) {
+                        console.log(`[ReceiptScan] ${model} failed (${status}): ${errorMessage}. Trying next model...`);
+                        lastError = errorMessage;
+                        continue;
+                    }
+
+                    // Other errors (auth, bad request, etc.) — throw immediately
+                    throw new ReceiptScanError(`Gemini API error: ${errorMessage}`, 'API_ERROR');
+                }
+
+                const data = await response.json();
+                const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (!responseText) {
+                    console.log(`[ReceiptScan] ${model} returned empty response. Trying next model...`);
+                    lastError = 'Empty response from model';
+                    continue;
+                }
+
+                // Parse the response
+                const parsed = parseGeminiResponse(responseText);
+
+                if (!parsed.items || parsed.items.length === 0) {
+                    throw new ReceiptScanError(
+                        'No items found in the receipt. Please try a clearer image.',
+                        'NO_ITEMS_FOUND'
+                    );
+                }
+
+                // Validate and clean items
+                const items: ScannedItem[] = parsed.items.map((item: any) => ({
+                    name: String(item.name || 'Unknown Item').trim(),
+                    amount: typeof item.amount === 'number' ? item.amount : parseFloat(item.amount) || 0,
+                    suggestedCategoryId: typeof item.suggestedCategoryId === 'number' ? item.suggestedCategoryId : null,
+                    suggestedSubcategoryId: typeof item.suggestedSubcategoryId === 'number' ? item.suggestedSubcategoryId : null,
+                }));
+
+                console.log(`[ReceiptScan] Success with model: ${model}, found ${items.length} items`);
+                return { items, receiptDate: parsed.receiptDate };
+            } catch (modelError) {
+                if (modelError instanceof ReceiptScanError) {
+                    throw modelError; // Don't retry on parse/auth errors
+                }
+                // Network or unexpected error for this model — try next
+                console.log(`[ReceiptScan] ${model} threw: ${modelError instanceof Error ? modelError.message : 'unknown'}`);
+                lastError = modelError instanceof Error ? modelError.message : 'Unknown error';
+                continue;
+            }
         }
 
-        const data = await response.json();
-
-        // Extract text from Gemini response
-        const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-        if (!responseText) {
-            throw new ReceiptScanError(
-                'No response from Gemini API',
-                'API_ERROR'
-            );
-        }
-
-        // Parse the response
-        const parsed = parseGeminiResponse(responseText);
-
-        if (!parsed.items || parsed.items.length === 0) {
-            throw new ReceiptScanError(
-                'No items found in the receipt. Please try a clearer image.',
-                'NO_ITEMS_FOUND'
-            );
-        }
-
-        // Validate and clean items
-        const items: ScannedItem[] = parsed.items.map((item: any) => ({
-            name: String(item.name || 'Unknown Item').trim(),
-            amount: typeof item.amount === 'number' ? item.amount : parseFloat(item.amount) || 0,
-            suggestedCategoryId: typeof item.suggestedCategoryId === 'number' ? item.suggestedCategoryId : null,
-            suggestedSubcategoryId: typeof item.suggestedSubcategoryId === 'number' ? item.suggestedSubcategoryId : null,
-        }));
-
-        return {
-            items,
-            receiptDate: parsed.receiptDate,
-        };
+        // All models exhausted
+        throw new ReceiptScanError(
+            `All AI models are currently unavailable. Last error: ${lastError}. Please try again later or check your API key quota.`,
+            'API_ERROR'
+        );
     } catch (error) {
         if (error instanceof ReceiptScanError) {
             throw error;
@@ -273,29 +315,38 @@ export const scanReceiptImage = async (imageUri: string): Promise<ScanReceiptRes
  * @returns Promise<boolean> - true if connection is successful
  */
 const testApiConnection = async (): Promise<boolean> => {
-    if (!GEMINI_API_KEY) {
+    const { geminiApiKey } = useSettingsStore.getState();
+    const apiKey = geminiApiKey || ENV_GEMINI_API_KEY;
+
+    if (!apiKey) {
         return false;
     }
 
     try {
-        // Simple test request to Gemini
-        const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                contents: [
-                    {
-                        parts: [{ text: 'Say "OK" if you can read this.' }],
-                    },
-                ],
-                generationConfig: {
-                    maxOutputTokens: 10,
-                },
-            }),
-        });
-        return response.ok;
+        // Try each model until one responds
+        for (const model of GEMINI_MODELS) {
+            try {
+                const url = buildModelUrl(model);
+                const response = await fetch(`${url}?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [
+                            {
+                                parts: [{ text: 'Say "OK" if you can read this.' }],
+                            },
+                        ],
+                        generationConfig: { maxOutputTokens: 10 },
+                    }),
+                });
+                if (response.ok) return true;
+                if (response.status === 429 || response.status === 404) continue;
+                return false; // Auth or other fatal error
+            } catch {
+                continue;
+            }
+        }
+        return false;
     } catch {
         return false;
     }

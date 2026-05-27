@@ -1,9 +1,10 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { Platform, ActionSheetIOS } from 'react-native';
 import { Tabs, useRouter } from 'expo-router';
 import { useTheme } from '../../src/theme';
 import { CustomTabBar } from '../../src/components/CustomTabBar';
 import { showActionSheet } from '../../src/components/ActionSheet';
+import { useWalkthroughContext } from '../../src/components/WalkthroughContext';
 import { useHaptics } from '../../src/hooks';
 import { useReceiptScanner } from '../../src/hooks/useReceiptScanner';
 import { ScanningModal } from '../../src/components/ScanningModal';
@@ -26,6 +27,14 @@ export default function TabsLayout() {
         closeBarcodeScanner,
         handleBarcodeScanComplete,
     } = useReceiptScanner();
+
+    // Connect walkthrough tab navigation
+    const { setNavigateToTab } = useWalkthroughContext();
+    useEffect(() => {
+        setNavigateToTab((tabName: string) => {
+            router.push(`/(tabs)/${tabName}` as any);
+        });
+    }, [router, setNavigateToTab]);
 
     const handleFabPress = useCallback(() => {
         light();

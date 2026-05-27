@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.financetracker.app",
+      "bundleIdentifier": "com.financetracker.ayush.app",
       "infoPlist": {
         "UIViewControllerBasedStatusBarAppearance": false
       }

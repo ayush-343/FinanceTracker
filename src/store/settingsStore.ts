@@ -1,6 +1,9 @@
 import { create } from 'zustand';
-import { getSettings, updateSettings } from '../database';
+import { getSettings, resetAllData, updateSettings } from '../database';
 import { AppSettings, BudgetPeriod } from '../types';
+import * as SecureStore from 'expo-secure-store';
+
+const GEMINI_API_KEY_STORE = 'gemini_api_key';
 
 interface SettingsState {
   // State
@@ -10,6 +13,7 @@ interface SettingsState {
   currency: string;
   budgetPeriod: BudgetPeriod;
   isOnboardingCompleted: boolean;
+  geminiApiKey: string | null;
   
   // Actions
   loadSettings: () => Promise<void>;
@@ -18,7 +22,8 @@ interface SettingsState {
   setCurrency: (code: string) => Promise<void>;
   setBudgetPeriod: (period: BudgetPeriod) => Promise<void>;
   setOnboardingCompleted: (completed: boolean) => Promise<void>;
-  resetOnboarding: () => Promise<void>;
+  setGeminiApiKey: (key: string | null) => Promise<void>;
+  resetAppData: () => Promise<void>;
 }
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
@@ -29,12 +34,20 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   currency: 'USD',
   budgetPeriod: 'monthly',
   isOnboardingCompleted: false,
+  geminiApiKey: null,
 
   // Load settings from database
   loadSettings: async () => {
     try {
       set({ isLoading: true });
       const settings = await getSettings();
+      let geminiKey = null;
+      try {
+        geminiKey = await SecureStore.getItemAsync(GEMINI_API_KEY_STORE);
+      } catch (e) {
+        console.error('Failed to load API key', e);
+      }
+      
       if (settings) {
         set({
           isBiometricEnabled: settings.biometric_enabled,
@@ -42,10 +55,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
           currency: settings.currency_code,
           budgetPeriod: settings.budget_period,
           isOnboardingCompleted: settings.onboarding_completed,
+          geminiApiKey: geminiKey,
           isLoading: false,
         });
       } else {
-        set({ isLoading: false });
+        set({ geminiApiKey: geminiKey, isLoading: false });
       }
     } catch (error) {
       console.error('Failed to load settings:', error);
@@ -103,13 +117,40 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     }
   },
 
-  // Reset onboarding
-  resetOnboarding: async () => {
+  // Save Gemini API key
+  setGeminiApiKey: async (key: string | null) => {
     try {
-      await updateSettings({ onboarding_completed: false });
-      set({ isOnboardingCompleted: false });
+      if (key) {
+        await SecureStore.setItemAsync(GEMINI_API_KEY_STORE, key);
+      } else {
+        await SecureStore.deleteItemAsync(GEMINI_API_KEY_STORE);
+      }
+      set({ geminiApiKey: key });
     } catch (error) {
-      console.error('Failed to reset onboarding:', error);
+      console.error('Failed to save API key:', error);
+      throw error;
+    }
+  },
+
+  // Reset app data and settings
+  resetAppData: async () => {
+    try {
+      await resetAllData();
+      try {
+        await SecureStore.deleteItemAsync(GEMINI_API_KEY_STORE);
+      } catch (e) {
+        console.error('Failed to clear API key on reset', e);
+      }
+      set({
+        isBiometricEnabled: false,
+        darkMode: null,
+        currency: 'USD',
+        budgetPeriod: 'monthly',
+        isOnboardingCompleted: false,
+        geminiApiKey: null,
+      });
+    } catch (error) {
+      console.error('Failed to reset app data:', error);
     }
   },
 }));

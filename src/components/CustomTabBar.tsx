@@ -1,10 +1,11 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, ActionSheetIOS } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../theme';
 import { useHaptics } from '../hooks';
 import { showActionSheet } from './ActionSheet';
+import { useWalkthroughContext } from './WalkthroughContext';
 
 interface TabItem {
     name: string;
@@ -34,6 +35,12 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
     const { colors } = useTheme();
     const { light } = useHaptics();
     const insets = useSafeAreaInsets();
+    const { registerRef } = useWalkthroughContext();
+    const fabRef = useRef<View>(null);
+
+    useEffect(() => {
+        registerRef('fab', fabRef);
+    }, [registerRef]);
 
     const handleTabPress = useCallback((name: string) => {
         light();
@@ -87,11 +94,16 @@ export const CustomTabBar: React.FC<CustomTabBarProps> = ({
                 {/* Center FAB */}
                 <View style={styles.fabContainer}>
                     <TouchableOpacity
-                        style={[styles.fab, { backgroundColor: colors.primary }]}
                         onPress={handleFabPress}
                         activeOpacity={0.85}
                     >
-                        <Feather name="plus" size={32} color="#FFFFFF" />
+                        <View
+                            ref={fabRef}
+                            style={[styles.fab, { backgroundColor: colors.primary }]}
+                            collapsable={false}
+                        >
+                            <Feather name="plus" size={32} color="#FFFFFF" />
+                        </View>
                     </TouchableOpacity>
                 </View>
 

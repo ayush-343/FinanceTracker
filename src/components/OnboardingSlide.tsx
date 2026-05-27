@@ -150,6 +150,7 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
+        overflow: 'hidden',
     },
     lottieContainer: {
         flex: 0.55,
