@@ -173,10 +173,12 @@ export const SettingsScreen: React.FC = () => {
     const { registerRef } = useWalkthroughContext();
     const prefsRef = useRef<View>(null);
     const securityDataRef = useRef<View>(null);
+    const aiScannerRef = useRef<View>(null);
 
     useEffect(() => {
         registerRef('preferences-group', prefsRef);
         registerRef('security-data', securityDataRef);
+        registerRef('ai-scanner', aiScannerRef);
     }, [registerRef]);
 
     const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
@@ -527,6 +529,7 @@ export const SettingsScreen: React.FC = () => {
                 )}
 
                 {/* AI Scanner */}
+                <View ref={aiScannerRef} collapsable={false}>
                 <SettingsGroup title="AI SCANNER">
                     <SettingRow
                         icon="cpu"
@@ -536,6 +539,7 @@ export const SettingsScreen: React.FC = () => {
                         isLast
                     />
                 </SettingsGroup>
+                </View>
 
                 {/* Data */}
                 <SettingsGroup title="DATA">

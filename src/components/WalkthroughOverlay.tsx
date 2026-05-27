@@ -133,7 +133,7 @@ const WALKTHROUGH_STEPS: WalkthroughStepConfig[] = [
     description: 'Drag this panel up to see the full transaction list for the selected day. Tap any transaction to edit it.',
   },
 
-  // ─── SETTINGS (Steps 9–10) ───
+  // ─── SETTINGS (Steps 9–11) ───
   {
     id: 'preferences',
     targetTab: 'Settings',
@@ -154,8 +154,18 @@ const WALKTHROUGH_STEPS: WalkthroughStepConfig[] = [
     title: 'Security & Export 🔒',
     description: 'Enable Face ID/Touch ID to secure your data, and export a beautiful PDF report of your monthly spending anytime!',
   },
+  {
+    id: 'ai-scanner',
+    targetTab: 'Settings',
+    spotlightKey: 'ai-scanner',
+    spotlightPadding: 4,
+    spotlightBorderRadius: 24,
+    tooltipPosition: 'top',
+    title: 'AI Receipt Scanner 🤖',
+    description: 'Add your Gemini API key here to enable AI-powered receipt scanning. Just snap a photo and let the AI extract items and prices automatically!',
+  },
 
-  // ─── COMPLETION (Steps 11) ───
+  // ─── COMPLETION (Step 12) ───
   {
     id: 'completion',
     targetTab: 'Home',

@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const WALKTHROUGH_KEY = '@walkthrough_completed';
-const TOTAL_STEPS = 14;
+const TOTAL_STEPS = 13;
 
 interface WalkthroughState {
   // State
