@@ -1,92 +1,143 @@
-# Finance Tracker
+<![CDATA[<div align="center">
 
-A comprehensive personal finance and budget tracking app built with React Native and Expo for iOS. Track your spending, manage budgets across categories, monitor subscriptions, and gain insights into your financial habits.
+# 💸 Finance Tracker
 
-![React Native](https://img.shields.io/badge/React%20Native-0.81.5-blue)
-![Expo](https://img.shields.io/badge/Expo-SDK%2054-black)
-![Platform](https://img.shields.io/badge/Platform-iOS-lightgrey)
-![License](https://img.shields.io/badge/License-MIT-green)
+**A beautifully designed, AI-powered personal finance app built with React Native & Expo**
 
-## ✨ Features
+Track spending, manage budgets, scan receipts with AI, and gain actionable insights — all from your pocket.
 
-### 📊 Budget Management
+![React Native](https://img.shields.io/badge/React%20Native-0.81.5-61DAFB?style=for-the-badge&logo=react&logoColor=white)
+![Expo](https://img.shields.io/badge/Expo%20SDK-54-000020?style=for-the-badge&logo=expo&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![Platform](https://img.shields.io/badge/Platform-iOS-000000?style=for-the-badge&logo=apple&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-22C55E?style=for-the-badge)
 
-- **Category-based Budgets** - Create and manage spending categories with custom budget limits
-- **Nested Subcategories** - Organize spending with subcategories and individual items
-- **Weekly/Monthly Tracking** - Switch between weekly and monthly budget periods
-- **Real-time Progress** - Visual progress bars showing spending vs. budget
+</div>
 
-### 💰 Transaction Tracking
+---
 
-- **Quick Add Transactions** - Easily log expenses with category, amount, and notes
-- **Item Names** - Track specific items for each transaction
-- **Edit & Delete** - Full control over your transaction history
-- **Date-based Filtering** - View transactions by date
+## 🎬 Demo
 
-### 📅 Calendar View
+https://github.com/user-attachments/assets/Demo-Video.mp4
 
-- **Visual Spending Calendar** - See daily spending at a glance
-- **Monthly Navigation** - Browse through past months
-- **Daily Breakdown** - Tap any day to see detailed transactions
+> *Full walkthrough of the app — from onboarding to budget tracking, AI receipt scanning, and insights.*
 
-### 📈 Analytics Dashboard
-
-- **Spending Charts** - Beautiful visualizations of your spending patterns
-- **Category Breakdown** - Pie charts showing spending by category
-- **Trend Analysis** - Track spending trends over time
-
-### 🔄 Subscription Management
-
-- **Track Recurring Expenses** - Manage Netflix, Spotify, gym memberships, etc.
-- **Billing Cycle Reminders** - Never miss a subscription payment
-- **Monthly Cost Overview** - See total subscription costs
-
-### ⚙️ Settings & Customization
-
-- **Multiple Currencies** - Support for USD, EUR, GBP, INR, JPY, and more
-- **Dark Mode** - Automatic dark/light theme based on system preference
-- **Biometric Lock** - Secure your financial data with Face ID/Touch ID
-- **PDF Export** - Generate detailed spending reports
-- **Adjustable Budget** - Change total budget with proportional category updates
-
-### 🔒 Security
-
-- **Biometric Authentication** - Face ID and Touch ID support
-- **Secure Storage** - Sensitive data stored securely
-- **Local-first** - All data stored on device with SQLite
-
-## 🛠️ Tech Stack
-
-- **Framework:** React Native 0.81.5 with Expo SDK 54
-- **Language:** TypeScript
-- **Navigation:** React Navigation (Bottom Tabs + Native Stack)
-- **State Management:** Zustand with persistence
-- **Database:** Expo SQLite
-- **Charts:** react-native-gifted-charts
-- **Animations:** react-native-reanimated
-- **Icons:** @expo/vector-icons (Feather)
+---
 
 ## 📱 Screenshots
 
-_Add screenshots of your app here_
+<div align="center">
+<table>
+  <tr>
+    <td align="center"><img src="assets/IMG_4928.PNG" width="250" /><br /><b>Home Dashboard</b><br />Budget overview with category cards</td>
+    <td align="center"><img src="assets/IMG_4922.PNG" width="250" /><br /><b>Financial Insights</b><br />Spending breakdown & donut chart</td>
+    <td align="center"><img src="assets/IMG_4923.PNG" width="250" /><br /><b>Analytics Deep Dive</b><br />Category distribution & monthly comparison</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="assets/IMG_4924.PNG" width="250" /><br /><b>Calendar View</b><br />Daily spending summary & transactions</td>
+    <td align="center"><img src="assets/IMG_4925.PNG" width="250" /><br /><b>Settings</b><br />Preferences, security & AI configuration</td>
+    <td></td>
+  </tr>
+</table>
+</div>
+
+---
+
+## ✨ Features
+
+### 🏠 Smart Home Dashboard
+- **Total Budget at a Glance** — Glassmorphic budget summary card with real-time progress
+- **Category Cards** — Visual spending breakdown per category with circular progress indicators
+- **Quick Add** — Floating action button to instantly log transactions
+- **Search** — Find transactions quickly across all categories
+
+### 📊 Financial Insights & Analytics
+- **Multi-Timeframe Analysis** — Switch between Day, Week, Month, and Year views
+- **Spending Breakdown** — Interactive donut chart showing total spend with category percentages
+- **Category Distribution** — Visual treemap of spending by category
+- **Monthly Comparison** — Bar chart comparing current vs. previous month spending
+- **Net Savings Tracker** — Real-time savings calculation with trend indicators
+
+### 📅 Calendar View
+- **Visual Spending Calendar** — Color-coded daily spending heatmap
+- **Daily Summary Panel** — Tap any day to see an "On Track" / "Over Budget" status
+- **Transaction Details** — Per-day breakdown with category icons and amounts
+- **Monthly Navigation** — Browse through months to track spending history
+
+### 🤖 AI Receipt Scanner (Gemini API)
+- **Receipt Photo Scanning** — Snap a photo of any receipt or invoice
+- **Barcode Detection** — Integrated barcode scanner for quick product lookup
+- **Auto Item Detection** — AI extracts line items, prices, and quantities
+- **Smart Categorization** — Automatically suggests spending categories
+- **Review & Edit** — Review scanned items before adding to your budget
+- **Bring Your Own API Key** — Use your personal Gemini API key for AI features
+
+### 🔄 Subscription Management
+- **Track Recurring Expenses** — Manage Netflix, Spotify, gym memberships, and more
+- **Billing Cycle Awareness** — Weekly, monthly, quarterly, and yearly billing periods
+- **Monthly Cost Overview** — See total subscription costs at a glance
+
+### 🎓 Guided Onboarding & Walkthrough
+- **Animated Onboarding** — Beautiful Lottie-animated intro screens for first-time users
+- **Step-by-Step Setup** — Guided currency selection, category creation, and biometric setup
+- **In-App Walkthrough** — Interactive overlay walkthrough to learn every feature
+- **Replay Anytime** — Re-trigger the walkthrough from Settings
+
+### ⚙️ Settings & Customization
+- **Profile Management** — Manage your profile and preferences
+- **Multiple Currencies** — Support for USD, EUR, GBP, INR, JPY, and more
+- **Budget Period** — Toggle between weekly and monthly budget periods
+- **Appearance** — System, Light, and Dark theme options
+- **Adjustable Budget** — Set and modify your total monthly budget
+- **PDF Export** — Generate detailed spending reports and share them
+
+### 🔒 Security & Privacy
+- **Face ID / Touch ID Lock** — Biometric authentication to secure the app
+- **Secure Storage** — Sensitive data (API keys, preferences) stored with Expo Secure Store
+- **Local-First Architecture** — All financial data stored on-device with SQLite
+- **No Cloud Dependency** — Your data never leaves your device
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|---|---|
+| **Framework** | React Native 0.81.5 + Expo SDK 54 |
+| **Language** | TypeScript 5.9 |
+| **Navigation** | Expo Router (File-based routing) |
+| **State Management** | Zustand with persistence |
+| **Database** | Expo SQLite |
+| **AI / ML** | Google Gemini API (via Bring Your Own Key) |
+| **Charts** | react-native-gifted-charts |
+| **Animations** | React Native Reanimated + Lottie |
+| **Forms** | React Hook Form |
+| **UI Components** | Custom components + Expo Blur + Linear Gradient |
+| **Icons** | @expo/vector-icons (Feather) |
+| **Lists** | @shopify/flash-list |
+| **Security** | expo-local-authentication + expo-secure-store |
+
+---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-- **Node.js** 18+
-- **npm** or **yarn**
-- **Xcode** 15+ (for iOS development)
-- **CocoaPods** (`sudo gem install cocoapods`)
-- **iOS Device** or Simulator
+| Requirement | Version |
+|---|---|
+| Node.js | 18+ |
+| npm or yarn | Latest |
+| Xcode | 15+ (for iOS development) |
+| CocoaPods | Latest (`sudo gem install cocoapods`) |
+| iOS Device / Simulator | iOS 16+ recommended |
 
 ### Installation
 
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/yourusername/Finance_Tracker.git
-   cd Finance_Tracker
+   git clone https://github.com/yourusername/FinanceTracker.git
+   cd FinanceTracker
    ```
 
 2. **Install dependencies**
@@ -96,21 +147,32 @@ _Add screenshots of your app here_
    ```
 
 3. **Install iOS pods**
+
    ```bash
    cd ios && pod install && cd ..
    ```
 
+4. **(Optional) Set up Gemini API Key**
+
+   Create a `.env` file in the project root:
+
+   ```env
+   GEMINI_API_KEY=your_api_key_here
+   ```
+
+   Or configure it in-app via **Settings → Gemini API Key**.
+
 ### Running the App
 
-#### On iOS Simulator
+#### iOS Simulator
 
 ```bash
 npx expo run:ios
 ```
 
-#### On Physical iPhone
+#### Physical iPhone
 
-1. **Connect your iPhone** via USB cable
+1. **Connect your iPhone** via USB
 
 2. **Find your device ID**
 
@@ -124,105 +186,115 @@ npx expo run:ios
    npx expo run:ios --device YOUR_DEVICE_ID
    ```
 
-   Or open in Xcode:
+   Or open via Xcode:
 
    ```bash
    open ios/FinanceTracker.xcworkspace
    ```
 
-   Then select your device and press ⌘R
+   Select your device and press **⌘R**
 
 #### First Time on Physical Device
 
-If deploying to a physical device for the first time:
-
-1. **Trust Developer Certificate on iPhone:**
-   - Go to **Settings → General → VPN & Device Management**
-   - Tap on your developer profile
-   - Tap **Trust**
+1. **Trust the Developer Certificate on iPhone:**
+   - Navigate to **Settings → General → VPN & Device Management**
+   - Tap on your developer profile → **Trust**
 
 2. **Configure Signing in Xcode (if needed):**
-   - Open `ios/FinanceTracker.xcworkspace` in Xcode
-   - Select the FinanceTracker project
-   - Go to **Signing & Capabilities**
+   - Open `ios/FinanceTracker.xcworkspace`
+   - Select the project → **Signing & Capabilities**
    - Enable **"Automatically manage signing"**
    - Select your Apple ID team
+
+---
 
 ## 📁 Project Structure
 
 ```
-Finance_Tracker/
-├── App.tsx                 # Main app component
-├── index.ts               # Entry point
-├── app.json               # Expo configuration
-├── package.json           # Dependencies
-├── tsconfig.json          # TypeScript config
+FinanceTracker/
+├── app/                        # Expo Router — file-based routing
+│   ├── (onboarding)/           # Onboarding flow
+│   │   ├── AnimatedOnboarding.tsx
+│   │   ├── BiometricSetup.tsx
+│   │   ├── CategorySetup.tsx
+│   │   └── CurrencySetup.tsx
+│   ├── (tabs)/                 # Main tab screens
+│   │   ├── Home.tsx
+│   │   ├── Analytics.tsx
+│   │   ├── Calendar.tsx
+│   │   ├── Subscriptions.tsx
+│   │   └── Settings.tsx
+│   ├── AddTransaction.tsx      # Transaction forms
+│   ├── AddCategory.tsx
+│   ├── AddSubcategory.tsx
+│   ├── AddSubscription.tsx
+│   ├── ReviewScannedItems.tsx  # AI scan review screen
+│   ├── Category.tsx            # Category detail view
+│   ├── Items.tsx               # Items list view
+│   └── _layout.tsx             # Root layout
 ├── src/
-│   ├── components/        # Reusable UI components
-│   │   ├── BudgetCard.tsx
-│   │   ├── CalendarDay.tsx
+│   ├── components/             # Reusable UI components
+│   │   ├── BudgetSummaryCard.tsx
 │   │   ├── CategoryCard.tsx
-│   │   ├── EmptyState.tsx
-│   │   ├── ProgressBar.tsx
-│   │   ├── SubscriptionCard.tsx
-│   │   └── TransactionItem.tsx
-│   ├── constants/         # App constants
-│   │   └── index.ts       # Currencies, categories, etc.
-│   ├── database/          # SQLite database layer
-│   │   ├── index.ts       # Database initialization
-│   │   └── queries.ts     # CRUD operations
-│   ├── hooks/             # Custom React hooks
+│   │   ├── CalendarDay.tsx
+│   │   ├── CustomTabBar.tsx
+│   │   ├── CircularProgress.tsx
+│   │   ├── BarcodeScannerModal.tsx
+│   │   ├── ScanningModal.tsx
+│   │   ├── OnboardingSlide.tsx
+│   │   ├── WalkthroughOverlay.tsx
+│   │   ├── SwipeableTransaction.tsx
+│   │   └── ...
+│   ├── services/               # Business logic & API services
+│   │   ├── receiptService.ts   # Gemini AI receipt scanning
+│   │   └── barcodeService.ts   # Barcode detection & lookup
+│   ├── database/               # SQLite database layer
+│   │   ├── index.ts            # Database initialization & migrations
+│   │   └── queries.ts          # CRUD operations
+│   ├── hooks/                  # Custom React hooks
 │   │   ├── useBiometricAuth.ts
 │   │   ├── useCurrency.ts
-│   │   └── useHaptics.ts
-│   ├── navigation/        # Navigation configuration
-│   │   └── RootNavigator.tsx
-│   ├── screens/           # App screens
-│   │   ├── forms/         # Form screens
-│   │   │   ├── AddCategoryScreen.tsx
-│   │   │   ├── AddSubscriptionScreen.tsx
-│   │   │   ├── AddTransactionScreen.tsx
-│   │   │   ├── EditCategoryScreen.tsx
-│   │   │   └── EditTransactionScreen.tsx
-│   │   └── main/          # Main tab screens
-│   │       ├── AnalyticsScreen.tsx
-│   │       ├── CalendarScreen.tsx
-│   │       ├── HomeScreen.tsx
-│   │       ├── SettingsScreen.tsx
-│   │       └── SubscriptionsScreen.tsx
-│   ├── store/             # Zustand stores
+│   │   ├── useHaptics.ts
+│   │   └── useReceiptScanner.ts
+│   ├── store/                  # Zustand state stores
 │   │   ├── budgetStore.ts
-│   │   └── settingsStore.ts
-│   ├── theme/             # Theming
-│   │   └── index.ts       # Colors, typography, spacing
-│   ├── types/             # TypeScript types
-│   │   └── index.ts
-│   └── utils/             # Utility functions
-│       └── index.ts       # Date helpers, formatters
-├── assets/                # Images, icons, fonts
-└── ios/                   # Native iOS project
+│   │   ├── settingsStore.ts
+│   │   ├── subscriptionStore.ts
+│   │   ├── scanStore.ts
+│   │   └── walkthroughStore.ts
+│   ├── constants/              # App constants & defaults
+│   ├── theme/                  # Colors, typography, spacing
+│   ├── types/                  # TypeScript type definitions
+│   └── utils/                  # Utility functions & helpers
+├── assets/
+│   ├── onboarding/             # Lottie animations for onboarding
+│   ├── icon.png                # App icon
+│   └── splash-icon.png         # Splash screen
+└── ios/                        # Native iOS project
 ```
+
+---
 
 ## 🗄️ Database Schema
 
-The app uses SQLite with the following tables:
+The app uses **Expo SQLite** with the following schema:
 
-- **categories** - Budget categories with limits and colors
-- **subcategories** - Nested subcategories
-- **items** - Individual trackable items
-- **transactions** - All spending records
-- **subscriptions** - Recurring payments
-- **settings** - App preferences
-- **daily_spending_cache** - Cached daily totals
-- **monthly_spending_cache** - Cached monthly totals
+| Table | Purpose |
+|---|---|
+| `categories` | Budget categories with limits, colors, and icons |
+| `subcategories` | Nested subcategories within parent categories |
+| `items` | Individual trackable items per subcategory |
+| `transactions` | All spending records with amounts, dates, and notes |
+| `subscriptions` | Recurring payment tracking with billing cycles |
+| `settings` | User preferences and app configuration |
+| `daily_spending_cache` | Cached daily spending totals for performance |
+| `monthly_spending_cache` | Cached monthly spending totals for performance |
+
+---
 
 ## 🔧 Configuration
 
-### Environment Variables
-
-No environment variables required - all configuration is stored locally.
-
-### Customizing Currencies
+### Currencies
 
 Edit `src/constants/index.ts` to add more currencies:
 
@@ -230,11 +302,12 @@ Edit `src/constants/index.ts` to add more currencies:
 export const CURRENCIES = [
   { code: "USD", symbol: "$", name: "US Dollar" },
   { code: "EUR", symbol: "€", name: "Euro" },
+  { code: "INR", symbol: "₹", name: "Indian Rupee" },
   // Add more currencies here
 ];
 ```
 
-### Customizing Categories
+### Default Categories
 
 Default categories are defined in `src/constants/index.ts`:
 
@@ -246,27 +319,49 @@ export const DEFAULT_CATEGORIES = [
 ];
 ```
 
-## 🤝 Contributing
+### Gemini API Key
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+The app supports **Bring Your Own API Key** for AI-powered receipt scanning. Configure it via:
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- [Expo](https://expo.dev/) - React Native development platform
-- [React Navigation](https://reactnavigation.org/) - Navigation library
-- [Zustand](https://zustand-demo.pmnd.rs/) - State management
-- [react-native-gifted-charts](https://github.com/Abhinandan-Kushwaha/react-native-gifted-charts) - Beautiful charts
+- **In-app:** Settings → AI Scanner → Gemini API Key
+- **Environment variable:** Add `GEMINI_API_KEY` to your `.env` file
 
 ---
 
-**Built with ❤️ using React Native and Expo**
+## 🤝 Contributing
+
+Contributions are welcome! Please follow the standard GitHub workflow:
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- [Expo](https://expo.dev/) — React Native development platform
+- [React Navigation](https://reactnavigation.org/) — Navigation library
+- [Zustand](https://zustand-demo.pmnd.rs/) — Lightweight state management
+- [react-native-gifted-charts](https://github.com/Abhinandan-Kushwaha/react-native-gifted-charts) — Beautiful chart components
+- [Google Gemini](https://ai.google.dev/) — AI-powered receipt scanning
+- [LottieFiles](https://lottiefiles.com/) — Animation assets
+
+---
+
+<div align="center">
+
+**Built with ❤️ by Ayush Srivastava**
+
+React Native • Expo • TypeScript • Gemini AI
+
+</div>
+]]>
