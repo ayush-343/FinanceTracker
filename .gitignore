@@ -40,3 +40,5 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+FinanceTracker_Interview_Prep.txt
