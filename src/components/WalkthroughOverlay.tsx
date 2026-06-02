@@ -5,7 +5,10 @@ import {
   Dimensions,
   TouchableWithoutFeedback,
   Modal,
+  Platform,
+  StatusBar,
   LayoutRectangle,
+  useWindowDimensions,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -18,7 +21,16 @@ import { useWalkthroughStore } from '../store/walkthroughStore';
 import { useWalkthroughContext } from './WalkthroughContext';
 import { WalkthroughTooltip } from './WalkthroughTooltip';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+// On Android with statusBarTranslucent, the Modal covers the full physical screen.
+// We need screen dimensions (not window) for the SVG overlay mask.
+const getOverlayDimensions = () => {
+  if (Platform.OS === 'android') {
+    const screen = Dimensions.get('screen');
+    return { width: screen.width, height: screen.height };
+  }
+  const win = Dimensions.get('window');
+  return { width: win.width, height: win.height };
+};
 
 // ─── Step configuration ──────────────────────────────────────
 interface WalkthroughStepConfig {
@@ -198,6 +210,13 @@ export const WalkthroughOverlay: React.FC = () => {
   // Current step config
   const stepConfig = WALKTHROUGH_STEPS[activeStepIndex];
 
+  // Use dynamic dimensions for layout calculations
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  // For the SVG overlay, use screen dimensions on Android (statusBarTranslucent Modal)
+  const overlayDims = getOverlayDimensions();
+  const OVERLAY_WIDTH = overlayDims.width;
+  const OVERLAY_HEIGHT = overlayDims.height;
+
   // Show/hide overlay
   useEffect(() => {
     if (isWalkthroughActive) {
@@ -290,21 +309,21 @@ export const WalkthroughOverlay: React.FC = () => {
 
   // Compute tooltip position
   const tooltipPosition = useMemo(() => {
-    if (!stepConfig) return { top: SCREEN_HEIGHT * 0.4 };
+    if (!stepConfig) return { top: windowHeight * 0.4 };
 
     if (stepConfig.tooltipPosition === 'center' || !spotlightRect) {
-      return { top: SCREEN_HEIGHT * 0.35 };
+      return { top: windowHeight * 0.35 };
     }
 
     if (stepConfig.tooltipPosition === 'bottom') {
       const bottomOfSpotlight = spotlightRect.y + spotlightRect.height + (stepConfig.spotlightPadding || 8);
-      return { top: Math.min(bottomOfSpotlight + 16, SCREEN_HEIGHT * 0.65) };
+      return { top: Math.min(bottomOfSpotlight + 16, OVERLAY_HEIGHT * 0.65) };
     }
 
     // 'top'
     const topOfSpotlight = spotlightRect.y - (stepConfig.spotlightPadding || 8);
     return { top: Math.max(topOfSpotlight - 260, 60) };
-  }, [stepConfig, spotlightRect]);
+  }, [stepConfig, spotlightRect, windowHeight, OVERLAY_HEIGHT]);
 
   const handleNext = useCallback(() => {
     nextStep();
@@ -339,11 +358,11 @@ export const WalkthroughOverlay: React.FC = () => {
       <Animated.View style={[styles.overlay, overlayAnimatedStyle]}>
         {/* SVG spotlight mask */}
         <View style={StyleSheet.absoluteFill} pointerEvents="none">
-          <Svg width={SCREEN_WIDTH} height={SCREEN_HEIGHT}>
+          <Svg width={OVERLAY_WIDTH} height={OVERLAY_HEIGHT}>
             {cutout ? (
               <Path
                 d={`
-                  M0,0 h${SCREEN_WIDTH} v${SCREEN_HEIGHT} h-${SCREEN_WIDTH} Z
+                  M0,0 h${OVERLAY_WIDTH} v${OVERLAY_HEIGHT} h-${OVERLAY_WIDTH} Z
                   M${cutout.x + cutout.rx},${cutout.y}
                   h${cutout.width - 2 * cutout.rx}
                   a${cutout.rx},${cutout.rx} 0 0 1 ${cutout.rx},${cutout.rx}
@@ -360,7 +379,7 @@ export const WalkthroughOverlay: React.FC = () => {
               />
             ) : (
               /* Full screen overlay for non-spotlight steps */
-              <Rect x={0} y={0} width={SCREEN_WIDTH} height={SCREEN_HEIGHT} fill="rgba(0,0,0,0.75)" />
+              <Rect x={0} y={0} width={OVERLAY_WIDTH} height={OVERLAY_HEIGHT} fill="rgba(0,0,0,0.75)" />
             )}
           </Svg>
         </View>
@@ -371,11 +390,11 @@ export const WalkthroughOverlay: React.FC = () => {
             style={[
               styles.spotlightGlow,
               {
-                top: cutout.y - 2,
-                left: cutout.x - 2,
-                width: cutout.width + 4,
-                height: cutout.height + 4,
-                borderRadius: cutout.rx + 2,
+                top: cutout.y - 1,
+                left: cutout.x - 1,
+                width: cutout.width + 2,
+                height: cutout.height + 2,
+                borderRadius: cutout.rx + 1,
               },
             ]}
             pointerEvents="none"
@@ -417,13 +436,12 @@ const styles = StyleSheet.create({
   },
   spotlightGlow: {
     position: 'absolute',
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: 'rgba(59, 130, 246, 0.5)',
     shadowColor: '#3B82F6',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 15,
-    elevation: 10,
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
   },
   tooltipContainer: {
     position: 'absolute',

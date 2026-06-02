@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useCallback, useRef } from 'react';
-import { LayoutRectangle, View } from 'react-native';
+import { LayoutRectangle, Platform, StatusBar, View } from 'react-native';
 
 interface WalkthroughContextType {
   // Tab navigation callback — set by TabsLayout
@@ -29,7 +29,10 @@ export const WalkthroughProvider: React.FC<{ children: React.ReactNode }> = ({ c
     refs.current.set(key, ref);
   }, []);
 
-  // Measure a registered ref on-demand — always returns fresh absolute coordinates
+  // Measure a registered ref on-demand — always returns fresh absolute coordinates.
+  // On Android with a statusBarTranslucent Modal, measureInWindow returns y-coordinates
+  // relative to the window (below status bar), but the Modal covers the full screen.
+  // We add StatusBar.currentHeight on Android to convert to screen-absolute coords.
   const measureRef = useCallback((key: string): Promise<LayoutRectangle | null> => {
     return new Promise((resolve) => {
       const ref = refs.current.get(key);
@@ -39,7 +42,12 @@ export const WalkthroughProvider: React.FC<{ children: React.ReactNode }> = ({ c
       }
       ref.current.measureInWindow((x, y, width, height) => {
         if (width > 0 && height > 0) {
-          resolve({ x, y, width, height });
+          // On Android, measureInWindow y is relative to below the status bar,
+          // but our overlay Modal is statusBarTranslucent (covers full screen).
+          // Add status bar height to get screen-absolute y.
+          const statusBarOffset =
+            Platform.OS === 'android' ? (StatusBar.currentHeight ?? 0) : 0;
+          resolve({ x, y: y + statusBarOffset, width, height });
         } else {
           resolve(null);
         }
