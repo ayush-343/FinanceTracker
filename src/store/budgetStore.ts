@@ -18,7 +18,7 @@ import {
   updateSubcategory as dbUpdateSubcategory,
   deleteSubcategory as dbDeleteSubcategory,
 } from '../database';
-import { Category, CategoryWithSpending, TransactionWithDetails, Timeframe, Subcategory } from '../types';
+import { Category, CategoryWithSpending, TransactionWithDetails, Timeframe, Subcategory, TransactionSource } from '../types';
 
 interface BudgetState {
   // State
@@ -53,7 +53,7 @@ interface BudgetState {
   removeSubcategory: (id: number) => Promise<void>;
   
   // Transaction CRUD
-  addTransaction: (transaction: { category_id: number; subcategory_id?: number; item_id?: number; amount: number; date: string; notes?: string }) => Promise<number>;
+  addTransaction: (transaction: { category_id: number; subcategory_id?: number; item_id?: number; amount: number; date: string; notes?: string; merchant?: string | null; source?: TransactionSource }) => Promise<number>;
   editTransaction: (id: number, transaction: Partial<{ amount: number; date: string; notes: string }>) => Promise<void>;
   removeTransaction: (id: number) => Promise<void>;
   

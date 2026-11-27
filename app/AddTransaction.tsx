@@ -6,11 +6,12 @@ import { Feather } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
 import { useTheme } from '../src/theme';
-import { Button, TextInput as CustomTextInput } from '../src/components';
+import { Button, TextInput as CustomTextInput, SuggestionChip } from '../src/components';
 import { useBudgetStore } from '../src/store';
-import { useCurrency, useHaptics } from '../src/hooks';
+import { useCurrency, useHaptics, useCategorySuggestion } from '../src/hooks';
 import { Category, Subcategory } from '../src/types';
-import { getCategories, getSubcategories, createItem, getItems } from '../src/database';
+import { getCategories, getSubcategories, createItem, getItems, learnCategory } from '../src/database';
+import { Suggestion } from '../src/ai/categorizer';
 
 export const AddTransactionScreen: React.FC = () => {
     const router = useRouter();
@@ -90,6 +91,28 @@ export const AddTransactionScreen: React.FC = () => {
         return subs;
     };
 
+    const suggestion = useCategorySuggestion(itemName || description);
+    const suggestedCategory = suggestion ? categories.find(c => c.id === suggestion.categoryId) ?? null : null;
+    const showSuggestion = !!suggestedCategory && (
+        suggestedCategory.id !== selectedCategory?.id ||
+        (suggestion?.subcategoryId != null && suggestion.subcategoryId !== selectedSubcategory?.id)
+    );
+
+    const applySuggestion = async (s: Suggestion) => {
+        const category = categories.find(c => c.id === s.categoryId);
+        if (!category) return;
+        setSelectedCategory(category);
+        setSelectedSubcategory(null);
+        const subs = await loadSubcategories(category.id);
+        if (s.subcategoryId != null) setSelectedSubcategory(subs.find(sub => sub.id === s.subcategoryId) ?? null);
+    };
+
+    // Preselect only an exact learned match, and only while the user hasn't picked a category.
+    useEffect(() => {
+        if (suggestion?.source === 'exact' && !selectedCategory) applySuggestion(suggestion);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [suggestion]);
+
     const handleCategorySelect = (category: Category) => {
         setSelectedCategory(category);
         setSelectedSubcategory(null);
@@ -150,6 +173,7 @@ export const AddTransactionScreen: React.FC = () => {
                 notes: description.trim(),
                 date: format(date, 'yyyy-MM-dd'),
             });
+            await learnCategory(itemName.trim(), selectedCategory.id, selectedSubcategory?.id ?? null);
             success();
             router.back();
         } catch (err) {
@@ -290,6 +314,14 @@ export const AddTransactionScreen: React.FC = () => {
                             )}
                             <Feather name={showCategoryPicker ? 'chevron-up' : 'chevron-down'} size={20} color={colors.textSecondary} />
                         </TouchableOpacity>
+
+                        {showSuggestion && suggestedCategory && suggestion && (
+                            <SuggestionChip
+                                label={`Suggested: ${suggestedCategory.name}`}
+                                color={suggestedCategory.color}
+                                onPress={() => applySuggestion(suggestion)}
+                            />
+                        )}
 
                         {showCategoryPicker && (
                             <View

@@ -19,7 +19,7 @@ import { useWalkthroughContext } from '../../src/components/WalkthroughContext';
 import { useCurrency, useBiometricAuth, useHaptics } from '../../src/hooks';
 import { BudgetPeriod } from '../../src/types';
 import { CURRENCIES, BUDGET_PERIODS } from '../../src/constants';
-import { getCategoriesWithSpending, getTransactionsByCategory, updateCategory } from '../../src/database';
+import { getCategoriesWithSpending, getTransactionsByCategory, updateCategory, clearCategoryMemory } from '../../src/database';
 
 const CURRENCY_OPTIONS = CURRENCIES.slice(0, 10);
 
@@ -530,12 +530,35 @@ export const SettingsScreen: React.FC = () => {
 
                 {/* AI Scanner */}
                 <View ref={aiScannerRef} collapsable={false}>
-                <SettingsGroup title="AI SCANNER">
+                <SettingsGroup title="AI & PRIVACY">
                     <SettingRow
                         icon="cpu"
                         title="Gemini API Key"
-                        subtitle={useSettingsStore.getState().geminiApiKey ? '••••••••' : 'Not configured'}
+                        subtitle={useSettingsStore.getState().geminiApiKey ? 'Set · sends receipt photos to Google' : 'Not set · sends receipt photos to Google'}
                         onPress={handleOpenApiKeyEditor}
+                    />
+                    <SettingRow
+                        icon="rotate-ccw"
+                        title="Clear Learned Categories"
+                        subtitle="Forget the categories the app learned from you"
+                        onPress={() => {
+                            light();
+                            Alert.alert(
+                                'Clear Learned Categories?',
+                                'Category suggestions will start fresh. Your transactions are not changed.',
+                                [
+                                    { text: 'Cancel', style: 'cancel' },
+                                    {
+                                        text: 'Clear',
+                                        style: 'destructive',
+                                        onPress: async () => {
+                                            await clearCategoryMemory();
+                                            success();
+                                        },
+                                    },
+                                ]
+                            );
+                        }}
                         isLast
                     />
                 </SettingsGroup>

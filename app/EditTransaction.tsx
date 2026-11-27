@@ -10,7 +10,7 @@ import { Button, TextInput as CustomTextInput } from '../src/components';
 import { useBudgetStore } from '../src/store';
 import { useCurrency, useHaptics } from '../src/hooks';
 import { Category, Subcategory, TransactionWithDetails } from '../src/types';
-import { getCategories, getSubcategories, getTransactionById, updateTransaction, deleteTransaction, createItem } from '../src/database';
+import { getCategories, getSubcategories, getTransactionById, updateTransaction, deleteTransaction, createItem, learnCategory } from '../src/database';
 
 export const EditTransactionScreen: React.FC = () => {
     const router = useRouter();
@@ -141,6 +141,9 @@ export const EditTransactionScreen: React.FC = () => {
                 notes: description.trim(),
                 date: format(date, 'yyyy-MM-dd'),
             });
+            const categoryChanged = transaction?.category_id !== selectedCategory.id ||
+                (transaction?.subcategory_id ?? null) !== (selectedSubcategory?.id ?? null);
+            if (categoryChanged) await learnCategory(itemName.trim(), selectedCategory.id, selectedSubcategory?.id ?? null);
             await refreshData();
             success();
             router.back();
