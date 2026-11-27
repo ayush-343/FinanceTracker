@@ -2,6 +2,11 @@ import { create } from 'zustand';
 import { getSettings, resetAllData, updateSettings } from '../database';
 import { AppSettings, BudgetPeriod } from '../types';
 import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { EnginePreference } from '../ai/engine';
+import { DEFAULT_LOCAL_MODEL_ID } from '../ai/models';
+
+const AI_PREFS_KEY = 'ai_prefs';
 
 const GEMINI_API_KEY_STORE = 'gemini_api_key';
 
@@ -14,6 +19,8 @@ interface SettingsState {
   budgetPeriod: BudgetPeriod;
   isOnboardingCompleted: boolean;
   geminiApiKey: string | null;
+  aiEngine: EnginePreference;
+  localModelId: string;
   
   // Actions
   loadSettings: () => Promise<void>;
@@ -23,6 +30,8 @@ interface SettingsState {
   setBudgetPeriod: (period: BudgetPeriod) => Promise<void>;
   setOnboardingCompleted: (completed: boolean) => Promise<void>;
   setGeminiApiKey: (key: string | null) => Promise<void>;
+  setAiEngine: (engine: EnginePreference) => Promise<void>;
+  setLocalModelId: (id: string) => Promise<void>;
   resetAppData: () => Promise<void>;
 }
 
@@ -35,6 +44,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   budgetPeriod: 'monthly',
   isOnboardingCompleted: false,
   geminiApiKey: null,
+  aiEngine: 'auto',
+  localModelId: DEFAULT_LOCAL_MODEL_ID,
 
   // Load settings from database
   loadSettings: async () => {
@@ -46,6 +57,15 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         geminiKey = await SecureStore.getItemAsync(GEMINI_API_KEY_STORE);
       } catch (e) {
         console.error('Failed to load API key', e);
+      }
+      try {
+        const aiPrefs = JSON.parse((await AsyncStorage.getItem(AI_PREFS_KEY)) ?? '{}');
+        set({
+          aiEngine: aiPrefs.aiEngine ?? 'auto',
+          localModelId: aiPrefs.localModelId ?? DEFAULT_LOCAL_MODEL_ID,
+        });
+      } catch (e) {
+        console.warn('Failed to load AI preferences', e);
       }
       
       if (settings) {
@@ -115,6 +135,16 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     } catch (error) {
       console.error('Failed to update onboarding status:', error);
     }
+  },
+
+  setAiEngine: async (aiEngine) => {
+    set({ aiEngine });
+    await AsyncStorage.setItem(AI_PREFS_KEY, JSON.stringify({ aiEngine, localModelId: get().localModelId }));
+  },
+
+  setLocalModelId: async (localModelId) => {
+    set({ localModelId });
+    await AsyncStorage.setItem(AI_PREFS_KEY, JSON.stringify({ aiEngine: get().aiEngine, localModelId }));
   },
 
   // Save Gemini API key

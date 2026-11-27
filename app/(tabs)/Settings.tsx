@@ -16,7 +16,7 @@ import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { useTheme } from '../../src/theme';
 import { useSettingsStore, useBudgetStore, useWalkthroughStore } from '../../src/store';
 import { useWalkthroughContext } from '../../src/components/WalkthroughContext';
-import { useCurrency, useBiometricAuth, useHaptics } from '../../src/hooks';
+import { useCurrency, useBiometricAuth, useHaptics, useAiStatus } from '../../src/hooks';
 import { BudgetPeriod } from '../../src/types';
 import { CURRENCIES, BUDGET_PERIODS } from '../../src/constants';
 import { getCategoriesWithSpending, getTransactionsByCategory, updateCategory, clearCategoryMemory } from '../../src/database';
@@ -154,6 +154,39 @@ export const SettingsScreen: React.FC = () => {
     const { format: formatCurrency } = useCurrency();
     const { isAvailable: biometricAvailable, biometricType } = useBiometricAuth();
     const { light, success } = useHaptics();
+    const ai = useAiStatus();
+    const setAiEngine = useSettingsStore((s) => s.setAiEngine);
+
+    const chooseAiEngine = () => {
+        light();
+        const pick = (engine: 'auto' | 'apple' | 'local' | 'off') => () => setAiEngine(engine);
+        Alert.alert('On-Device AI', 'Everything runs on this phone. Auto uses Apple Intelligence when available, otherwise the downloaded model.', [
+            { text: 'Auto', onPress: pick('auto') },
+            { text: 'Apple Intelligence', onPress: pick('apple') },
+            { text: `Local Model (${ai.model.label})`, onPress: pick('local') },
+            { text: 'Off', onPress: pick('off') },
+            { text: 'Cancel', style: 'cancel' },
+        ]);
+    };
+
+    const manageLocalModel = () => {
+        light();
+        if (ai.localState === 'downloading') return;
+        if (ai.localState === 'ready') {
+            Alert.alert(`Delete ${ai.model.label}?`, `Frees ${ai.model.sizeMB} MB. You can download it again later.`, [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Delete', style: 'destructive', onPress: () => ai.remove() },
+            ]);
+            return;
+        }
+        Alert.alert(`Download ${ai.model.label}?`, `${ai.model.sizeMB} MB, downloaded once from Hugging Face. Wi-Fi recommended. After that it runs offline on this phone.`, [
+            { text: 'Cancel', style: 'cancel' },
+            {
+                text: 'Download',
+                onPress: () => ai.download().then(success).catch(() => Alert.alert('Download Failed', 'Check your connection and try again.')),
+            },
+        ]);
+    };
 
     const {
         isBiometricEnabled,
@@ -536,6 +569,22 @@ export const SettingsScreen: React.FC = () => {
                         title="Gemini API Key"
                         subtitle={useSettingsStore.getState().geminiApiKey ? 'Set · sends receipt photos to Google' : 'Not set · sends receipt photos to Google'}
                         onPress={handleOpenApiKeyEditor}
+                    />
+                    <SettingRow
+                        icon="zap"
+                        title="On-Device AI"
+                        subtitle={`${ai.aiEngine === 'auto' ? 'Auto' : ai.aiEngine === 'apple' ? 'Apple' : ai.aiEngine === 'local' ? 'Local' : 'Off'} · ${ai.active}`}
+                        onPress={chooseAiEngine}
+                    />
+                    <SettingRow
+                        icon="download"
+                        title="Local Model"
+                        subtitle={
+                            ai.localState === 'downloading' ? `Downloading ${ai.progress}%`
+                            : ai.localState === 'ready' ? `${ai.model.label} · Downloaded · Tap to delete`
+                            : `${ai.model.label} · ${ai.model.sizeMB} MB · Tap to download`
+                        }
+                        onPress={manageLocalModel}
                     />
                     <SettingRow
                         icon="rotate-ccw"
