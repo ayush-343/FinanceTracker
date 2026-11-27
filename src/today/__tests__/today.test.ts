@@ -19,6 +19,11 @@ describe('buildMonthKolam', () => {
   it('today open when not logged', () => {
     expect(buildMonthKolam(2026, 10, new Set(), '2026-11-10').cells[9].state).toBe('today-open');
   });
+  it('days before the first use are not counted as missed', () => {
+    const k = buildMonthKolam(2026, 10, new Set(['2026-11-27']), '2026-11-27', '2026-11-27');
+    expect(k.cells[25].state).toBe('before');
+    expect(k).toMatchObject({ drawn: 1, elapsed: 1 });
+  });
   it('past month is fully elapsed', () => {
     const k = buildMonthKolam(2026, 9, new Set(['2026-10-01']), '2026-11-27');
     expect(k.elapsed).toBe(31);

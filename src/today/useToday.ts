@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { endOfMonth, format, startOfMonth, subDays } from 'date-fns';
 import { useSettingsStore } from '../store/settingsStore';
-import { getCategoriesWithSpending, getTransactions, loadDrawnDays, markNothingSpent } from '../database';
+import { getCategoriesWithSpending, getTransactions, loadDrawnDays, loadFirstDay, markNothingSpent } from '../database';
 import { resolveRange } from '../ai/ask/range';
 import { CategoryWithSpending, TransactionWithDetails } from '../types';
 import { buildMonthKolam, KolamCell } from './kolamGrid';
@@ -32,11 +32,12 @@ export const useToday = () => {
     const now = new Date();
     const todayISO = iso(now);
     const period = resolveRange({ preset: budgetPeriod === 'weekly' ? 'this_week' : 'this_month' }, now);
-    const [drawn, categories, todayCats, recent] = await Promise.all([
+    const [drawn, categories, todayCats, recent, firstDay] = await Promise.all([
       loadDrawnDays(iso(startOfMonth(now)), iso(endOfMonth(now))),
       getCategoriesWithSpending(period.from, todayISO),
       getCategoriesWithSpending(todayISO, todayISO),
       getTransactions(iso(subDays(now, 1)), todayISO),
+      loadFirstDay(),
     ]);
     const budget = categories.reduce((s, c) => s + (c.budget_limit || 0), 0);
     const periodSpent = categories.reduce((s, c) => s + c.spent, 0);
@@ -46,7 +47,7 @@ export const useToday = () => {
     setData({
       todayISO,
       monthLabel: format(now, 'MMMM'),
-      kolam: buildMonthKolam(now.getFullYear(), now.getMonth(), drawn, todayISO),
+      kolam: buildMonthKolam(now.getFullYear(), now.getMonth(), drawn, todayISO, firstDay ?? todayISO),
       pace: computePace({ budget, spentBeforeToday: periodSpent - spentToday, spentToday, periodEnd: period.to, today: todayISO }),
       budget,
       periodSpent,

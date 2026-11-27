@@ -1,6 +1,7 @@
 import React from 'react';
 import { Text, Alert, ActionSheetIOS, Platform, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import { Screen, Card, SettingsRow, useKolam, type, space } from '../../src/ui';
@@ -34,7 +35,11 @@ export default function YouScreen() {
     currency, budgetPeriod, darkMode, isBiometricEnabled, geminiApiKey, digestEnabled, alertsEnabled,
     setCurrency, setBudgetPeriod, setDarkMode, setBiometricEnabled, setGeminiApiKey, setAiEngine, setDigestEnabled, setAlertsEnabled, resetAppData,
   } = useSettingsStore();
-  const { totalBudget } = useBudgetStore();
+  const [totalBudget, setTotalBudget] = React.useState(0);
+  const loadBudget = React.useCallback(() => {
+    getCategories().then((cats) => setTotalBudget(cats.reduce((s, x) => s + x.budget_limit, 0))).catch(() => {});
+  }, []);
+  useFocusEffect(loadBudget);
   const [notificationsGranted, setNotificationsGranted] = React.useState(false);
   const [exporting, setExporting] = React.useState(false);
 
@@ -68,6 +73,7 @@ export default function YouScreen() {
         await updateCategory(cat.id, { budget_limit: Math.round(total * share) });
       }
       success();
+      loadBudget();
       reloadBudgets();
     };
     Alert.prompt(

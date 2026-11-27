@@ -15,3 +15,12 @@ export const markNothingSpent = async (date: string): Promise<void> =>
   withDatabase(async (db) => {
     await db.runAsync("INSERT OR IGNORE INTO day_marks (date, kind) VALUES (?, 'nothing')", [date]);
   });
+
+/** The first day the person used the app: their earliest purchase or "nothing spent" mark, or null. */
+export const loadFirstDay = async (): Promise<string | null> =>
+  withDatabase(async (db) => {
+    const row = await db.getFirstAsync<{ d: string | null }>(
+      'SELECT MIN(d) AS d FROM (SELECT MIN(date) AS d FROM transactions UNION ALL SELECT MIN(date) AS d FROM day_marks)',
+    );
+    return row?.d ?? null;
+  });

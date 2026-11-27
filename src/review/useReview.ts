@@ -5,7 +5,7 @@ import { askDb } from '../ai/ask/db';
 import { getForecastFrom } from '../ai/forecast/load';
 import { subscriptionChargesBetween } from '../ai/forecast/subscriptions';
 import { loadWeekStats } from '../services/insightNotifications';
-import { getGoals, getSubscriptions, getSubscriptionSkips, loadDrawnDays } from '../database';
+import { getGoals, getSubscriptions, getSubscriptionSkips, loadDrawnDays, loadFirstDay } from '../database';
 import { KolamCell } from '../today/kolamGrid';
 import { ReviewInput } from './cards';
 
@@ -23,16 +23,18 @@ export const useReview = () => {
       const todayISO = iso(now);
       const start = startOfWeek(now, WEEK);
       const end = endOfWeek(now, WEEK);
-      const [stats, forecast, drawnSet, goals, subs] = await Promise.all([
-        loadWeekStats(askDb, now), getForecastFrom(askDb, now, budgetPeriod), loadDrawnDays(iso(start), iso(end)), getGoals(), getSubscriptions(),
+      const [stats, forecast, drawnSet, goals, subs, firstDay] = await Promise.all([
+        loadWeekStats(askDb, now), getForecastFrom(askDb, now, budgetPeriod), loadDrawnDays(iso(start), iso(end)), getGoals(), getSubscriptions(), loadFirstDay(),
       ]);
+      const startISO = firstDay ?? todayISO;
       const cells: KolamCell[] = Array.from({ length: 7 }, (_, i) => {
         const d = iso(addDays(start, i));
         const logged = drawnSet.has(d);
-        const state = d < todayISO ? (logged ? 'drawn' : 'skipped') : d === todayISO ? (logged ? 'today-drawn' : 'today-open') : 'future';
+        const state = d < startISO && !logged ? 'before'
+          : d < todayISO ? (logged ? 'drawn' : 'skipped') : d === todayISO ? (logged ? 'today-drawn' : 'today-open') : 'future';
         return { day: Number(format(addDays(start, i), 'd')), iso: d, col: i, row: 0, state };
       });
-      const elapsed = cells.filter((x) => x.iso <= todayISO).length;
+      const elapsed = cells.filter((x) => x.iso <= todayISO && x.state !== 'before').length;
       const drawn = cells.filter((x) => x.iso <= todayISO && drawnSet.has(x.iso)).length;
       const from = iso(addDays(now, 1));
       const to = iso(addDays(now, 7));

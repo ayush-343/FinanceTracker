@@ -93,7 +93,7 @@ export const Kolam: React.FC<KolamProps> = ({ cells, rows, width, accessibilityL
           const p = pos(cell);
           const isToday = cell.state === 'today-open' || cell.state === 'today-drawn';
           const color = isToday ? c.action : cell.state === 'drawn' ? c.fieldInk : c.fieldMuted;
-          const opacity = cell.state === 'future' ? 0.35 : cell.state === 'skipped' ? 0.6 : 1;
+          const opacity = cell.state === 'future' || cell.state === 'before' ? 0.35 : cell.state === 'skipped' ? 0.6 : 1;
           return <Circle key={cell.iso} cx={p.x} cy={p.y} r={isToday ? 4 : 3} fill={color} opacity={opacity} />;
         })}
       </Svg>

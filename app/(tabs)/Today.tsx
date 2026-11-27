@@ -52,7 +52,7 @@ export default function TodayScreen() {
         <View style={styles.row}>
           <Text style={[type.title, { color: c.fieldInk }]}>{data?.monthLabel ?? format(now, 'MMMM')}</Text>
           {data ? (
-            <Text style={[type.money(13, '500'), { color: c.fieldMuted }]}>{data.kolam.drawn} of {data.kolam.elapsed} days drawn</Text>
+            <Text style={[type.money(13, '500'), { color: c.fieldMuted }]}>{data.kolam.drawn} of {data.kolam.elapsed} {data.kolam.elapsed === 1 ? 'day' : 'days'} drawn</Text>
           ) : null}
         </View>
         <View onLayout={onKolamLayout} style={{ marginTop: space.md }}>

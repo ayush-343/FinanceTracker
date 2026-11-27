@@ -30,7 +30,7 @@ export const reviewCards = (i: ReviewInput, money: (n: number) => string): Revie
   const quiet = i.elapsed - i.drawn;
   cards.push({
     kind: 'week',
-    title: `${i.drawn} of ${i.elapsed} days drawn`,
+    title: `${i.drawn} of ${i.elapsed} ${i.elapsed === 1 ? 'day' : 'days'} drawn`,
     body: quiet === 0 ? 'You logged every day this week.' : `${quiet} ${quiet === 1 ? 'day stayed a dot' : 'days stayed dots'}. The pattern kept going.`,
   });
 
