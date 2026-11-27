@@ -35,7 +35,7 @@ export const KButton: React.FC<KButtonProps> = ({ title, onPress, variant = 'pri
         style,
       ]}
     >
-      {loading ? <ActivityIndicator color={textColor} /> : <Text style={[styles.label, { color: textColor }]}>{title}</Text>}
+      {loading ? <ActivityIndicator color={textColor} /> : <Text maxFontSizeMultiplier={2} style={[styles.label, { color: textColor }]}>{title}</Text>}
     </Pressable>
   );
 };

@@ -57,7 +57,7 @@ export default function ActivityScreen() {
           accessibilityState={{ selected: mode === m }}
           style={[styles.segBtn, mode === m && { backgroundColor: c.surface }]}
         >
-          <Text style={[type.label, { color: mode === m ? c.ink : c.muted }]}>{m === 'list' ? 'List' : 'Month'}</Text>
+          <Text maxFontSizeMultiplier={2} style={[type.label, { color: mode === m ? c.ink : c.muted }]}>{m === 'list' ? 'List' : 'Month'}</Text>
         </Pressable>
       ))}
     </View>
@@ -66,7 +66,7 @@ export default function ActivityScreen() {
   const renderGroups = () => groups.map((g) => (
     <Card key={g.date} style={{ paddingVertical: space.sm }}>
       <View style={[styles.row, { paddingTop: space.xs }]}>
-        <Text accessibilityRole="header" style={[type.label, { color: c.muted }]}>{format(parseISO(g.date), 'EEE d MMM')}</Text>
+        <Text maxFontSizeMultiplier={2} accessibilityRole="header" style={[type.label, { color: c.muted }]}>{format(parseISO(g.date), 'EEE d MMM')}</Text>
         <Money value={g.total} size={13} weight="600" color={c.muted} whole />
       </View>
       {g.items.map((t, i) => (
@@ -106,7 +106,7 @@ export default function ActivityScreen() {
           style={({ pressed }) => [styles.askRow, { backgroundColor: c.surface, opacity: pressed ? 0.7 : 1 }]}
         >
           <Symbol name="bubble.left" fallback="message-circle" color={c.ink} size={17} />
-          <Text style={[type.sub, { color: c.ink, marginLeft: space.sm, flex: 1 }]} numberOfLines={1}>Ask about “{query.trim()}”</Text>
+          <Text maxFontSizeMultiplier={2} style={[type.sub, { color: c.ink, marginLeft: space.sm, flex: 1 }]} numberOfLines={1}>Ask about “{query.trim()}”</Text>
         </Pressable>
       ) : null}
 
@@ -114,7 +114,7 @@ export default function ActivityScreen() {
         <Pressable onPress={() => changeMonth(subMonths(month, 1))} accessibilityRole="button" accessibilityLabel="Previous month" style={styles.chev}>
           <Symbol name="chevron.left" fallback="chevron-left" color={c.ink} size={17} />
         </Pressable>
-        <Text accessibilityRole="header" style={[type.title, { color: c.ink, flex: 1 }]}>{format(month, 'MMMM yyyy')}</Text>
+        <Text maxFontSizeMultiplier={2} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6} accessibilityRole="header" style={[type.title, { color: c.ink, flex: 1 }]}>{format(month, 'MMMM yyyy')}</Text>
         <Money value={monthTotal} size={17} weight="700" whole />
         <Pressable
           onPress={() => changeMonth(addMonths(month, 1))}
@@ -155,7 +155,7 @@ export default function ActivityScreen() {
       {mode === 'month' ? (
         <Card>
           <View style={styles.gridRow}>
-            {WEEKDAYS.map((w, i) => <Text key={i} style={[type.caption, styles.cell, { color: c.muted, minHeight: 0 }]}>{w}</Text>)}
+            {WEEKDAYS.map((w, i) => <Text maxFontSizeMultiplier={2} key={i} style={[type.caption, styles.cell, { color: c.muted, minHeight: 0 }]}>{w}</Text>)}
           </View>
           {Array.from({ length: grid.rows }).map((_, r) => (
             <View key={r} style={styles.gridRow}>
@@ -176,9 +176,9 @@ export default function ActivityScreen() {
                     style={[styles.cell, selected && { backgroundColor: c.ink, borderRadius: radii.small }]}
                   >
                     <View style={[styles.dayRing, { borderColor: isToday ? c.action : isDrawn ? (selected ? c.ground : c.ink) : 'transparent', borderWidth: isToday ? 2.5 : 1.5 }]}>
-                      <Text style={[type.money(14, '600'), { color: selected ? c.ground : cell.state === 'future' ? c.muted : c.ink }]}>{cell.day}</Text>
+                      <Text maxFontSizeMultiplier={2} style={[type.money(14, '600'), { color: selected ? c.ground : cell.state === 'future' ? c.muted : c.ink }]}>{cell.day}</Text>
                     </View>
-                    <Text style={[type.money(10, '500'), { color: selected ? c.ground : c.muted, marginTop: 2 }]}>{total ? compact(total) : ' '}</Text>
+                    <Text maxFontSizeMultiplier={2} style={[type.money(10, '500'), { color: selected ? c.ground : c.muted, marginTop: 2 }]}>{total ? compact(total) : ' '}</Text>
                   </Pressable>
                 );
               })}
@@ -189,16 +189,16 @@ export default function ActivityScreen() {
 
       {txs && all.length === 0 ? (
         <Card>
-          <Text style={[type.title, { color: c.ink }]}>Nothing logged in {format(month, 'MMMM')}</Text>
-          <Text style={[type.sub, { color: c.muted, marginTop: 4 }]}>Purchases you log show up here, grouped by day.</Text>
+          <Text maxFontSizeMultiplier={2} style={[type.title, { color: c.ink }]}>Nothing logged in {format(month, 'MMMM')}</Text>
+          <Text maxFontSizeMultiplier={2} style={[type.sub, { color: c.muted, marginTop: 4 }]}>Purchases you log show up here, grouped by day.</Text>
           {isCurrent ? <KButton title="Log a spend" onPress={() => router.push('/Log')} style={{ marginTop: space.lg }} /> : null}
         </Card>
       ) : txs && visible.length === 0 ? (
-        <Text style={[type.sub, { color: c.muted, marginHorizontal: space.xl, marginTop: space.xl }]}>
+        <Text maxFontSizeMultiplier={2} style={[type.sub, { color: c.muted, marginHorizontal: space.xl, marginTop: space.xl }]}>
           {mode === 'month' && !day && !query && categoryId == null ? 'Tap a day to see its purchases.' : query ? `No purchases match “${query.trim()}”.` : 'No purchases here.'}
         </Text>
       ) : mode === 'month' && !day ? (
-        <Text style={[type.sub, { color: c.muted, marginHorizontal: space.xl, marginTop: space.lg }]}>Tap a day to see its purchases.</Text>
+        <Text maxFontSizeMultiplier={2} style={[type.sub, { color: c.muted, marginHorizontal: space.xl, marginTop: space.lg }]}>Tap a day to see its purchases.</Text>
       ) : renderGroups()}
     </Screen>
   );

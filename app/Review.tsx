@@ -40,7 +40,7 @@ export default function ReviewScreen() {
           ))}
         </View>
         <Pressable onPress={() => router.back()} accessibilityRole="button" hitSlop={8} style={styles.done}>
-          <Text style={[type.label, { color: c.fieldInk }]}>Done</Text>
+          <Text maxFontSizeMultiplier={2} style={[type.label, { color: c.fieldInk }]}>Done</Text>
         </Pressable>
       </View>
 
@@ -54,15 +54,15 @@ export default function ReviewScreen() {
         {cards.map((card, i) => (
           <View key={card.kind} style={[styles.page, { width }]}>
             {card.kind === 'week' && data ? (
-              <Text style={[type.sub, { color: c.fieldMuted }]}>Your week · {data.input.weekLabel}</Text>
+              <Text maxFontSizeMultiplier={2} style={[type.sub, { color: c.fieldMuted }]}>Your week · {data.input.weekLabel}</Text>
             ) : null}
-            <Text accessibilityRole="header" style={[styles.title, { color: c.fieldInk }]}>{card.title}</Text>
+            <Text maxFontSizeMultiplier={1.3} accessibilityRole="header" style={[styles.title, { color: c.fieldInk }]}>{card.title}</Text>
             {card.kind === 'week' && data ? (
               <View style={{ marginTop: space.xxl }}>
                 <Kolam cells={data.cells} rows={1} width={width - space.xxl * 2} accessibilityLabel={card.title} />
               </View>
             ) : null}
-            <Text style={[styles.body, { color: c.fieldMuted }]}>{card.body}</Text>
+            <Text maxFontSizeMultiplier={2} style={[styles.body, { color: c.fieldMuted }]}>{card.body}</Text>
 
             <View style={styles.actions}>
               {card.action ? (

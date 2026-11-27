@@ -101,11 +101,11 @@ export default function Start() {
         <StatusBar style="light" />
         {dots}
         <View style={styles.pad}>
-          <Text accessibilityRole="header" style={[styles.hero, { color: c.fieldInk }]}>Your month,{'\n'}one loop a day.</Text>
+          <Text maxFontSizeMultiplier={1.3} accessibilityRole="header" style={[styles.hero, { color: c.fieldInk }]}>Your month,{'\n'}one loop a day.</Text>
           <View onLayout={onKolamLayout} style={{ marginTop: space.xxl }}>
             <Kolam cells={kolam.cells} rows={kolam.rows} width={kolamWidth} accessibilityLabel={`${format(now, 'MMMM')}, nothing logged yet`} />
           </View>
-          <Text style={[styles.lede, { color: c.fieldMuted }]}>
+          <Text maxFontSizeMultiplier={2} style={[styles.lede, { color: c.fieldMuted }]}>
             Log what you spend and today's loop closes. Miss a day and it stays a dot; the pattern keeps going. Everything stays on this phone.
           </Text>
         </View>
@@ -123,15 +123,15 @@ export default function Start() {
         {step === 'currency' ? (
           <>
             <View style={styles.pad}>
-              <Text accessibilityRole="header" style={[type.largeTitle, { color: c.ink }]}>Which currency?</Text>
-              <Text style={[type.sub, { color: c.muted, marginTop: space.xs }]}>You can change it later in You.</Text>
+              <Text maxFontSizeMultiplier={1.3} accessibilityRole="header" style={[type.largeTitle, { color: c.ink }]}>Which currency?</Text>
+              <Text maxFontSizeMultiplier={2} style={[type.sub, { color: c.muted, marginTop: space.xs }]}>You can change it later in You.</Text>
             </View>
             <ScrollView contentContainerStyle={styles.list}>
               {CURRENCIES.map((x) => (
                 <Pressable key={x.code} onPress={() => setCode(x.code)} accessibilityRole="radio" accessibilityState={{ selected: code === x.code }}
                   style={[styles.option, { backgroundColor: code === x.code ? c.surface : 'transparent', borderColor: code === x.code ? c.ink : c.hairline }]}>
-                  <Text style={[type.money(18, '700'), { color: c.ink, width: 36 }]}>{x.symbol}</Text>
-                  <Text style={[type.body, { color: c.ink, flex: 1 }]}>{x.name}</Text>
+                  <Text maxFontSizeMultiplier={2} style={[type.money(18, '700'), { color: c.ink, width: 36 }]}>{x.symbol}</Text>
+                  <Text maxFontSizeMultiplier={2} style={[type.body, { color: c.ink, flex: 1 }]}>{x.name}</Text>
                   {code === x.code ? <Symbol name="checkmark" fallback="check" color={c.ink} size={17} /> : null}
                 </Pressable>
               ))}
@@ -144,8 +144,8 @@ export default function Start() {
           <>
             <ScrollView contentContainerStyle={{ paddingBottom: space.xl }} keyboardShouldPersistTaps="handled">
               <View style={styles.pad}>
-                <Text accessibilityRole="header" style={[type.largeTitle, { color: c.ink }]}>A month's budget</Text>
-                <Text style={[type.sub, { color: c.muted, marginTop: space.xs }]}>A rough number is fine. Today will show what's left each day.</Text>
+                <Text maxFontSizeMultiplier={1.3} accessibilityRole="header" style={[type.largeTitle, { color: c.ink }]}>A month's budget</Text>
+                <Text maxFontSizeMultiplier={2} style={[type.sub, { color: c.muted, marginTop: space.xs }]}>A rough number is fine. Today will show what's left each day.</Text>
                 <TextInput
                   value={budget}
                   onChangeText={setBudget}
@@ -155,7 +155,7 @@ export default function Start() {
                   accessibilityLabel="Monthly budget"
                   style={[type.money(40, '700'), styles.budget, { color: c.ink, borderBottomColor: c.hairline }]}
                 />
-                <Text style={[type.label, { color: c.muted, marginTop: space.xl }]}>Start with these categories</Text>
+                <Text maxFontSizeMultiplier={2} style={[type.label, { color: c.muted, marginTop: space.xl }]}>Start with these categories</Text>
                 <View style={styles.chips}>
                   {STARTERS.map((s, i) => (
                     <Chip key={s.key} label={s.name} hue={CATEGORY_HUES[i]} selected={chosen.includes(s.key)}
@@ -166,13 +166,13 @@ export default function Start() {
                   <View style={[styles.split, { backgroundColor: c.surface }]}>
                     {split.map((x, i) => (
                       <View key={x.key} style={[styles.splitRow, { borderBottomColor: c.hairline, borderBottomWidth: i === split.length - 1 ? 0 : StyleSheet.hairlineWidth }]}>
-                        <Text style={[type.body, { color: c.ink, flex: 1 }]}>{STARTERS.find((s) => s.key === x.key)?.name}</Text>
+                        <Text maxFontSizeMultiplier={2} style={[type.body, { color: c.ink, flex: 1 }]}>{STARTERS.find((s) => s.key === x.key)?.name}</Text>
                         <Money value={x.amount} size={15} whole />
                       </View>
                     ))}
                   </View>
                 ) : null}
-                <Text style={[type.caption, { color: c.muted, marginTop: space.md }]}>A suggested split. Change any of it later in Plan.</Text>
+                <Text maxFontSizeMultiplier={2} style={[type.caption, { color: c.muted, marginTop: space.md }]}>A suggested split. Change any of it later in Plan.</Text>
               </View>
             </ScrollView>
             <View style={styles.footer}>
@@ -185,19 +185,19 @@ export default function Start() {
           <>
             <ScrollView contentContainerStyle={{ paddingBottom: space.xl }} keyboardShouldPersistTaps="handled">
               <View style={styles.pad}>
-                <Text accessibilityRole="header" style={[type.largeTitle, { color: c.ink }]}>{drawnToday ? 'Day one is drawn.' : 'Draw day one'}</Text>
-                <Text style={[type.sub, { color: c.muted, marginTop: space.xs }]}>
+                <Text maxFontSizeMultiplier={1.3} accessibilityRole="header" style={[type.largeTitle, { color: c.ink }]}>{drawnToday ? 'Day one is drawn.' : 'Draw day one'}</Text>
+                <Text maxFontSizeMultiplier={2} style={[type.sub, { color: c.muted, marginTop: space.xs }]}>
                   {drawnToday ? 'Come back tomorrow for the next loop.' : 'What did you spend today? One sentence is enough.'}
                 </Text>
               </View>
               <View style={[styles.fieldBox, { backgroundColor: c.field }]} onLayout={(e) => setKolamWidth(e.nativeEvent.layout.width - space.lg * 2)}>
-                <Text style={[type.title, { color: c.fieldInk, marginBottom: space.md }]}>{format(now, 'MMMM')}</Text>
+                <Text maxFontSizeMultiplier={2} style={[type.title, { color: c.fieldInk, marginBottom: space.md }]}>{format(now, 'MMMM')}</Text>
                 <Kolam cells={kolam.cells} rows={kolam.rows} width={kolamWidth} accessibilityLabel={drawnToday ? 'Today is drawn' : "Today's loop is open"} />
               </View>
               {!drawnToday ? (
                 <View style={styles.pad}>
                   <PillInput value={sentence} onChangeText={setSentence} placeholder="180 coffee at Blue Tokai" accessibilityLabel="Your first purchase" style={{ marginTop: space.lg }} />
-                  {amount ? <Text style={[type.money(15, '600'), { color: c.ink, marginTop: space.sm, marginLeft: space.xs }]}>{formatWhole(amount)}{pre?.item || pre?.merchant ? ` · ${pre?.merchant || pre?.item}` : ''}</Text> : null}
+                  {amount ? <Text maxFontSizeMultiplier={2} style={[type.money(15, '600'), { color: c.ink, marginTop: space.sm, marginLeft: space.xs }]}>{formatWhole(amount)}{pre?.item || pre?.merchant ? ` · ${pre?.merchant || pre?.item}` : ''}</Text> : null}
                   <View style={styles.chips}>
                     {created.map((x) => <Chip key={x.id} label={x.name} hue={x.color} selected={categoryId === x.id} onPress={() => setCategoryId(x.id)} />)}
                   </View>

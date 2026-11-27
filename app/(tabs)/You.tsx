@@ -191,7 +191,7 @@ export default function YouScreen() {
         <SettingsRow icon="trash" fallback="trash-2" title="Erase all data" subtitle="Delete everything on this phone and start again" onPress={eraseAll} destructive last />
       </Card>
 
-      <Text style={[type.caption, styles.footer, { color: c.muted }]}>
+      <Text maxFontSizeMultiplier={2} style={[type.caption, styles.footer, { color: c.muted }]}>
         Finance Tracker {Constants.expoConfig?.version ?? ''} · your data stays on this phone
       </Text>
     </Screen>

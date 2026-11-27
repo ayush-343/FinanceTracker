@@ -20,7 +20,12 @@ export const Money: React.FC<MoneyProps> = ({ value, size = 16, weight = '600', 
   const { c } = useKolam();
   const { format, formatWhole } = useCurrency();
   return (
-    <Text {...rest} style={[type.money(size, weight), { color: color ?? c.ink }, style]}>
+    <Text
+      maxFontSizeMultiplier={size >= 24 ? 1.3 : 2}
+      {...(size >= 24 ? { numberOfLines: 1, adjustsFontSizeToFit: true, minimumFontScale: 0.5 } : {})}
+      {...rest}
+      style={[type.money(size, weight), { color: color ?? c.ink }, style]}
+    >
       {sign}{whole ? formatWhole(value) : format(value)}
     </Text>
   );

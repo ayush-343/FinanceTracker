@@ -28,8 +28,8 @@ export const Screen: React.FC<ScreenProps> = ({ title, subtitle, right, children
       >
         <View style={styles.header}>
           <View style={styles.titles}>
-            <Text accessibilityRole="header" style={[type.largeTitle, { color: c.ink }]}>{title}</Text>
-            {subtitle ? <Text style={[type.sub, { color: c.muted, marginTop: 2 }]}>{subtitle}</Text> : null}
+            <Text maxFontSizeMultiplier={1.3} accessibilityRole="header" style={[type.largeTitle, { color: c.ink }]}>{title}</Text>
+            {subtitle ? <Text maxFontSizeMultiplier={2} style={[type.sub, { color: c.muted, marginTop: 2 }]}>{subtitle}</Text> : null}
           </View>
           {right ? <View style={styles.right}>{right}</View> : null}
         </View>

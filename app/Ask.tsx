@@ -97,8 +97,8 @@ export function AskView({ asTab = false, initialQuestion }: { asTab?: boolean; i
       <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={styles.header}>
           <View style={{ flex: 1 }}>
-            <Text accessibilityRole="header" style={[type.largeTitle, { color: c.ink }]}>Ask</Text>
-            <Text style={[type.sub, { color: c.muted, marginTop: 2 }]}>Answers worked out from your data, on this phone</Text>
+            <Text maxFontSizeMultiplier={1.3} accessibilityRole="header" style={[type.largeTitle, { color: c.ink }]}>Ask</Text>
+            <Text maxFontSizeMultiplier={2} style={[type.sub, { color: c.muted, marginTop: 2 }]}>Answers worked out from your data, on this phone</Text>
           </View>
           {asTab ? null : (
             <Pressable onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Close" hitSlop={10} style={styles.close}>
@@ -117,7 +117,7 @@ export function AskView({ asTab = false, initialQuestion }: { asTab?: boolean; i
           {exchanges.map((e) => (
             <View key={e.id} style={{ marginBottom: space.xl }}>
               <View style={[styles.bubble, { backgroundColor: c.field }]}>
-                <Text style={[type.body, { color: c.fieldInk }]}>{e.question}</Text>
+                <Text maxFontSizeMultiplier={2} style={[type.body, { color: c.fieldInk }]}>{e.question}</Text>
               </View>
               {e.answer ? (
                 <AskResultCard
@@ -131,7 +131,7 @@ export function AskView({ asTab = false, initialQuestion }: { asTab?: boolean; i
               ) : (
                 <View style={styles.thinking}>
                   <ActivityIndicator color={c.muted} />
-                  <Text style={[type.caption, { color: c.muted, marginLeft: space.sm }]}>Working it out…</Text>
+                  <Text maxFontSizeMultiplier={2} style={[type.caption, { color: c.muted, marginLeft: space.sm }]}>Working it out…</Text>
                 </View>
               )}
             </View>

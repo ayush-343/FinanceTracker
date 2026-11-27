@@ -260,7 +260,7 @@ export default function LogSheet() {
     <SafeAreaView edges={['top', 'bottom']} style={[styles.root, { backgroundColor: c.ground }]}>
       <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={styles.header}>
-          <Text accessibilityRole="header" style={[type.title, { color: c.ink }]}>{editingId ? 'Edit purchase' : 'Log a spend'}</Text>
+          <Text maxFontSizeMultiplier={2} accessibilityRole="header" style={[type.title, { color: c.ink }]}>{editingId ? 'Edit purchase' : 'Log a spend'}</Text>
           <View style={styles.headerRight}>
             {editingId ? null : (
               <Pressable onPress={scanner.pickImage} accessibilityRole="button" accessibilityLabel="Scan a receipt" hitSlop={8} style={[styles.iconBtn, { backgroundColor: c.surface }]}>
@@ -268,7 +268,7 @@ export default function LogSheet() {
               </Pressable>
             )}
             <Pressable onPress={() => router.back()} accessibilityRole="button" hitSlop={8} style={styles.cancel}>
-              <Text style={[type.body, { color: c.muted }]}>Cancel</Text>
+              <Text maxFontSizeMultiplier={2} style={[type.body, { color: c.muted }]}>Cancel</Text>
             </Pressable>
           </View>
         </View>
@@ -292,7 +292,7 @@ export default function LogSheet() {
                 icon: <Symbol name={dictation.listening ? 'stop.fill' : 'mic.fill'} fallback={dictation.listening ? 'square' : 'mic'} color={c.onAction} />,
               } : undefined}
             />
-            <Text style={[type.caption, { color: c.muted, marginTop: space.sm, marginLeft: space.xs }]}>
+            <Text maxFontSizeMultiplier={2} style={[type.caption, { color: c.muted, marginTop: space.sm, marginLeft: space.xs }]}>
               {dictation.listening ? 'Listening… tap stop when you’re done.'
                 : refining ? 'Reading on this phone…'
                 : dictation.error ?? 'Read on this phone. You check everything before it saves.'}
@@ -302,7 +302,7 @@ export default function LogSheet() {
 
           <Card style={{ marginTop: editingId ? space.xs : space.lg }}>
             <View style={styles.amountRow}>
-              <Text style={[type.caption, { color: c.muted }]}>Amount</Text>
+              <Text maxFontSizeMultiplier={2} style={[type.caption, { color: c.muted }]}>Amount</Text>
               <TextInput
                 value={draft.amount}
                 onChangeText={(v) => edit('amount', v, 'amount')}
@@ -314,7 +314,7 @@ export default function LogSheet() {
               />
             </View>
             <View style={[styles.kv, { borderTopColor: c.hairline }]}>
-              <Text style={[type.body, { color: c.muted }]}>What</Text>
+              <Text maxFontSizeMultiplier={2} style={[type.body, { color: c.muted }]}>What</Text>
               <TextInput
                 value={draft.what}
                 onChangeText={(v) => edit('what', v, 'what')}
@@ -325,7 +325,7 @@ export default function LogSheet() {
               />
             </View>
             <View style={[styles.kv, { borderTopColor: c.hairline }]}>
-              <Text style={[type.body, { color: c.muted }]}>When</Text>
+              <Text maxFontSizeMultiplier={2} style={[type.body, { color: c.muted }]}>When</Text>
               <View style={styles.chipsRight}>
                 <Chip label="Today" selected={draft.date === todayISO} onPress={() => edit('date', todayISO, 'date')} />
                 <Chip label="Yesterday" selected={draft.date === yesterdayISO} onPress={() => edit('date', yesterdayISO, 'date')} />
@@ -349,13 +349,13 @@ export default function LogSheet() {
             ) : null}
             <View style={[styles.kvBlock, { borderTopColor: c.hairline }]}>
               <View style={styles.row}>
-                <Text style={[type.body, { color: c.muted }]}>Category</Text>
+                <Text maxFontSizeMultiplier={2} style={[type.body, { color: c.muted }]}>Category</Text>
                 {draft.categorySource === 'learned' || draft.categorySource === 'model' ? (
-                  <Text style={[type.caption, { color: c.muted }]}>{draft.categorySource === 'learned' ? 'learned from you' : 'suggested'}</Text>
+                  <Text maxFontSizeMultiplier={2} style={[type.caption, { color: c.muted }]}>{draft.categorySource === 'learned' ? 'learned from you' : 'suggested'}</Text>
                 ) : null}
               </View>
               {categories.length === 0 ? (
-                <Text style={[type.caption, { color: c.muted, marginTop: space.sm }]}>Add a category in Plan to start logging.</Text>
+                <Text maxFontSizeMultiplier={2} style={[type.caption, { color: c.muted, marginTop: space.sm }]}>Add a category in Plan to start logging.</Text>
               ) : (
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipScroll}>
                   {categories.map((cat) => (
@@ -385,7 +385,7 @@ export default function LogSheet() {
           {warning ? (
             <View accessibilityRole="alert" style={[styles.warn, { backgroundColor: c.surface }]}>
               <Hatch width={18} height={18} color={c.hatchInk} radius={5} />
-              <Text style={[type.sub, { color: c.ink, flex: 1, marginLeft: space.md }]}>{warning}</Text>
+              <Text maxFontSizeMultiplier={2} style={[type.sub, { color: c.ink, flex: 1, marginLeft: space.md }]}>{warning}</Text>
             </View>
           ) : null}
 

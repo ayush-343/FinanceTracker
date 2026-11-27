@@ -25,7 +25,7 @@ export const Chip: React.FC<ChipProps> = ({ label, selected, hue, onPress }) => 
       ]}
     >
       {hue ? <View style={[styles.dot, { backgroundColor: hue }]} /> : null}
-      <Text style={[type.caption, { fontSize: 14, color: selected ? c.ground : c.ink }]}>{label}</Text>
+      <Text maxFontSizeMultiplier={2} style={[type.caption, { fontSize: 14, color: selected ? c.ground : c.ink }]}>{label}</Text>
     </Pressable>
   );
 };

@@ -31,8 +31,8 @@ export const ListRow: React.FC<ListRowProps> = ({ title, subtitle, hue, amount, 
     >
       {hue ? <View style={[styles.dot, { backgroundColor: hue }]} /> : null}
       <View style={styles.text}>
-        <Text style={[type.body, { color: c.ink }]} numberOfLines={1}>{title}</Text>
-        {subtitle ? <Text style={[type.caption, { color: c.muted, marginTop: 1 }]} numberOfLines={1}>{subtitle}</Text> : null}
+        <Text maxFontSizeMultiplier={2} style={[type.body, { color: c.ink }]} numberOfLines={1}>{title}</Text>
+        {subtitle ? <Text maxFontSizeMultiplier={2} style={[type.caption, { color: c.muted, marginTop: 1 }]} numberOfLines={1}>{subtitle}</Text> : null}
       </View>
       {trailing ?? (amount != null ? <Money value={amount} /> : null)}
     </Pressable>

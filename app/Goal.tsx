@@ -78,7 +78,7 @@ export default function GoalSheet() {
 
   const field = (label: string, value: string, onChange: (v: string) => void, opts: { placeholder: string; money?: boolean; first?: boolean }) => (
     <View style={[styles.kv, { borderTopColor: c.hairline, borderTopWidth: opts.first ? 0 : StyleSheet.hairlineWidth }]}>
-      <Text style={[type.body, { color: c.muted }]}>{label}</Text>
+      <Text maxFontSizeMultiplier={2} style={[type.body, { color: c.muted }]}>{label}</Text>
       <TextInput
         value={value}
         onChangeText={onChange}
@@ -95,19 +95,19 @@ export default function GoalSheet() {
     <SafeAreaView edges={['top', 'bottom']} style={[styles.root, { backgroundColor: c.ground }]}>
       <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={styles.header}>
-          <Text accessibilityRole="header" style={[type.title, { color: c.ink }]}>{id ? 'Goal' : 'New goal'}</Text>
+          <Text maxFontSizeMultiplier={2} accessibilityRole="header" style={[type.title, { color: c.ink }]}>{id ? 'Goal' : 'New goal'}</Text>
           <Pressable onPress={() => router.back()} accessibilityRole="button" hitSlop={8} style={styles.cancel}>
-            <Text style={[type.body, { color: c.muted }]}>Cancel</Text>
+            <Text maxFontSizeMultiplier={2} style={[type.body, { color: c.muted }]}>Cancel</Text>
           </Pressable>
         </View>
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: space.xxxl }}>
           {plan ? (
             <Card style={{ marginTop: 0 }}>
-              <Text style={[type.title, { color: c.ink }]}>{name.trim() || 'Your goal'}</Text>
+              <Text maxFontSizeMultiplier={2} style={[type.title, { color: c.ink }]}>{name.trim() || 'Your goal'}</Text>
               <View style={{ marginTop: space.md }}>
                 <Bands values={[{ key: 'saved', value: savedN, color: c.action }]} total={targetN ?? 1} accessibilityLabel={`${Math.round(plan.progress * 100)} percent saved`} />
               </View>
-              <Text style={[type.sub, { color: c.muted, marginTop: space.sm }]}>{formatWhole(savedN)} of {formatWhole(targetN ?? 0)} · {plan.line}</Text>
+              <Text maxFontSizeMultiplier={2} style={[type.sub, { color: c.muted, marginTop: space.sm }]}>{formatWhole(savedN)} of {formatWhole(targetN ?? 0)} · {plan.line}</Text>
             </Card>
           ) : null}
 
@@ -116,7 +116,7 @@ export default function GoalSheet() {
             {field('Target', target, setTarget, { placeholder: '0', money: true })}
             {field('Saved so far', saved, setSaved, { placeholder: '0', money: true })}
             <View style={[styles.kv, { borderTopColor: c.hairline, borderTopWidth: StyleSheet.hairlineWidth }]}>
-              <Text style={[type.body, { color: c.muted }]}>By</Text>
+              <Text maxFontSizeMultiplier={2} style={[type.body, { color: c.muted }]}>By</Text>
               <View style={styles.chips}>
                 <Chip label="No date" selected={!date} onPress={() => { setDate(null); setShowPicker(false); }} />
                 <Chip

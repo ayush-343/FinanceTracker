@@ -12,7 +12,7 @@ export const Card: React.FC<CardProps> = ({ title, style, children, ...rest }) =
   const { c } = useKolam();
   return (
     <View {...rest} style={[styles.card, { backgroundColor: c.surface }, style]}>
-      {title ? <Text accessibilityRole="header" style={[type.label, { color: c.muted, marginBottom: space.sm }]}>{title}</Text> : null}
+      {title ? <Text maxFontSizeMultiplier={2} accessibilityRole="header" style={[type.label, { color: c.muted, marginBottom: space.sm }]}>{title}</Text> : null}
       {children}
     </View>
   );

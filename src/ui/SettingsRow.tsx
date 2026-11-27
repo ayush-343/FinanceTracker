@@ -35,14 +35,14 @@ export const SettingsRow: React.FC<SettingsRowProps> = ({ icon, fallback, title,
         <Symbol name={icon} fallback={fallback} color={ink} size={17} />
       </View>
       <View style={styles.text}>
-        <Text style={[type.body, { color: ink, fontWeight: destructive ? '600' : '400' }]}>{title}</Text>
-        {subtitle ? <Text style={[type.caption, { color: c.muted, marginTop: 1 }]}>{subtitle}</Text> : null}
+        <Text maxFontSizeMultiplier={2} style={[type.body, { color: ink, fontWeight: destructive ? '600' : '400' }]}>{title}</Text>
+        {subtitle ? <Text maxFontSizeMultiplier={2} style={[type.caption, { color: c.muted, marginTop: 1 }]}>{subtitle}</Text> : null}
       </View>
       {toggle ? (
         <Switch value={toggle.value} onValueChange={toggle.onChange} trackColor={{ false: c.hairline, true: c.action }} thumbColor="#FFFFFF" ios_backgroundColor={c.hairline} />
       ) : (
         <View style={styles.trail}>
-          {value ? <Text style={[type.sub, { color: c.muted, marginRight: space.xs }]} numberOfLines={1}>{value}</Text> : null}
+          {value ? <Text maxFontSizeMultiplier={2} style={[type.sub, { color: c.muted, marginRight: space.xs }]} numberOfLines={1}>{value}</Text> : null}
           {onPress && !destructive ? <Symbol name="chevron.right" fallback="chevron-right" color={c.muted} size={14} /> : null}
         </View>
       )}
@@ -53,6 +53,6 @@ export const SettingsRow: React.FC<SettingsRowProps> = ({ icon, fallback, title,
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', minHeight: 56, paddingVertical: space.sm },
   icon: { width: 32, height: 32, borderRadius: 9, alignItems: 'center', justifyContent: 'center', marginRight: space.md },
-  text: { flex: 1, marginRight: space.sm },
-  trail: { flexDirection: 'row', alignItems: 'center', maxWidth: '45%' },
+  text: { flex: 1, minWidth: '50%', marginRight: space.sm },
+  trail: { flexDirection: 'row', alignItems: 'center', maxWidth: '45%', flexShrink: 1 },
 });
