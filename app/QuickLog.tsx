@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../src/theme';
 import { Button } from '../src/components';
@@ -20,6 +20,17 @@ export default function QuickLogScreen() {
     const { light, error: errorHaptic } = useHaptics();
     const { currency, aiEngine, localModelId } = useSettingsStore();
     const dictation = useDictation();
+    const { voice } = useLocalSearchParams<{ voice?: string }>();
+    const autoStarted = useRef(false);
+    useEffect(() => {
+        // Opened from Today's mic: start listening as soon as dictation is known to be available.
+        if (voice === '1' && dictation.available && !autoStarted.current) {
+            autoStarted.current = true;
+            setUsedMic(true);
+            dictation.start();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [voice, dictation.available]);
     const [text, setText] = useState('');
     const [usedMic, setUsedMic] = useState(false);
     const [isParsing, setIsParsing] = useState(false);

@@ -25,7 +25,7 @@ const STARTERS = [
 
 interface Exchange { id: number; question: string; answer?: { result: AskResult; sentence: string } }
 
-export default function AskScreen() {
+export function AskView({ asTab = false }: { asTab?: boolean }) {
     const router = useRouter();
     const { colors, spacing, textStyles, borderRadius } = useTheme();
     const { format: money } = useCurrency();
@@ -68,12 +68,14 @@ export default function AskScreen() {
     };
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={asTab ? ['top'] : ['top', 'bottom']}>
             <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
                 <View style={[styles.header, { paddingHorizontal: spacing.lg }]}>
+                    {asTab ? <View style={{ width: 24 }} /> : (
                     <TouchableOpacity onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Close" hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                         <Feather name="x" size={24} color={colors.text} />
                     </TouchableOpacity>
+                    )}
                     <Text style={[textStyles.h3, { color: colors.text }]}>Ask</Text>
                     <View style={{ width: 24 }} />
                 </View>
@@ -152,3 +154,7 @@ const styles = StyleSheet.create({
     input: { flex: 1, minHeight: 44, borderWidth: 1 },
     send: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginLeft: 8 },
 });
+
+export default function AskScreen() {
+    return <AskView />;
+}

@@ -5,7 +5,7 @@ import { useSettingsStore } from '../src/store';
 const Index: React.FC = () => {
     const { isOnboardingCompleted } = useSettingsStore();
 
-    return <Redirect href={isOnboardingCompleted ? "/(tabs)/Home" : "/(onboarding)/AnimatedOnboarding"} />;
+    return <Redirect href={isOnboardingCompleted ? "/(tabs)/Today" : "/(onboarding)/AnimatedOnboarding"} />;
 };
 
 export default Index;

@@ -2,7 +2,8 @@ import React, { useCallback, useEffect } from 'react';
 import { Platform, ActionSheetIOS } from 'react-native';
 import { Tabs, useRouter } from 'expo-router';
 import { useTheme } from '../../src/theme';
-import { CustomTabBar } from '../../src/components/CustomTabBar';
+import { Symbol, useKolam } from '../../src/ui';
+import { LogActionsContext } from '../../src/today/LogActions';
 import { showActionSheet } from '../../src/components/ActionSheet';
 import { useWalkthroughContext } from '../../src/components/WalkthroughContext';
 import { useHaptics } from '../../src/hooks';
@@ -13,6 +14,7 @@ import * as Haptics from 'expo-haptics';
 
 export default function TabsLayout() {
     const { colors } = useTheme();
+    const { c: k } = useKolam();
     const router = useRouter();
     const { light } = useHaptics();
     const {
@@ -84,34 +86,31 @@ export default function TabsLayout() {
 
     return (
         <>
+            <LogActionsContext.Provider value={{ openLogMenu: handleFabPress }}>
             <Tabs
-                initialRouteName="Home"
-                tabBar={(props) => (
-                    <CustomTabBar
-                        currentRoute={props.state.routes[props.state.index]?.name ?? 'Home'}
-                        onTabPress={(name) => {
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
-                            router.push(`/(tabs)/${name}` as any);
-                        }}
-                        onFabPress={handleFabPress}
-                    />
-                )}
+                initialRouteName="Today"
                 screenOptions={{
                     headerShown: false,
-                    tabBarStyle: { display: 'none' },
+                    tabBarActiveTintColor: k.ink,
+                    tabBarInactiveTintColor: k.muted,
+                    tabBarStyle: { backgroundColor: k.ground, borderTopColor: k.hairline },
+                    tabBarLabelStyle: { fontSize: 10, fontWeight: '600' },
                 }}
+                screenListeners={{ tabPress: () => { Haptics.selectionAsync().catch(() => {}); } }}
             >
-                <Tabs.Screen name="Home" options={{ title: 'Home' }} />
-                <Tabs.Screen name="Analytics" options={{ title: 'Insights' }} />
-                <Tabs.Screen name="Calendar" options={{ title: 'Calendar' }} />
-                <Tabs.Screen name="Settings" options={{ title: 'Settings' }} />
-                <Tabs.Screen
-                    name="Subscriptions"
-                    options={{
-                        href: null,
-                    }}
-                />
+                <Tabs.Screen name="Today" options={{ title: 'Today', tabBarIcon: ({ color }) => <Symbol name="sun.max" fallback="sun" color={color} size={22} /> }} />
+                <Tabs.Screen name="Activity" options={{ title: 'Activity', tabBarIcon: ({ color }) => <Symbol name="list.bullet" fallback="list" color={color} size={22} /> }} />
+                <Tabs.Screen name="Ask" options={{ title: 'Ask', tabBarIcon: ({ color }) => <Symbol name="bubble.left" fallback="message-circle" color={color} size={22} /> }} />
+                <Tabs.Screen name="Plan" options={{ title: 'Plan', tabBarIcon: ({ color }) => <Symbol name="chart.line.uptrend.xyaxis" fallback="trending-up" color={color} size={22} /> }} />
+                <Tabs.Screen name="You" options={{ title: 'You', tabBarIcon: ({ color }) => <Symbol name="person.crop.circle" fallback="user" color={color} size={22} /> }} />
+                {/* Legacy screens, still reachable by route until R3–R6 replace them. */}
+                <Tabs.Screen name="Home" options={{ href: null }} />
+                <Tabs.Screen name="Analytics" options={{ href: null }} />
+                <Tabs.Screen name="Calendar" options={{ href: null }} />
+                <Tabs.Screen name="Settings" options={{ href: null }} />
+                <Tabs.Screen name="Subscriptions" options={{ href: null }} />
             </Tabs>
+            </LogActionsContext.Provider>
 
             <ScanningModal
                 visible={showModal}

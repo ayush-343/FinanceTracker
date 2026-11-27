@@ -90,7 +90,7 @@ const AppShell: React.FC = () => {
         }
 
         if (isOnboardingCompleted && isInOnboarding) {
-            router.replace('/(tabs)/Home');
+            router.replace('/(tabs)/Today');
         }
     }, [isOnboardingCompleted, isSettingsReady, router, isInOnboarding]);
 

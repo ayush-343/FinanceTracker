@@ -27,3 +27,7 @@ export const hueFor = (index: number, dark = false): string => {
   const n = wheel.length;
   return wheel[((Math.trunc(index) % n) + n) % n];
 };
+
+/** Stable category → hue mapping: categories are ordered by id so a category keeps its colour everywhere. */
+export const hueMap = (categoryIds: number[], dark = false): Map<number, string> =>
+  new Map([...categoryIds].sort((a, b) => a - b).map((id, i) => [id, hueFor(i, dark)]));
