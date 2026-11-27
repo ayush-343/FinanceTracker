@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { format, parseISO } from 'date-fns';
 import { useTheme } from '../theme';
 import { useCurrency } from '../hooks/useCurrency';
@@ -45,9 +46,12 @@ export const AskResultCard: React.FC<{ result: AskResult; sentence: string }> = 
             <View style={row}><Text style={[textStyles.body, muted]}>{result.b.label}</Text><Text style={[textStyles.h3, { color: colors.text }]}>{money(result.b.value)}</Text></View>
             <View style={row}><Text style={[textStyles.body, muted]}>{result.a.label}</Text><Text style={[textStyles.body, { color: colors.text }]}>{money(result.a.value)}</Text></View>
             {result.diff !== 0 && (
-              <Text style={[textStyles.label, { color: more ? colors.error : colors.success, marginTop: spacing.sm }]}>
-                {more ? '▲' : '▼'} {money(Math.abs(result.diff))}{result.pct != null ? ` (${Math.round(Math.abs(result.pct))}%)` : ''}
-              </Text>
+              <View style={[styles.diff, { marginTop: spacing.sm }]}>
+                <Feather name={more ? 'arrow-up-right' : 'arrow-down-right'} size={16} color={more ? colors.error : colors.success} />
+                <Text style={[textStyles.label, { color: colors.text, marginLeft: spacing.xs }]}>
+                  {money(Math.abs(result.diff))} {more ? 'more' : 'less'}{result.pct != null ? ` (${Math.round(Math.abs(result.pct))}%)` : ''}
+                </Text>
+              </View>
             )}
           </>
         );
@@ -79,7 +83,7 @@ export const AskResultCard: React.FC<{ result: AskResult; sentence: string }> = 
   })();
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.card, borderRadius: borderRadius.lg, padding: spacing.lg }]}>
+    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: borderRadius.lg, padding: spacing.lg }]}>
       <Text style={[textStyles.body, { color: result.kind === 'unsupported' ? colors.textSecondary : colors.text, marginBottom: body ? spacing.sm : 0 }]}>
         {sentence}
       </Text>
@@ -89,7 +93,8 @@ export const AskResultCard: React.FC<{ result: AskResult; sentence: string }> = 
 };
 
 const styles = StyleSheet.create({
-  card: {},
+  card: { borderWidth: StyleSheet.hairlineWidth },
+  diff: { flexDirection: 'row', alignItems: 'center' },
   track: { height: 6, borderRadius: 3, overflow: 'hidden', marginTop: 4 },
   fill: { height: 6, borderRadius: 3 },
   dot: { width: 8, height: 8, borderRadius: 4, marginRight: 8, alignSelf: 'center' },

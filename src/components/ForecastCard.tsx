@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { format, parseISO } from 'date-fns';
 import { useTheme } from '../theme';
 import { useCurrency } from '../hooks/useCurrency';
@@ -15,7 +16,12 @@ export const ForecastRows: React.FC<{ forecast: Forecast; onPressCategory?: (id:
   if (forecast.status !== 'ok') return null;
   const atRisk = forecast.categories.filter((c) => c.overOn).slice(0, MAX_ROWS);
   if (atRisk.length === 0) {
-    return <Text style={[textStyles.bodySmall, { color: colors.success, marginTop: spacing.sm }]}>All categories on track</Text>;
+    return (
+      <View style={[styles.row, { marginTop: spacing.sm }]}>
+        <Feather name="check-circle" size={16} color={colors.success} />
+        <Text style={[textStyles.bodySmall, { color: colors.text, marginLeft: spacing.xs }]}>All categories on track</Text>
+      </View>
+    );
   }
   return (
     <>
@@ -25,11 +31,13 @@ export const ForecastRows: React.FC<{ forecast: Forecast; onPressCategory?: (id:
           disabled={!onPressCategory}
           onPress={() => onPressCategory?.(c.categoryId, c.name)}
           accessibilityRole={onPressCategory ? 'button' : undefined}
-          style={[styles.row, { marginTop: spacing.sm }]}
+          accessibilityLabel={`${c.name}: on pace for ${formatWhole(c.likely)} of ${formatWhole(c.budget)} budget, ${c.spent > c.budget ? 'already over' : `likely over around ${format(parseISO(c.overOn!), 'd MMMM')}`}`}
+          style={[styles.row, styles.riskRow]}
         >
           <View style={[styles.dot, { backgroundColor: c.color }]} />
           <Text style={[textStyles.body, { color: colors.text, flex: 1 }]} numberOfLines={1}>{c.name}</Text>
-          <Text style={[textStyles.bodySmall, { color: colors.error }]}>
+          <Feather name="alert-triangle" size={14} color={colors.error} style={{ marginRight: spacing.xs }} />
+          <Text style={[textStyles.bodySmall, { color: colors.text, flexShrink: 1 }]} numberOfLines={1}>
             {formatWhole(c.likely)} of {formatWhole(c.budget)} · {c.spent > c.budget ? 'already over' : `over ~${format(parseISO(c.overOn!), 'd MMM')}`}
           </Text>
         </TouchableOpacity>
@@ -48,12 +56,14 @@ export const ForecastCard: React.FC<{ forecast: Forecast | null; onPressCategory
       style={[styles.card, { backgroundColor: colors.card, borderRadius: borderRadius.lg, padding: spacing.lg, borderColor: colors.border }]}
       accessibilityLabel="Spending forecast"
     >
-      <Text style={[textStyles.label, { color: colors.textSecondary }]}>FORECAST</Text>
       {forecast.status === 'insufficient' ? (
-        <Text style={[textStyles.body, { color: colors.textSecondary, marginTop: spacing.xs }]}>{FORECAST_INSUFFICIENT}</Text>
+        <View style={styles.row}>
+          <Feather name="trending-up" size={16} color={colors.textSecondary} />
+          <Text style={[textStyles.body, { color: colors.textSecondary, marginLeft: spacing.sm, flex: 1 }]}>{FORECAST_INSUFFICIENT}</Text>
+        </View>
       ) : (
         <>
-          <Text style={[textStyles.h3, { color: colors.text, marginTop: spacing.xs }]}>
+          <Text style={[textStyles.h3, { color: colors.text }]}>
             On pace for {formatWhole(forecast.total.low)}–{formatWhole(forecast.total.high)}
           </Text>
           <Text style={[textStyles.bodySmall, { color: colors.textSecondary }]}>
@@ -71,4 +81,5 @@ const styles = StyleSheet.create({
   card: { borderWidth: StyleSheet.hairlineWidth },
   row: { flexDirection: 'row', alignItems: 'center' },
   dot: { width: 8, height: 8, borderRadius: 4, marginRight: 8 },
+  riskRow: { minHeight: 44 },
 });

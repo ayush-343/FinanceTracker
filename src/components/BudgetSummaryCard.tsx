@@ -53,12 +53,12 @@ export const BudgetSummaryCard: React.FC<BudgetSummaryCardProps> = ({
                     <View style={styles.glowLeft} />
 
                     <View style={styles.content}>
-                        <Text style={styles.label}>
+                        <Text style={[styles.label, { color: colors.textSecondary }]}>
                             TOTAL {budgetPeriod === 'weekly' ? 'WEEKLY' : 'MONTHLY'} BUDGET
                         </Text>
                         <View style={styles.amountRow}>
-                            <Text style={styles.amount}>{format(totalSpending)}</Text>
-                            <Text style={styles.totalBudget}> / {format(totalBudget)}</Text>
+                            <Text style={[styles.amount, { color: colors.text }]}>{format(totalSpending)}</Text>
+                            <Text style={[styles.totalBudget, { color: colors.textSecondary }]}> / {format(totalBudget)}</Text>
                         </View>
 
                         {/* Progress bar */}

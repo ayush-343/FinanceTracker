@@ -129,7 +129,7 @@ const HomeScreen: React.FC = () => {
                 <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
                     <View style={styles.headerTop}>
                         <View>
-                            <Text style={styles.headerTitle}>Home</Text>
+                            <Text style={[styles.headerTitle, { color: colors.text }]}>Home</Text>
                             <Text style={[styles.headerSubtitle, { color: colors.textTertiary }]}>
                                 {periodLabel}
                             </Text>
@@ -141,7 +141,7 @@ const HomeScreen: React.FC = () => {
                                 onPress={handleSearchPress}
                                 activeOpacity={0.7}
                             >
-                                <Feather name="search" size={20} color="#FFFFFF" />
+                                <Feather name="search" size={20} color={colors.text} />
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -262,7 +262,6 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize: 26,
         fontWeight: '700',
-        color: '#FFFFFF',
         letterSpacing: -0.3,
     },
     headerSubtitle: {

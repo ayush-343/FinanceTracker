@@ -225,7 +225,9 @@ export const CategoryScreen: React.FC = () => {
                     </View>
 
                     {categoryForecast && (
-                        <Text style={[textStyles.bodySmall, { color: categoryForecast.overOn ? colors.error : colors.textSecondary, marginBottom: spacing.sm }]}>
+                        <Text style={[textStyles.bodySmall, { color: colors.textSecondary, marginBottom: spacing.sm }]}>
+                            {categoryForecast.overOn && categoryForecast.spent <= categoryForecast.budget ? <Feather name="alert-triangle" size={13} color={colors.error} /> : null}
+                            {categoryForecast.overOn && categoryForecast.spent <= categoryForecast.budget ? ' ' : ''}
                             On pace for {format(categoryForecast.likely)} by {formatDate(parseISO(categoryForecast.forecastEnd), 'd MMM')}
                             {categoryForecast.overOn && categoryForecast.spent <= categoryForecast.budget ? ` · likely over around ${formatDate(parseISO(categoryForecast.overOn), 'd MMM')}` : ''}
                         </Text>

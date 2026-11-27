@@ -71,7 +71,7 @@ const CategoryCardComponent: React.FC<CategoryCardProps> = ({
                     </View>
                 </CircularProgress>
             </View>
-            <Text style={styles.categoryName} numberOfLines={1}>
+            <Text style={[styles.categoryName, { color: colors.text }]} numberOfLines={1}>
                 {category.name}
             </Text>
             <Text style={[styles.amounts, { color: colors.textTertiary }]}>

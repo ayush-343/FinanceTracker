@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
@@ -76,6 +76,13 @@ export default function QuickLogScreen() {
                     ...(learned?.subcategoryId != null ? { subcategoryId: String(learned.subcategoryId) } : {}),
                 },
             });
+        } catch (error) {
+            console.warn('[QuickLog] failed:', error);
+            errorHaptic();
+            Alert.alert("Couldn't Read That", 'Try rewording it, or add the purchase manually.', [
+                { text: 'Add Manually', onPress: () => router.replace('/AddTransaction') },
+                { text: 'OK', style: 'cancel' },
+            ]);
         } finally {
             setIsParsing(false);
         }
@@ -85,7 +92,7 @@ export default function QuickLogScreen() {
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
             <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
                 <View style={[styles.header, { paddingHorizontal: spacing.lg }]}>
-                    <TouchableOpacity onPress={() => router.back()} accessibilityLabel="Close">
+                    <TouchableOpacity onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Close" hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                         <Feather name="x" size={24} color={colors.text} />
                     </TouchableOpacity>
                     <Text style={[textStyles.h3, { color: colors.text }]}>Type or Say It</Text>
@@ -96,7 +103,7 @@ export default function QuickLogScreen() {
                     <Text style={[textStyles.label, { color: colors.textSecondary, marginTop: spacing.md, marginBottom: spacing.sm }]}>
                         What did you spend on?
                     </Text>
-                    <View style={[styles.inputCard, { backgroundColor: colors.card, borderRadius: borderRadius.lg, padding: spacing.lg }]}>
+                    <View style={[styles.inputCard, { backgroundColor: colors.inputBackground, borderColor: colors.inputBorder, borderRadius: borderRadius.lg, padding: spacing.lg }]}>
                         <TextInput
                             ref={inputRef}
                             value={text}
@@ -124,7 +131,7 @@ export default function QuickLogScreen() {
                                     },
                                 ]}
                             >
-                                <Feather name={dictation.listening ? 'square' : 'mic'} size={22} color={dictation.listening ? '#fff' : colors.primary} />
+                                <Feather name={dictation.listening ? 'square' : 'mic'} size={22} color={dictation.listening ? '#FFFFFF' : colors.primary} />
                             </TouchableOpacity>
                         )}
                     </View>
@@ -146,8 +153,9 @@ export default function QuickLogScreen() {
                         <TouchableOpacity
                             key={example}
                             onPress={() => { light(); setText(example); setUsedMic(false); }}
-                            style={{ paddingVertical: spacing.sm }}
+                            style={styles.example}
                             accessibilityRole="button"
+                            accessibilityHint="Fills the box with this example"
                         >
                             <Text style={[textStyles.body, { color: colors.primary }]}>“{example}”</Text>
                         </TouchableOpacity>
@@ -167,7 +175,8 @@ export default function QuickLogScreen() {
 const styles = StyleSheet.create({
     container: { flex: 1 },
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 16 },
-    inputCard: { flexDirection: 'row', alignItems: 'flex-start' },
+    inputCard: { flexDirection: 'row', alignItems: 'flex-start', borderWidth: 1 },
+  example: { minHeight: 44, justifyContent: 'center' },
     input: { flex: 1, minHeight: 72, textAlignVertical: 'top' },
     mic: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', marginLeft: 12 },
 });

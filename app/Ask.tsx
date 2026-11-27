@@ -13,6 +13,9 @@ import { askQuestion } from '../src/ai/ask/ask';
 import { askDb } from '../src/ai/ask/db';
 import { AskResult } from '../src/ai/ask/execute';
 
+// Text on the brand blue stays white in both themes, as in the shared Button.
+const ON_PRIMARY = '#FFFFFF';
+
 const STARTERS = [
     'How much did I spend this month?',
     'Biggest categories last month',
@@ -68,7 +71,7 @@ export default function AskScreen() {
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top', 'bottom']}>
             <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
                 <View style={[styles.header, { paddingHorizontal: spacing.lg }]}>
-                    <TouchableOpacity onPress={() => router.back()} accessibilityLabel="Close">
+                    <TouchableOpacity onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Close" hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                         <Feather name="x" size={24} color={colors.text} />
                     </TouchableOpacity>
                     <Text style={[textStyles.h3, { color: colors.text }]}>Ask</Text>
@@ -98,7 +101,7 @@ export default function AskScreen() {
                     {exchanges.map((e) => (
                         <View key={e.id} style={{ marginBottom: spacing.lg }}>
                             <View style={[styles.bubble, { backgroundColor: colors.primary, borderRadius: borderRadius.lg, padding: spacing.md, marginBottom: spacing.sm }]}>
-                                <Text style={[textStyles.body, { color: '#FFFFFF' }]}>{e.question}</Text>
+                                <Text style={[textStyles.body, { color: ON_PRIMARY }]}>{e.question}</Text>
                             </View>
                             {e.answer ? (
                                 <AskResultCard result={e.answer.result} sentence={e.answer.sentence} />
@@ -118,7 +121,7 @@ export default function AskScreen() {
                         onChangeText={setInput}
                         placeholder="Ask a question…"
                         placeholderTextColor={colors.textSecondary}
-                        style={[textStyles.body, styles.input, { color: colors.text, backgroundColor: colors.card, borderRadius: borderRadius.full, paddingHorizontal: spacing.lg }]}
+                        style={[textStyles.body, styles.input, { color: colors.text, backgroundColor: colors.inputBackground, borderColor: colors.inputBorder, borderRadius: borderRadius.full, paddingHorizontal: spacing.lg }]}
                         returnKeyType="send"
                         onSubmitEditing={() => ask(input)}
                         editable={!busy}
@@ -131,7 +134,7 @@ export default function AskScreen() {
                         accessibilityLabel="Send question"
                         style={[styles.send, { backgroundColor: busy || !input.trim() ? colors.border : colors.primary }]}
                     >
-                        <Feather name="arrow-up" size={20} color="#FFFFFF" />
+                        <Feather name="arrow-up" size={20} color={ON_PRIMARY} />
                     </TouchableOpacity>
                 </View>
             </KeyboardAvoidingView>
@@ -142,10 +145,10 @@ export default function AskScreen() {
 const styles = StyleSheet.create({
     container: { flex: 1 },
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 16 },
-    starter: { borderWidth: 1 },
+    starter: { borderWidth: 1, minHeight: 44, justifyContent: 'center' },
     bubble: { alignSelf: 'flex-end', maxWidth: '85%' },
     thinking: { flexDirection: 'row', alignItems: 'center' },
     inputRow: { flexDirection: 'row', alignItems: 'center', borderTopWidth: StyleSheet.hairlineWidth },
-    input: { flex: 1, height: 44 },
+    input: { flex: 1, minHeight: 44, borderWidth: 1 },
     send: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginLeft: 8 },
 });

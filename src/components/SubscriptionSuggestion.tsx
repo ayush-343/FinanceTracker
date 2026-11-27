@@ -17,11 +17,11 @@ export const SubscriptionSuggestion: React.FC<{ candidate: SubscriptionCandidate
         <Text style={[textStyles.body, { color: colors.text }]}>
           You've paid {candidate.label} {format(candidate.amount)} {candidate.count} {unit} in a row. Track it as a subscription?
         </Text>
-        <View style={[styles.actions, { marginTop: spacing.sm }]}>
-          <TouchableOpacity onPress={onTrack} accessibilityRole="button" style={{ marginRight: spacing.lg }}>
+        <View style={[styles.actions, { marginTop: spacing.xs }]}>
+          <TouchableOpacity onPress={onTrack} accessibilityRole="button" accessibilityLabel={`Track ${candidate.label} as a subscription`} style={[styles.action, { marginRight: spacing.lg }]}>
             <Text style={[textStyles.label, { color: colors.primary }]}>Track</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={onDismiss} accessibilityRole="button">
+          <TouchableOpacity onPress={onDismiss} accessibilityRole="button" accessibilityLabel={`Dismiss ${candidate.label} suggestion`} style={styles.action}>
             <Text style={[textStyles.label, { color: colors.textSecondary }]}>Dismiss</Text>
           </TouchableOpacity>
         </View>
@@ -33,4 +33,5 @@ export const SubscriptionSuggestion: React.FC<{ candidate: SubscriptionCandidate
 const styles = StyleSheet.create({
   card: { flexDirection: 'row', borderWidth: 1 },
   actions: { flexDirection: 'row' },
+  action: { minHeight: 44, justifyContent: 'center' },
 });

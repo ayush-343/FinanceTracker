@@ -11,7 +11,7 @@ interface SuggestionChipProps {
 
 /** Tappable "Suggested: …" chip for a category learned from the user's history. */
 export const SuggestionChip: React.FC<SuggestionChipProps> = ({ label, color, onPress }) => {
-  const { spacing, textStyles, borderRadius } = useTheme();
+  const { colors, spacing, textStyles, borderRadius } = useTheme();
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -26,12 +26,13 @@ export const SuggestionChip: React.FC<SuggestionChipProps> = ({ label, color, on
           borderRadius: borderRadius.full,
           paddingHorizontal: spacing.md,
           paddingVertical: spacing.sm,
+          minHeight: 36,
           marginTop: spacing.sm,
         },
       ]}
     >
       <Feather name="zap" size={14} color={color} />
-      <Text style={[textStyles.label, { color, marginLeft: spacing.xs, fontWeight: '600' }]}>{label}</Text>
+      <Text style={[textStyles.label, { color: colors.text, marginLeft: spacing.xs, fontWeight: '600' }]}>{label}</Text>
     </TouchableOpacity>
   );
 };
