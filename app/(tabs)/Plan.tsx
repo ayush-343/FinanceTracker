@@ -110,7 +110,7 @@ export default function PlanScreen() {
               </View>
               {cat.budget_limit > 0 ? (
                 <View style={{ marginTop: space.sm }}>
-                  <Bands height={8} values={[{ key: 'spent', value: cat.spent, color: hues.get(cat.id) ?? c.data }]} total={Math.max(cat.budget_limit, cat.spent)} marker={over > 0 ? cat.budget_limit / cat.spent : undefined} />
+                  <Bands height={8} values={[{ key: 'spent', value: cat.spent, color: hues.get(cat.id) ?? c.data }]} total={Math.max(cat.budget_limit, cat.spent)} marker={over > 0 ? cat.budget_limit / cat.spent : undefined} hatch={over > 0 ? { from: cat.budget_limit / cat.spent, to: 1, color: c.hatchInk } : undefined} />
                 </View>
               ) : null}
               {over > 0 ? (

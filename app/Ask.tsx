@@ -2,16 +2,16 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { format, parseISO } from 'date-fns';
-import { Chip, PillInput, Symbol, useKolam, hueMap, type, space } from '../src/ui';
+import { endOfMonth, format, parseISO, startOfMonth } from 'date-fns';
+import { Bands, Chip, Field, Money, PillInput, Symbol, useKolam, hueMap, type, space } from '../src/ui';
 import { AskResultCard } from '../src/components/AskResultCard';
 import { useCurrency, useHaptics } from '../src/hooks';
 import { useSettingsStore } from '../src/store';
-import { getCategories } from '../src/database';
+import { getCategories, getCategoriesWithSpending } from '../src/database';
 import { getEngine } from '../src/ai/engine';
 import { askQuestion, AskAnswer } from '../src/ai/ask/ask';
 import { askDb } from '../src/ai/ask/db';
-import { Category } from '../src/types';
+import { Category, CategoryWithSpending } from '../src/types';
 
 const STARTERS = [
   'How much did I spend this month?',
@@ -36,7 +36,13 @@ export function AskView({ asTab = false, initialQuestion }: { asTab?: boolean; i
   const [categories, setCategories] = useState<Category[]>([]);
   const scroller = useRef<ScrollView>(null);
 
-  useEffect(() => { getCategories().then(setCategories).catch(() => {}); }, []);
+  const [month, setMonth] = useState<CategoryWithSpending[]>([]);
+  useEffect(() => {
+    getCategories().then(setCategories).catch(() => {});
+    const now = new Date();
+    getCategoriesWithSpending(format(startOfMonth(now), 'yyyy-MM-dd'), format(endOfMonth(now), 'yyyy-MM-dd')).then(setMonth).catch(() => {});
+  }, []);
+  const monthTotal = month.reduce((s, x) => s + x.spent, 0);
   const hues = hueMap(categories.map((x) => x.id), isDark);
   const hueOf = (name: string) => {
     const cat = categories.find((x) => x.name.toLowerCase() === name.toLowerCase());
@@ -109,6 +115,18 @@ export function AskView({ asTab = false, initialQuestion }: { asTab?: boolean; i
 
         <ScrollView ref={scroller} style={styles.root} contentContainerStyle={{ padding: space.lg, paddingBottom: space.xl }} keyboardShouldPersistTaps="handled">
           {exchanges.length === 0 ? (
+            <Field style={{ marginHorizontal: 0, marginBottom: space.lg }}>
+              <Text maxFontSizeMultiplier={2} style={[type.caption, { color: c.fieldMuted }]}>{format(new Date(), 'MMMM')} so far</Text>
+              <Money value={monthTotal} size={34} weight="700" whole color={c.fieldInk} style={{ marginTop: space.xs }} />
+              {monthTotal > 0 ? (
+                <View style={{ marginTop: space.md }}>
+                  <Bands onField height={10} values={month.map((x) => ({ key: String(x.id), value: x.spent, color: hues.get(x.id) ?? c.data }))} />
+                </View>
+              ) : null}
+              <Text maxFontSizeMultiplier={2} style={[type.sub, { color: c.fieldMuted, marginTop: space.md }]}>Ask anything about it. The figures are worked out from your purchases, never guessed.</Text>
+            </Field>
+          ) : null}
+          {exchanges.length === 0 ? (
             <View style={styles.starters}>
               {STARTERS.map((s) => <Chip key={s} label={s} onPress={() => ask(s)} />)}
             </View>
@@ -129,10 +147,10 @@ export function AskView({ asTab = false, initialQuestion }: { asTab?: boolean; i
                   onOpenPurchase={(id) => router.push({ pathname: '/Log', params: { transactionId: String(id) } })}
                 />
               ) : (
-                <View style={styles.thinking}>
-                  <ActivityIndicator color={c.muted} />
-                  <Text maxFontSizeMultiplier={2} style={[type.caption, { color: c.muted, marginLeft: space.sm }]}>Working it out…</Text>
-                </View>
+                <Field style={[styles.thinking, { marginHorizontal: 0 }]}>
+                  <ActivityIndicator color={c.fieldMuted} />
+                  <Text maxFontSizeMultiplier={2} style={[type.sub, { color: c.fieldInk, marginLeft: space.md, flex: 1 }]}>Working it out from your purchases, on this phone…</Text>
+                </Field>
               )}
             </View>
           ))}

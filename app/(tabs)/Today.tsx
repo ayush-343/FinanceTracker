@@ -101,10 +101,7 @@ export default function TodayScreen() {
                 </>
               ) : (
                 <>
-                  <View style={styles.row}>
-                    <Money value={overBudget > 0 ? overBudget : Math.abs(data.pace.leftToday)} size={40} weight="700" whole />
-                    <Hatch width={28} height={28} color={c.hatchInk} radius={8} />
-                  </View>
+                  <Money value={overBudget > 0 ? overBudget : Math.abs(data.pace.leftToday)} size={40} weight="700" whole />
                   <Text maxFontSizeMultiplier={2} style={[type.sub, { color: c.muted, marginTop: 6 }]}>
                     {overBudget > 0
                       ? `over your ${formatWhole(data.budget)} budget for this ${periodWord}. Plan shows where it went.`
@@ -116,13 +113,18 @@ export default function TodayScreen() {
                 <Bands
                   values={data.categories.map((x) => ({ key: String(x.id), value: x.spent, color: hues.get(x.id) ?? c.data }))}
                   total={Math.max(data.budget, data.periodSpent)}
-                  marker={data.periodElapsed * (data.budget / Math.max(data.budget, data.periodSpent))}
+                  marker={data.paceMark / Math.max(data.budget, data.periodSpent)}
+                  hatch={data.periodSpent > data.paceMark ? {
+                    from: data.paceMark / Math.max(data.budget, data.periodSpent),
+                    to: data.periodSpent / Math.max(data.budget, data.periodSpent),
+                    color: c.hatchInk,
+                  } : undefined}
                   accessibilityLabel={`${formatWhole(data.periodSpent)} spent of ${formatWhole(data.budget)}`}
                 />
               </View>
               <View style={[styles.row, { marginTop: space.sm }]}>
                 <Text maxFontSizeMultiplier={2} style={[type.money(12, '500'), { color: c.muted }]}>{formatWhole(data.periodSpent)} spent</Text>
-                <Text maxFontSizeMultiplier={2} style={[type.money(12, '500'), { color: c.muted }]}>pace {formatWhole(data.budget * data.periodElapsed)}</Text>
+                <Text maxFontSizeMultiplier={2} style={[type.money(12, '500'), { color: c.muted }]}>today's pace {formatWhole(data.paceMark)}</Text>
               </View>
             </>
           )}

@@ -17,6 +17,8 @@ export interface TodayData {
   periodSpent: number;
   /** Fraction of the budget period elapsed, including today. */
   periodElapsed: number;
+  /** Where spending can be by the end of today and stay on pace: spent before today + today's allowance. */
+  paceMark: number;
   categories: CategoryWithSpending[];
   recent: TransactionWithDetails[];
 }
@@ -44,11 +46,13 @@ export const useToday = () => {
     const spentToday = todayCats.reduce((s, c) => s + c.spent, 0);
     const totalDays = (new Date(`${period.to}T00:00:00`).getTime() - new Date(`${period.from}T00:00:00`).getTime()) / 86400000 + 1;
     const elapsedDays = (new Date(`${todayISO}T00:00:00`).getTime() - new Date(`${period.from}T00:00:00`).getTime()) / 86400000 + 1;
+    const pace = computePace({ budget, spentBeforeToday: periodSpent - spentToday, spentToday, periodEnd: period.to, today: todayISO });
     setData({
       todayISO,
       monthLabel: format(now, 'MMMM'),
       kolam: buildMonthKolam(now.getFullYear(), now.getMonth(), drawn, todayISO, firstDay ?? todayISO),
-      pace: computePace({ budget, spentBeforeToday: periodSpent - spentToday, spentToday, periodEnd: period.to, today: todayISO }),
+      pace,
+      paceMark: Math.min(budget, periodSpent - spentToday + pace.allowanceToday),
       budget,
       periodSpent,
       periodElapsed: Math.min(1, elapsedDays / totalDays),

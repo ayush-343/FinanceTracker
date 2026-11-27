@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { addMonths, format, isSameMonth, parseISO, startOfMonth, subMonths } from 'date-fns';
-import { Screen, Card, ListRow, Chip, Bands, KButton, Money, Symbol, useKolam, hueMap, type, space, radii } from '../../src/ui';
+import { Screen, Field, Card, ListRow, Chip, Bands, KButton, Money, Symbol, useKolam, hueMap, type, space, radii } from '../../src/ui';
 import { useActivity } from '../../src/activity/useActivity';
 import { categoryShares, feedLabel, filterFeed, groupByDay } from '../../src/activity/feed';
 import { buildMonthKolam } from '../../src/today/kolamGrid';
@@ -110,12 +110,14 @@ export default function ActivityScreen() {
         </Pressable>
       ) : null}
 
+      {/* The month on slate: the screen's one dominant field. */}
+      <Field style={{ marginTop: space.md, paddingVertical: space.sm, paddingHorizontal: space.xs }}>
       <View style={styles.monthRow}>
         <Pressable onPress={() => changeMonth(subMonths(month, 1))} accessibilityRole="button" accessibilityLabel="Previous month" style={styles.chev}>
-          <Symbol name="chevron.left" fallback="chevron-left" color={c.ink} size={17} />
+          <Symbol name="chevron.left" fallback="chevron-left" color={c.fieldInk} size={17} />
         </Pressable>
-        <Text maxFontSizeMultiplier={2} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6} accessibilityRole="header" style={[type.title, { color: c.ink, flex: 1 }]}>{format(month, 'MMMM yyyy')}</Text>
-        <Money value={monthTotal} size={17} weight="700" whole />
+        <Text maxFontSizeMultiplier={2} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6} accessibilityRole="header" style={[type.title, { color: c.fieldInk, flex: 1 }]}>{format(month, 'MMMM yyyy')}</Text>
+        <Money value={monthTotal} size={17} weight="700" whole color={c.fieldInk} />
         <Pressable
           onPress={() => changeMonth(addMonths(month, 1))}
           disabled={isCurrent}
@@ -124,19 +126,23 @@ export default function ActivityScreen() {
           accessibilityState={{ disabled: isCurrent }}
           style={[styles.chev, { opacity: isCurrent ? 0.3 : 1 }]}
         >
-          <Symbol name="chevron.right" fallback="chevron-right" color={c.ink} size={17} />
+          <Symbol name="chevron.right" fallback="chevron-right" color={c.fieldInk} size={17} />
         </Pressable>
       </View>
-
-      {shares.length > 0 ? (
-        <>
-          <View style={{ marginHorizontal: space.lg, marginTop: space.sm }}>
+        {shares.length > 0 ? (
+          <View style={{ marginHorizontal: space.md, marginTop: space.xs, marginBottom: space.sm }}>
             <Bands
+              onField
               height={14}
               values={shares.map((x) => ({ key: String(x.categoryId), value: x.total, color: hues.get(x.categoryId) ?? c.data }))}
               accessibilityLabel={shares.map((x) => `${x.name} ${Math.round(x.share * 100)} percent`).join(', ')}
             />
           </View>
+        ) : null}
+      </Field>
+
+      {shares.length > 0 ? (
+        <>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
             <Chip label="All" selected={categoryId == null} onPress={() => setCategoryId(null)} />
             {shares.map((x) => (
@@ -211,7 +217,7 @@ const styles = StyleSheet.create({
   search: { flexDirection: 'row', alignItems: 'center', marginHorizontal: space.lg, height: 44, borderRadius: radii.small, borderWidth: 1, paddingHorizontal: space.md },
   searchInput: { flex: 1, marginLeft: space.sm, height: 44 },
   askRow: { flexDirection: 'row', alignItems: 'center', marginHorizontal: space.lg, marginTop: space.sm, minHeight: 44, borderRadius: radii.small, paddingHorizontal: space.md },
-  monthRow: { flexDirection: 'row', alignItems: 'center', marginHorizontal: space.sm, marginTop: space.md, gap: space.xs },
+  monthRow: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   chev: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   chips: { gap: space.sm, paddingHorizontal: space.lg, paddingTop: space.md },
   gridRow: { flexDirection: 'row' },

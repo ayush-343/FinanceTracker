@@ -12,7 +12,7 @@ import {
   createItem, deleteTransaction, getCategories, getItems, getSubcategories, getTransactionById, learnCategory, loadCategoryMemory, loadDrawnDays,
   loadKnownItems, markNothingSpent, updateTransaction,
 } from '../src/database';
-import { suggestCategory, KnownItem, MemoryRow } from '../src/ai/categorizer';
+import { keywordCategory, suggestCategory, KnownItem, MemoryRow } from '../src/ai/categorizer';
 import { preParse } from '../src/ai/quicklog/preParse';
 import { parseQuickLog } from '../src/ai/quicklog/parse';
 import { getEngine } from '../src/ai/engine';
@@ -36,7 +36,7 @@ export default function LogSheet() {
   const router = useRouter();
   const params = useLocalSearchParams<Params>();
   const { c, isDark } = useKolam();
-  const { format: money } = useCurrency();
+  const { format: money, symbol } = useCurrency();
   const { addTransaction } = useBudgetStore();
   const { aiEngine, localModelId, currency } = useSettingsStore();
   const dictation = useDictation();
@@ -120,9 +120,12 @@ export default function LogSheet() {
       let next = applyParse(d, { amount: pre.amount, item: pre.item, merchant: pre.merchant, date: pre.date }, touched);
       if (!touched.category) {
         const learned = suggestCategory(pre.merchant ?? pre.item ?? text, memory.rows, memory.items, validIds);
+        const guessed = learned ? null : keywordCategory(text, categories);
         next = learned
           ? { ...next, categoryId: learned.categoryId, subcategoryId: learned.subcategoryId, categorySource: 'learned' }
-          : d.categorySource === 'learned' ? { ...next, categoryId: null, subcategoryId: null, categorySource: null } : next;
+          : guessed
+            ? { ...next, categoryId: guessed, subcategoryId: null, categorySource: 'model' }
+            : d.categorySource === 'learned' || d.categorySource === 'model' ? { ...next, categoryId: null, subcategoryId: null, categorySource: null } : next;
       }
       return next;
     });
@@ -303,6 +306,7 @@ export default function LogSheet() {
           <Card style={{ marginTop: editingId ? space.xs : space.lg }}>
             <View style={styles.amountRow}>
               <Text maxFontSizeMultiplier={2} style={[type.caption, { color: c.muted }]}>Amount</Text>
+              <Text maxFontSizeMultiplier={1.3} style={[type.money(34, '700'), { color: draft.amount ? c.ink : c.muted, marginLeft: 'auto' }]}>{symbol}</Text>
               <TextInput
                 value={draft.amount}
                 onChangeText={(v) => edit('amount', v, 'amount')}
@@ -425,7 +429,7 @@ const styles = StyleSheet.create({
   cancel: { minHeight: 44, justifyContent: 'center', paddingHorizontal: space.xs },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   amountRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', minHeight: 52 },
-  amountInput: { flex: 1, textAlign: 'right', marginLeft: space.lg, paddingVertical: 0 },
+  amountInput: { minWidth: 40, textAlign: 'right', marginLeft: space.xs, paddingVertical: 0 },
   kv: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 52, borderTopWidth: StyleSheet.hairlineWidth },
   kvInput: { flex: 1, textAlign: 'right', marginLeft: space.lg, minHeight: 44 },
   kvBlock: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: space.md, paddingBottom: space.xs },
