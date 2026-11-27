@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { addMonths, format, isSameMonth, parseISO, startOfMonth, subMonths } from 'date-fns';
 import { Screen, Card, ListRow, Chip, Bands, KButton, Money, Symbol, useKolam, hueMap, type, space, radii } from '../../src/ui';
 import { useActivity } from '../../src/activity/useActivity';
@@ -23,6 +23,14 @@ export default function ActivityScreen() {
   const [categoryId, setCategoryId] = React.useState<number | null>(null);
   const [day, setDay] = React.useState<string | null>(null);
   const { txs, categories, drawn } = useActivity(month);
+  const params = useLocalSearchParams<{ month?: string; categoryId?: string }>();
+
+  // Opened from an Ask answer: jump to that month and category.
+  React.useEffect(() => {
+    if (params.month && /^\d{4}-\d{2}$/.test(params.month)) setMonth(startOfMonth(parseISO(`${params.month}-01`)));
+    setCategoryId(params.categoryId ? Number(params.categoryId) : null);
+    if (params.month || params.categoryId) { setMode('list'); setDay(null); setQuery(''); }
+  }, [params.month, params.categoryId]);
 
   const hues = hueMap(categories.map((x) => x.id), isDark);
   const all = txs ?? [];

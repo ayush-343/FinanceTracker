@@ -1,101 +1,111 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { format, parseISO } from 'date-fns';
-import { useTheme } from '../theme';
+import { Bands, Hatch, ListRow, Money, Symbol, useKolam, type, space, radii } from '../ui';
 import { useCurrency } from '../hooks/useCurrency';
 import { AskResult } from '../ai/ask/execute';
-import { ForecastRows } from './ForecastCard';
 
-const Bar: React.FC<{ fraction: number; color: string; track: string }> = ({ fraction, color, track }) => (
-  <View style={[styles.track, { backgroundColor: track }]}>
-    <View style={[styles.fill, { width: `${Math.max(0, Math.min(1, fraction)) * 100}%`, backgroundColor: color }]} />
-  </View>
-);
+interface Props {
+  result: AskResult;
+  sentence: string;
+  /** Category name → hue, so answers match the rest of the app. */
+  hueOf: (categoryName: string) => string | undefined;
+  onOpenCategory?: (categoryName: string) => void;
+  onOpenPurchase?: (id: number) => void;
+  onOpenMonth?: () => void;
+}
 
-/** Renders a computed Ask answer. Every figure here comes from the executor, never from the model. */
-export const AskResultCard: React.FC<{ result: AskResult; sentence: string }> = ({ result, sentence }) => {
-  const { colors, spacing, textStyles, borderRadius } = useTheme();
-  const { format: money } = useCurrency();
-  const muted = { color: colors.textSecondary };
-  const row = { flexDirection: 'row' as const, justifyContent: 'space-between' as const, marginTop: spacing.sm };
+/** A computed Ask answer in the Kolam world. Every figure comes from the executor; bars and rows open what's behind them. */
+export const AskResultCard: React.FC<Props> = ({ result, sentence, hueOf, onOpenCategory, onOpenPurchase, onOpenMonth }) => {
+  const { c } = useKolam();
+  const { formatWhole } = useCurrency();
+  const muted = { color: c.muted };
+
+  const tappableRow = (key: string, label: string, onPress: (() => void) | undefined, children: React.ReactNode) => (
+    <Pressable key={key} onPress={onPress} disabled={!onPress} accessibilityRole={onPress ? 'button' : undefined} accessibilityLabel={label}
+      style={({ pressed }) => [styles.block, { opacity: pressed ? 0.6 : 1 }]}>
+      {children}
+    </Pressable>
+  );
 
   const body = (() => {
     switch (result.kind) {
       case 'total':
-        return (
+        return tappableRow('total', `${formatWhole(result.value)}, ${result.label}. See purchases`, onOpenMonth, (
           <>
-            <Text style={[textStyles.h1, { color: colors.text }]}>{money(result.value)}</Text>
-            <Text style={[textStyles.bodySmall, muted]}>{result.count} {result.count === 1 ? 'purchase' : 'purchases'} · {result.label}</Text>
+            <Money value={result.value} size={34} weight="700" whole />
+            <Text style={[type.caption, muted]}>{result.count} {result.count === 1 ? 'purchase' : 'purchases'} · {result.label}</Text>
           </>
-        );
-      case 'breakdown':
-        return result.rows.map((r) => (
-          <View key={r.label} style={{ marginTop: spacing.sm }}>
-            <View style={row}>
-              <Text style={[textStyles.body, { color: colors.text, flex: 1 }]} numberOfLines={1}>{r.label}</Text>
-              <Text style={[textStyles.body, { color: colors.text }]}>{money(r.value)}</Text>
-            </View>
-            <Bar fraction={result.total ? r.value / result.total : 0} color={r.color ?? colors.primary} track={colors.border} />
-          </View>
         ));
+      case 'breakdown':
+        return result.rows.map((r) => tappableRow(r.label, `${r.label}, ${formatWhole(r.value)}. See purchases`, onOpenCategory ? () => onOpenCategory(r.label) : undefined, (
+          <>
+            <View style={styles.row}>
+              <Text style={[type.body, { color: c.ink, flex: 1 }]} numberOfLines={1}>{r.label}</Text>
+              <Money value={r.value} size={15} whole />
+            </View>
+            <View style={{ marginTop: 6 }}>
+              <Bands height={8} values={[{ key: r.label, value: r.value, color: hueOf(r.label) ?? c.data }]} total={Math.max(result.total, 1)} />
+            </View>
+          </>
+        )));
       case 'compare': {
         const more = result.diff > 0;
         return (
           <>
-            <View style={row}><Text style={[textStyles.body, muted]}>{result.b.label}</Text><Text style={[textStyles.h3, { color: colors.text }]}>{money(result.b.value)}</Text></View>
-            <View style={row}><Text style={[textStyles.body, muted]}>{result.a.label}</Text><Text style={[textStyles.body, { color: colors.text }]}>{money(result.a.value)}</Text></View>
-            {result.diff !== 0 && (
-              <View style={[styles.diff, { marginTop: spacing.sm }]}>
-                <Feather name={more ? 'arrow-up-right' : 'arrow-down-right'} size={16} color={more ? colors.error : colors.success} />
-                <Text style={[textStyles.label, { color: colors.text, marginLeft: spacing.xs }]}>
-                  {money(Math.abs(result.diff))} {more ? 'more' : 'less'}{result.pct != null ? ` (${Math.round(Math.abs(result.pct))}%)` : ''}
+            <View style={[styles.row, styles.block]}><Text style={[type.body, muted]}>{result.b.label}</Text><Money value={result.b.value} size={20} weight="700" whole /></View>
+            <View style={[styles.row, styles.block]}><Text style={[type.body, muted]}>{result.a.label}</Text><Money value={result.a.value} size={16} whole /></View>
+            {result.diff !== 0 ? (
+              <View style={[styles.row, { justifyContent: 'flex-start', marginTop: space.xs }]}>
+                <Symbol name={more ? 'arrow.up.right' : 'arrow.down.right'} fallback={more ? 'arrow-up-right' : 'arrow-down-right'} color={c.ink} size={15} />
+                <Text style={[type.label, { color: c.ink, marginLeft: space.xs }]}>
+                  {formatWhole(Math.abs(result.diff))} {more ? 'more' : 'less'}{result.pct != null ? ` (${Math.round(Math.abs(result.pct))}%)` : ''}
                 </Text>
               </View>
-            )}
+            ) : null}
           </>
         );
       }
       case 'list':
-        return result.rows.map((r) => (
-          <View key={r.id} style={row}>
-            <View style={[styles.dot, { backgroundColor: r.color }]} />
-            <Text style={[textStyles.body, { color: colors.text, flex: 1 }]} numberOfLines={1}>{r.label}</Text>
-            <Text style={[textStyles.bodySmall, muted, { marginHorizontal: spacing.sm }]}>{format(parseISO(r.date), 'd MMM')}</Text>
-            <Text style={[textStyles.body, { color: colors.text }]}>{money(r.amount)}</Text>
-          </View>
+        return result.rows.map((r, i) => (
+          <ListRow key={r.id} title={r.label} subtitle={`${r.category} · ${format(parseISO(r.date), 'd MMM')}`} hue={hueOf(r.category)} amount={r.amount}
+            last={i === result.rows.length - 1} onPress={onOpenPurchase ? () => onOpenPurchase(r.id) : undefined} />
         ));
       case 'budget':
-        return result.rows.map((r) => (
-          <View key={r.category} style={{ marginTop: spacing.sm }}>
-            <View style={row}>
-              <Text style={[textStyles.body, { color: colors.text }]}>{r.category}</Text>
-              <Text style={[textStyles.bodySmall, muted]}>{money(r.spent)} / {money(r.limit)}</Text>
+        return result.rows.map((r) => tappableRow(r.category, `${r.category}, ${Math.round(r.pct)} percent of budget`, onOpenCategory ? () => onOpenCategory(r.category) : undefined, (
+          <>
+            <View style={styles.row}>
+              <Text style={[type.body, { color: c.ink, flex: 1 }]}>{r.category}</Text>
+              {r.pct >= 100 ? <Hatch width={12} height={12} color={c.hatchInk} radius={3} /> : null}
+              <Text style={[type.money(13, '500'), muted, { marginLeft: space.sm }]}>{formatWhole(r.spent)} / {formatWhole(r.limit)}</Text>
             </View>
-            <Bar fraction={r.pct / 100} color={r.pct >= 100 ? colors.error : r.pct >= 80 ? colors.warning : r.color} track={colors.border} />
-          </View>
-        ));
+            <View style={{ marginTop: 6 }}>
+              <Bands height={8} values={[{ key: r.category, value: r.spent, color: hueOf(r.category) ?? c.data }]} total={Math.max(r.limit, r.spent)} />
+            </View>
+          </>
+        )));
       case 'forecast':
-        return <ForecastRows forecast={result.forecast} />;
+        return result.forecast.status === 'ok' ? (
+          <View style={styles.block}>
+            <Text style={[type.money(28, '700'), { color: c.ink }]}>{formatWhole(result.forecast.total.low)} – {formatWhole(result.forecast.total.high)}</Text>
+            <Text style={[type.caption, muted]}>likely {formatWhole(result.forecast.total.likely)} {result.label}</Text>
+          </View>
+        ) : null;
       case 'unsupported':
         return null;
     }
   })();
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: borderRadius.lg, padding: spacing.lg }]}>
-      <Text style={[textStyles.body, { color: result.kind === 'unsupported' ? colors.textSecondary : colors.text, marginBottom: body ? spacing.sm : 0 }]}>
-        {sentence}
-      </Text>
-      {body}
+    <View style={[styles.card, { backgroundColor: c.surface }]}>
+      <Text style={[type.body, { color: result.kind === 'unsupported' ? c.muted : c.ink, lineHeight: 22 }]}>{sentence}</Text>
+      {body ? <View style={{ marginTop: space.sm }}>{body}</View> : null}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  card: { borderWidth: StyleSheet.hairlineWidth },
-  diff: { flexDirection: 'row', alignItems: 'center' },
-  track: { height: 6, borderRadius: 3, overflow: 'hidden', marginTop: 4 },
-  fill: { height: 6, borderRadius: 3 },
-  dot: { width: 8, height: 8, borderRadius: 4, marginRight: 8, alignSelf: 'center' },
+  card: { borderRadius: radii.card, padding: space.lg },
+  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  block: { paddingVertical: space.sm, minHeight: 44, justifyContent: 'center' },
 });

@@ -25,7 +25,9 @@ const subjectFor = (categoryIds: number[], merchant: string | undefined, categor
 };
 
 /** Question → plan (model) → resolved plan → SQL result (app) → sentence (template, optionally rephrased under the number guard). */
-export const askQuestion = async (question: string, deps: AskDeps): Promise<{ result: AskResult; sentence: string }> => {
+export interface AskAnswer { result: AskResult; sentence: string; range?: { from: string; to: string } }
+
+export const askQuestion = async (question: string, deps: AskDeps): Promise<AskAnswer> => {
   const { system } = buildAskPrompt(format(deps.today, 'yyyy-MM-dd'), deps.categories.map((c) => c.name), deps.budgetPeriod);
 
   let plan: QueryPlan | null = null;
@@ -47,13 +49,14 @@ export const askQuestion = async (question: string, deps: AskDeps): Promise<{ re
     : resolved.type === 'list' || resolved.type === 'compare' ? subjectFor(resolved.categoryIds, undefined, deps.categories)
     : undefined;
   const template = templateSentence(result, deps.formatMoney, subject);
+  const range = resolved.type === 'compare' ? resolved.rangeB : 'range' in resolved ? resolved.range : undefined;
 
   try {
     const narration = buildNarrationPrompt(question, template);
     const rephrased = (await deps.engine.generate(narration.prompt, narration.system)).trim().split('\n')[0];
-    if (rephrased && guardSentence(rephrased, result)) return { result, sentence: rephrased };
+    if (rephrased && guardSentence(rephrased, result)) return { result, sentence: rephrased, range };
   } catch (error) {
     console.warn('[Ask] narration failed, using template:', error);
   }
-  return { result, sentence: template };
+  return { result, sentence: template, range };
 };
