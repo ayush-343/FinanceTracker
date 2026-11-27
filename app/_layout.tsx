@@ -136,6 +136,10 @@ const AppShell: React.FC = () => {
                     options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
                 />
                 <Stack.Screen
+                    name="Goal"
+                    options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+                />
+                <Stack.Screen
                     name="Log"
                     options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
                 />
