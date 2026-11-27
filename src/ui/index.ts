@@ -12,3 +12,4 @@ export { Hatch } from './Hatch';
 export { Bands } from './Bands';
 export { PillInput } from './PillInput';
 export { KButton } from './Button';
+export { Kolam } from './Kolam';
