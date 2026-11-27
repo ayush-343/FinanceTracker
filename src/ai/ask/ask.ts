@@ -4,6 +4,7 @@ import { buildAskPrompt } from '../prompts';
 import { buildNarrationPrompt, guardSentence, templateSentence } from './answer';
 import { AskResult, executePlan, QueryDb } from './execute';
 import { QueryPlan, QueryPlanSchema, resolvePlan } from './plan';
+import { getForecastFrom } from '../forecast/load';
 
 export interface AskDeps {
   engine: LanguageEngine;
@@ -38,7 +39,9 @@ export const askQuestion = async (question: string, deps: AskDeps): Promise<{ re
   const resolved = resolvePlan(plan, deps.categories, deps.today, deps.budgetPeriod);
   if (resolved.type === 'unsupported') return { result: { kind: 'unsupported', reason: resolved.reason }, sentence: resolved.reason };
 
-  const result = await executePlan(resolved, deps.db);
+  const result: AskResult = resolved.type === 'forecast'
+    ? { kind: 'forecast', forecast: await getForecastFrom(deps.db, deps.today, deps.budgetPeriod), label: deps.budgetPeriod === 'weekly' ? 'this week' : 'this month' }
+    : await executePlan(resolved, deps.db);
   const subject =
     resolved.type === 'total' ? subjectFor(resolved.categoryIds, resolved.merchant, deps.categories)
     : resolved.type === 'list' || resolved.type === 'compare' ? subjectFor(resolved.categoryIds, undefined, deps.categories)

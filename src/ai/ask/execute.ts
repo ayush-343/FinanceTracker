@@ -1,4 +1,5 @@
 import { ResolvedPlan } from './plan';
+import type { Forecast } from '../forecast/forecast';
 
 export interface QueryDb {
   getAllAsync<T>(sql: string, params: (string | number)[]): Promise<T[]>;
@@ -10,6 +11,7 @@ export type AskResult =
   | { kind: 'compare'; a: { label: string; value: number }; b: { label: string; value: number }; diff: number; pct: number | null }
   | { kind: 'list'; rows: { id: number; date: string; label: string; category: string; color: string; amount: number }[]; label: string }
   | { kind: 'budget'; rows: { category: string; color: string; spent: number; limit: number; pct: number }[]; label: string }
+  | { kind: 'forecast'; forecast: Forecast; label: string }
   | { kind: 'unsupported'; reason: string };
 
 const FROM = 'FROM transactions t JOIN categories c ON c.id = t.category_id LEFT JOIN items i ON i.id = t.item_id';

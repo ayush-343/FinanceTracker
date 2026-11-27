@@ -4,6 +4,7 @@ import { format, parseISO } from 'date-fns';
 import { useTheme } from '../theme';
 import { useCurrency } from '../hooks/useCurrency';
 import { AskResult } from '../ai/ask/execute';
+import { ForecastRows } from './ForecastCard';
 
 const Bar: React.FC<{ fraction: number; color: string; track: string }> = ({ fraction, color, track }) => (
   <View style={[styles.track, { backgroundColor: track }]}>
@@ -70,6 +71,8 @@ export const AskResultCard: React.FC<{ result: AskResult; sentence: string }> = 
             <Bar fraction={r.pct / 100} color={r.pct >= 100 ? colors.error : r.pct >= 80 ? colors.warning : r.color} track={colors.border} />
           </View>
         ));
+      case 'forecast':
+        return <ForecastRows forecast={result.forecast} />;
       case 'unsupported':
         return null;
     }

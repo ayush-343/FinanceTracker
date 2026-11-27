@@ -4,7 +4,7 @@ const initSqlJs: typeof import('sql.js').default = require('sql.js/dist/sql-asm.
 import { QueryDb } from '../execute';
 
 /** Real in-memory SQLite (sql.js) with the app's relevant tables and a small known dataset. */
-export const createFixtureDb = async (withRows = true): Promise<QueryDb> => {
+export const createFixtureDb = async (withRows = true, extraSql = ''): Promise<QueryDb> => {
   const SQL = await initSqlJs();
   const db = new SQL.Database();
   db.run(`
@@ -16,6 +16,9 @@ export const createFixtureDb = async (withRows = true): Promise<QueryDb> => {
     INSERT INTO categories VALUES (1,'Food','#EF4444','coffee',3000),(2,'Transport','#14B8A6','truck',0),(3,'Shopping','#6366F1','bag',1000);
     INSERT INTO subcategories VALUES (1,2,'Cabs');
     INSERT INTO items VALUES (1,1,'Uber ride');
+    CREATE TABLE subscriptions (id INTEGER PRIMARY KEY, name TEXT NOT NULL, amount REAL NOT NULL, frequency TEXT NOT NULL,
+      start_date TEXT NOT NULL, category_id INTEGER NOT NULL, is_active INTEGER DEFAULT 1);
+    CREATE TABLE subscription_skips (id INTEGER PRIMARY KEY, subscription_id INTEGER NOT NULL, skip_date TEXT NOT NULL);
   `);
   if (withRows) {
     db.run(`
@@ -29,6 +32,7 @@ export const createFixtureDb = async (withRows = true): Promise<QueryDb> => {
         (7,NULL,1,NULL,150,'2026-11-26','','Blue Tokai');
     `);
   }
+  if (extraSql) db.run(extraSql);
   return {
     getAllAsync: async <T,>(sql: string, params: (string | number)[]) => {
       const stmt = db.prepare(sql);

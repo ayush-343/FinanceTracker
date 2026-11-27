@@ -32,6 +32,7 @@ export type ResolvedPlan =
   | { type: 'budgetStatus'; range: ResolvedRange };
 
 export type Unsupported = { type: 'unsupported'; reason: string };
+export type ForecastRequest = { type: 'forecast' };
 
 const canon = (s: string) => s.toLowerCase().replace(/&/g, ' and ').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
 
@@ -50,7 +51,7 @@ export const resolvePlan = (
   categories: { id: number; name: string }[],
   today: Date,
   budgetPeriod: 'weekly' | 'monthly',
-): ResolvedPlan | Unsupported => {
+): ResolvedPlan | Unsupported | ForecastRequest => {
   const plan = QueryPlanSchema.parse(input);
   const ids = (names?: string[]): number[] | Unsupported => {
     const out: number[] = [];
@@ -64,7 +65,7 @@ export const resolvePlan = (
 
   switch (plan.type) {
     case 'unsupported': return plan;
-    case 'forecast': return { type: 'unsupported', reason: 'Forecasts are coming soon.' };
+    case 'forecast': return { type: 'forecast' };
     case 'budgetStatus':
       return { type: 'budgetStatus', range: resolveRange({ preset: budgetPeriod === 'weekly' ? 'this_week' : 'this_month' }, today) };
     case 'breakdown':

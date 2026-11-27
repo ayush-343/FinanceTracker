@@ -1,4 +1,7 @@
+import { format, parseISO } from 'date-fns';
 import { AskResult } from './execute';
+
+export const FORECAST_INSUFFICIENT = 'Forecast appears after 3 weeks of history.';
 
 const OVER_BUDGET_PCT = 80;
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
@@ -31,6 +34,15 @@ export const templateSentence = (result: AskResult, money: (n: number) => string
       const over = result.rows.filter((r) => r.pct >= OVER_BUDGET_PCT).length;
       return `${over} of ${plural(result.rows.length, 'budget', 'budgets')} ${over === 1 ? 'is' : 'are'} over ${OVER_BUDGET_PCT}% ${result.label}.`;
     }
+    case 'forecast': {
+      const f = result.forecast;
+      if (f.status === 'insufficient') return FORECAST_INSUFFICIENT;
+      const head = `You're on pace for ${money(f.total.low)}–${money(f.total.high)} ${result.label} (likely ${money(f.total.likely)}).`;
+      const risk = f.categories.find((c) => c.overOn);
+      return risk
+        ? `${head} ${risk.name} may go over budget around ${format(parseISO(risk.overOn!), 'd MMM')}.`
+        : `${head} All categories look on track.`;
+    }
     case 'unsupported':
       return result.reason;
   }
@@ -48,6 +60,14 @@ export const allowedNumbers = (result: AskResult): Set<number> => {
     case 'compare': raw.push(result.a.value, result.b.value, result.diff); if (result.pct != null) raw.push(result.pct); labels.push(result.a.label, result.b.label); break;
     case 'list': raw.push(result.rows.length); result.rows.forEach((r) => { raw.push(r.amount); labels.push(r.label, r.date); }); labels.push(result.label); break;
     case 'budget': raw.push(result.rows.length, OVER_BUDGET_PCT); result.rows.forEach((r) => raw.push(r.spent, r.limit, r.pct)); labels.push(result.label); break;
+    case 'forecast':
+      if (result.forecast.status === 'ok') {
+        const t = result.forecast.total;
+        raw.push(t.spent, t.likely, t.low, t.high, t.budget);
+        result.forecast.categories.forEach((c) => { raw.push(c.spent, c.likely, c.low, c.high, c.budget); if (c.overOn) labels.push(c.overOn); });
+      }
+      raw.push(3);
+      break;
     case 'unsupported': break;
   }
   const out = new Set<number>();

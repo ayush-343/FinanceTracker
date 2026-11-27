@@ -22,8 +22,8 @@ describe('resolvePlan', () => {
     const r = resolvePlan({ type: 'total', range: { preset: 'this_month' }, categories: ['pets'] }, cats, FRI, 'monthly');
     expect(r).toEqual({ type: 'unsupported', reason: "I couldn't find a category called pets." });
   });
-  it('forecast is not yet supported', () => {
-    expect(resolvePlan({ type: 'forecast' }, cats, FRI, 'monthly')).toEqual({ type: 'unsupported', reason: 'Forecasts are coming soon.' });
+  it('forecast resolves', () => {
+    expect(resolvePlan({ type: 'forecast' }, cats, FRI, 'monthly')).toEqual({ type: 'forecast' });
   });
   it('budget status uses budget period', () => {
     expect(resolvePlan({ type: 'budgetStatus' }, cats, FRI, 'weekly')).toMatchObject({ range: { from: '2026-11-23', to: '2026-11-29' } });
