@@ -17,6 +17,8 @@ import { useTheme } from '../../src/theme';
 import { useSettingsStore, useBudgetStore, useWalkthroughStore } from '../../src/store';
 import { useWalkthroughContext } from '../../src/components/WalkthroughContext';
 import { useCurrency, useBiometricAuth, useHaptics, useAiStatus } from '../../src/hooks';
+import { ensureNotificationPermission, refreshInsightNotifications } from '../../src/services/insightNotifications';
+import * as Notifications from 'expo-notifications';
 import { BudgetPeriod } from '../../src/types';
 import { CURRENCIES, BUDGET_PERIODS } from '../../src/constants';
 import { getCategoriesWithSpending, getTransactionsByCategory, updateCategory, clearCategoryMemory } from '../../src/database';
@@ -156,6 +158,26 @@ export const SettingsScreen: React.FC = () => {
     const { light, success } = useHaptics();
     const ai = useAiStatus();
     const setAiEngine = useSettingsStore((s) => s.setAiEngine);
+    const { digestEnabled, alertsEnabled, setDigestEnabled, setAlertsEnabled } = useSettingsStore();
+
+    const [notificationsGranted, setNotificationsGranted] = useState(false);
+    useEffect(() => {
+        Notifications.getPermissionsAsync().then((p) => setNotificationsGranted(p.granted)).catch(() => {});
+    }, []);
+
+    const toggleNotificationSetting = async (setter: (on: boolean) => Promise<void>, on: boolean) => {
+        light();
+        if (on) {
+            const granted = await ensureNotificationPermission();
+            setNotificationsGranted(granted);
+            if (!granted) {
+                Alert.alert('Notifications Are Off', 'Turn on notifications for Finance Tracker in iOS Settings to get these.');
+                return;
+            }
+        }
+        await setter(on);
+        refreshInsightNotifications();
+    };
 
     const chooseAiEngine = () => {
         light();
@@ -585,6 +607,32 @@ export const SettingsScreen: React.FC = () => {
                             : `${ai.model.label} · ${ai.model.sizeMB} MB · Tap to download`
                         }
                         onPress={manageLocalModel}
+                    />
+                    <SettingRow
+                        icon="calendar"
+                        title="Weekly Summary"
+                        subtitle="Sunday 7 pm · how your week went"
+                        rightComponent={
+                            <Switch
+                                value={digestEnabled && notificationsGranted}
+                                onValueChange={(on) => toggleNotificationSetting(setDigestEnabled, on)}
+                                trackColor={{ false: colors.border, true: '#34D399' }}
+                                thumbColor="#FFFFFF"
+                            />
+                        }
+                    />
+                    <SettingRow
+                        icon="alert-triangle"
+                        title="Budget Alerts"
+                        subtitle="When a category is on pace to go over"
+                        rightComponent={
+                            <Switch
+                                value={alertsEnabled && notificationsGranted}
+                                onValueChange={(on) => toggleNotificationSetting(setAlertsEnabled, on)}
+                                trackColor={{ false: colors.border, true: '#34D399' }}
+                                thumbColor="#FFFFFF"
+                            />
+                        }
                     />
                     <SettingRow
                         icon="rotate-ccw"

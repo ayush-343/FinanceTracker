@@ -8,6 +8,11 @@ import { DEFAULT_LOCAL_MODEL_ID } from '../ai/models';
 
 const AI_PREFS_KEY = 'ai_prefs';
 
+const saveAiPrefs = (s: { aiEngine: EnginePreference; localModelId: string; digestEnabled: boolean; alertsEnabled: boolean }) =>
+  AsyncStorage.setItem(AI_PREFS_KEY, JSON.stringify({
+    aiEngine: s.aiEngine, localModelId: s.localModelId, digestEnabled: s.digestEnabled, alertsEnabled: s.alertsEnabled,
+  }));
+
 const GEMINI_API_KEY_STORE = 'gemini_api_key';
 
 interface SettingsState {
@@ -21,6 +26,8 @@ interface SettingsState {
   geminiApiKey: string | null;
   aiEngine: EnginePreference;
   localModelId: string;
+  digestEnabled: boolean;
+  alertsEnabled: boolean;
   
   // Actions
   loadSettings: () => Promise<void>;
@@ -32,6 +39,8 @@ interface SettingsState {
   setGeminiApiKey: (key: string | null) => Promise<void>;
   setAiEngine: (engine: EnginePreference) => Promise<void>;
   setLocalModelId: (id: string) => Promise<void>;
+  setDigestEnabled: (on: boolean) => Promise<void>;
+  setAlertsEnabled: (on: boolean) => Promise<void>;
   resetAppData: () => Promise<void>;
 }
 
@@ -46,6 +55,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   geminiApiKey: null,
   aiEngine: 'auto',
   localModelId: DEFAULT_LOCAL_MODEL_ID,
+  digestEnabled: true,
+  alertsEnabled: true,
 
   // Load settings from database
   loadSettings: async () => {
@@ -63,6 +74,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         set({
           aiEngine: aiPrefs.aiEngine ?? 'auto',
           localModelId: aiPrefs.localModelId ?? DEFAULT_LOCAL_MODEL_ID,
+          digestEnabled: aiPrefs.digestEnabled ?? true,
+          alertsEnabled: aiPrefs.alertsEnabled ?? true,
         });
       } catch (e) {
         console.warn('Failed to load AI preferences', e);
@@ -139,12 +152,22 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
   setAiEngine: async (aiEngine) => {
     set({ aiEngine });
-    await AsyncStorage.setItem(AI_PREFS_KEY, JSON.stringify({ aiEngine, localModelId: get().localModelId }));
+    await saveAiPrefs(get());
   },
 
   setLocalModelId: async (localModelId) => {
     set({ localModelId });
-    await AsyncStorage.setItem(AI_PREFS_KEY, JSON.stringify({ aiEngine: get().aiEngine, localModelId }));
+    await saveAiPrefs(get());
+  },
+
+  setDigestEnabled: async (digestEnabled) => {
+    set({ digestEnabled });
+    await saveAiPrefs(get());
+  },
+
+  setAlertsEnabled: async (alertsEnabled) => {
+    set({ alertsEnabled });
+    await saveAiPrefs(get());
   },
 
   // Save Gemini API key

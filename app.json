@@ -46,7 +46,8 @@
           "microphonePermission": "Used to log purchases by voice.",
           "speechRecognitionPermission": "Used to turn your words into a transaction on this device."
         }
-      ]
+      ],
+      "expo-notifications"
     ],
     "extra": {
       "eas": {

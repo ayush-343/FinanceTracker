@@ -2,7 +2,13 @@ import '../src/ai/polyfills';
 import React, { useEffect, useState, useMemo } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Platform, BackHandler, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Platform, BackHandler, View, Text, StyleSheet, TouchableOpacity, AppState } from 'react-native';
+import * as Notifications from 'expo-notifications';
+import { refreshInsightNotifications } from '../src/services/insightNotifications';
+
+Notifications.setNotificationHandler({
+    handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: false, shouldSetBadge: false }),
+});
 import { BlurView } from 'expo-blur';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -64,6 +70,16 @@ const AppShell: React.FC = () => {
 
         initialize();
     }, [loadSettings, loadWalkthroughStatus]);
+
+    // Recompute the weekly summary and budget alerts whenever the app opens or returns to the foreground.
+    useEffect(() => {
+        if (!isSettingsReady) return;
+        refreshInsightNotifications();
+        const sub = AppState.addEventListener('change', (state) => {
+            if (state === 'active') refreshInsightNotifications();
+        });
+        return () => sub.remove();
+    }, [isSettingsReady]);
 
     useEffect(() => {
         if (!isSettingsReady) return;
