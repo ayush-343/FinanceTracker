@@ -5,7 +5,7 @@ const FRI = new Date(2026, 10, 27); // Fri 27 Nov 2026
 describe('preParse', () => {
   it('full sentence', () => {
     expect(preParse('200 coffee at Blue Tokai yesterday', FRI)).toMatchObject({
-      amount: 200, merchant: 'Blue Tokai', item: 'coffee', date: '2026-11-26',
+      amount: 200, merchant: 'Blue Tokai', item: 'coffee', date: '2026-11-26', dateFound: true,
     });
   });
 

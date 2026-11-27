@@ -3,6 +3,7 @@ import { format, subDays, subYears, isAfter } from 'date-fns';
 export interface PreParsed {
   amount: number | null;
   date: string; // yyyy-MM-dd
+  dateFound: boolean; // true when the text contained a date phrase
   merchant: string | null;
   item: string | null;
   amountsInText: number[];
@@ -18,7 +19,7 @@ const AMOUNT_RE = /(?:₹|\brs\.?|\binr|\$|\busd)?\s*(\d{1,3}(?:,\d{2,3})+|\d+)(
 const isoDay = (d: Date) => format(d, 'yyyy-MM-dd');
 
 /** Resolves a date phrase, returning the date and the text with that phrase removed. */
-const extractDate = (text: string, today: Date): { date: string; rest: string } => {
+const extractDate = (text: string, today: Date): { date: string; rest: string; found?: boolean } => {
   const lower = text.toLowerCase();
   const fixed: [RegExp, number][] = [
     [/\bday before yesterday\b/, 2],
@@ -48,14 +49,14 @@ const extractDate = (text: string, today: Date): { date: string; rest: string } 
     return { date: isoDay(d), rest: cut(text, m.index, m[0].length) };
   }
 
-  return { date: isoDay(today), rest: text };
+  return { date: isoDay(today), rest: text, found: false };
 };
 
 const cut = (text: string, index: number, length: number) => `${text.slice(0, index)} ${text.slice(index + length)}`;
 
 /** Deterministic parse of a one-line purchase. Always runs, with or without a language model. */
 export const preParse = (text: string, today: Date): PreParsed => {
-  const { date, rest: afterDate } = extractDate(text, today);
+  const { date, rest: afterDate, found } = extractDate(text, today);
 
   const amountsInText: number[] = [];
   const afterAmount = afterDate.replace(AMOUNT_RE, (_match, whole: string, decimals?: string, k?: string) => {
@@ -78,5 +79,5 @@ export const preParse = (text: string, today: Date): PreParsed => {
     .filter((w) => w && !FILLERS.has(w.toLowerCase()))
     .join(' ');
 
-  return { amount: amountsInText[0] ?? null, date, merchant, item: item || null, amountsInText };
+  return { amount: amountsInText[0] ?? null, date, dateFound: found !== false, merchant, item: item || null, amountsInText };
 };
