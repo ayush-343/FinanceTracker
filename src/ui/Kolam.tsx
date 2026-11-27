@@ -16,7 +16,7 @@ interface KolamProps {
 }
 
 const CURVE = 0.62;
-const ROW_RATIO = 0.82;
+const ROW_RATIO = 0.7;
 const DRAW_MS = 600;
 
 /** Rounded-diamond loop around a dot; neighbouring loops touch at their points, forming the lattice. */

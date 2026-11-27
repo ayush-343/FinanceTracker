@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { format, parseISO } from 'date-fns';
 import { Screen, Field, Card, ListRow, Bands, Kolam, KButton, Money, Symbol, Hatch, useKolam, hueMap, type, space, radii } from '../../src/ui';
 import { useCurrency } from '../../src/hooks';
+import { useSettingsStore } from '../../src/store';
 import { useToday } from '../../src/today/useToday';
 import { useLogActions } from '../../src/today/LogActions';
 import { TransactionWithDetails } from '../../src/types';
@@ -16,6 +17,7 @@ export default function TodayScreen() {
   const { formatWhole } = useCurrency();
   const { data, nothingSpentToday } = useToday();
   const { openLogMenu } = useLogActions();
+  const budgetPeriod = useSettingsStore((st) => st.budgetPeriod);
   const [kolamWidth, setKolamWidth] = React.useState(0);
 
   const openLog = (voice = false) => router.push(voice ? { pathname: '/QuickLog', params: { voice: '1' } } : '/QuickLog');
@@ -25,6 +27,8 @@ export default function TodayScreen() {
   const hues = hueMap((data?.categories ?? []).map((x) => x.id), isDark);
   const todayCell = data?.kolam.cells.find((x) => x.iso === data.todayISO);
   const weekday = format(now, 'EEEE');
+  const overBudget = data ? data.periodSpent - data.budget : 0;
+  const periodWord = budgetPeriod === 'weekly' ? 'week' : 'month';
 
   const groups = (data?.recent ?? []).reduce<Record<string, TransactionWithDetails[]>>((acc, t) => {
     (acc[t.date] ||= []).push(t);
@@ -100,10 +104,14 @@ export default function TodayScreen() {
               ) : (
                 <>
                   <View style={styles.row}>
-                    <Money value={Math.abs(data.pace.leftToday)} size={40} weight="700" whole />
+                    <Money value={overBudget > 0 ? overBudget : Math.abs(data.pace.leftToday)} size={40} weight="700" whole />
                     <Hatch width={28} height={28} color={c.hatchInk} radius={8} />
                   </View>
-                  <Text style={[type.sub, { color: c.muted, marginTop: 6 }]}>past today's pace for {formatWhole(data.budget)}. Tomorrow starts fresh.</Text>
+                  <Text style={[type.sub, { color: c.muted, marginTop: 6 }]}>
+                    {overBudget > 0
+                      ? `over your ${formatWhole(data.budget)} budget for this ${periodWord}. Plan shows where it went.`
+                      : `past today's pace for ${formatWhole(data.budget)}. Tomorrow starts fresh.`}
+                  </Text>
                 </>
               )}
               <View style={{ marginTop: space.lg }}>
@@ -151,7 +159,7 @@ export default function TodayScreen() {
             <ListRow
               key={t.id}
               title={labelFor(t)}
-              subtitle={[t.category_name, t.source && t.source !== 'manual' ? t.source : null].filter(Boolean).join(' · ')}
+              subtitle={[labelFor(t) === t.category_name ? null : t.category_name, t.source && t.source !== 'manual' ? t.source : null].filter(Boolean).join(' · ') || undefined}
               hue={hues.get(t.category_id)}
               amount={t.amount}
               last={i === items.length - 1}
