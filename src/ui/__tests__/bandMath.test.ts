@@ -27,4 +27,5 @@ describe('hueFor', () => {
   it('follows the wheel', () => expect(hueFor(0)).toBe(CATEGORY_HUES[0]));
   it('wraps', () => expect(hueFor(CATEGORY_HUES.length + 1)).toBe(CATEGORY_HUES[1]));
   it('handles negative ids', () => expect(CATEGORY_HUES).toContain(hueFor(-3)));
+  it('dark wheel has the same length', () => expect(hueFor(1, true)).not.toBe(hueFor(1)));
 });

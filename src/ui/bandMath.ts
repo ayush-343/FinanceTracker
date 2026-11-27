@@ -1,4 +1,4 @@
-import { CATEGORY_HUES } from './tokens';
+import { CATEGORY_HUES, CATEGORY_HUES_DARK } from './tokens';
 
 export interface BandInput { key: string; value: number; color: string }
 export interface BandSegment { key: string; color: string; fraction: number }
@@ -22,7 +22,8 @@ export const bandSegments = (values: BandInput[], total?: number): BandSegment[]
 };
 
 /** Category hue for a stable index (e.g. category id or position). */
-export const hueFor = (index: number): string => {
-  const n = CATEGORY_HUES.length;
-  return CATEGORY_HUES[((Math.trunc(index) % n) + n) % n];
+export const hueFor = (index: number, dark = false): string => {
+  const wheel = dark ? CATEGORY_HUES_DARK : CATEGORY_HUES;
+  const n = wheel.length;
+  return wheel[((Math.trunc(index) % n) + n) % n];
 };
