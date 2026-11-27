@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet, useWindowDimensions, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Kolam, KButton, useKolam, type, space } from '../src/ui';
@@ -14,6 +15,9 @@ export default function ReviewScreen() {
   const { c } = useKolam();
   const { formatWhole } = useCurrency();
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  // Full-screen modals can report zero insets on first render; never let the bar slide under the status bar.
+  const topInset = Math.max(insets.top, 54);
   const data = useReview();
   const [page, setPage] = React.useState(0);
   const scroller = React.useRef<ScrollView>(null);
@@ -27,7 +31,8 @@ export default function ReviewScreen() {
   const onScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => setPage(Math.round(e.nativeEvent.contentOffset.x / width));
 
   return (
-    <SafeAreaView edges={['top', 'bottom']} style={[styles.root, { backgroundColor: c.field }]}>
+    <View style={[styles.root, { backgroundColor: c.field, paddingTop: topInset, paddingBottom: Math.max(insets.bottom, 20) }]}>
+      <StatusBar style="light" />
       <View style={styles.top}>
         <View style={styles.segments} accessibilityLabel={`Page ${page + 1} of ${cards.length}`}>
           {cards.map((card, i) => (
@@ -79,7 +84,7 @@ export default function ReviewScreen() {
           </View>
         ))}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

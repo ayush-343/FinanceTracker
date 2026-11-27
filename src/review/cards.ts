@@ -47,7 +47,7 @@ export const reviewCards = (i: ReviewInput, money: (n: number) => string): Revie
     const change = pct(i.weekSpent, i.usualWeek);
     cards.push({
       kind: 'change',
-      title: change <= -NOTABLE * 100 ? 'Lighter than a usual week' : 'A steady week',
+      title: change <= -NOTABLE * 100 ? 'Lighter than a usual week' : change >= NOTABLE * 100 ? `${change}% above a usual week` : 'A steady week',
       body: `${money(i.weekSpent)} this week against a usual ${money(i.usualWeek)}.`,
     });
   }

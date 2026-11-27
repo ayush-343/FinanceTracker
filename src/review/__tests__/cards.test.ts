@@ -28,6 +28,14 @@ describe('reviewCards', () => {
     expect(change?.title).toBe('A quiet week');
     expect(JSON.stringify(cards)).not.toContain('NaN');
   });
+  it('overall up names the rise, without blame', () => {
+    const change = reviewCards(base({ weekSpent: 730, usualWeek: 621, top: { id: 1, name: 'Food', spent: 400, usual: 380 } }), money).find((c) => c.kind === 'change');
+    expect(change?.title).toBe('18% above a usual week');
+  });
+  it('steady within 10%', () => {
+    const change = reviewCards(base({ weekSpent: 650, usualWeek: 621, top: { id: 1, name: 'Food', spent: 400, usual: 380 } }), money).find((c) => c.kind === 'change');
+    expect(change?.title).toBe('A steady week');
+  });
   it('no history', () => {
     expect(reviewCards(base({ usualWeek: null, top: { id: 1, name: 'Food', spent: 400, usual: 0 } }), money).find((c) => c.kind === 'change')).toBeUndefined();
   });
