@@ -78,6 +78,19 @@ export default function PlanScreen() {
         )}
       </Field>
 
+      <Pressable
+        onPress={() => router.push('/Review')}
+        accessibilityRole="button"
+        style={({ pressed }) => [styles.reviewRow, { backgroundColor: c.surface, opacity: pressed ? 0.7 : 1 }]}
+      >
+        <Symbol name="sparkles" fallback="star" color={c.ink} size={18} />
+        <View style={{ flex: 1, marginLeft: space.md }}>
+          <Text style={[type.body, { color: c.ink, fontWeight: '600' }]}>This week's review</Text>
+          <Text style={[type.caption, { color: c.muted }]}>Your week's loops, what changed, one thing for next week</Text>
+        </View>
+        <Symbol name="chevron.right" fallback="chevron-right" color={c.muted} size={15} />
+      </Pressable>
+
       <Card title="Budgets">
         {budgets.length === 0 ? <Text style={[type.sub, { color: c.muted }]}>Add a category to start budgeting.</Text> : null}
         {budgets.map((cat, i) => {
@@ -162,4 +175,5 @@ const styles = StyleSheet.create({
   block: { paddingVertical: space.md, minHeight: 56 },
   upcoming: { minHeight: 44 },
   link: { minHeight: 44, marginTop: space.xs },
+  reviewRow: { flexDirection: 'row', alignItems: 'center', marginHorizontal: space.lg, marginTop: space.md, padding: space.lg, borderRadius: 20, minHeight: 64 },
 });

@@ -78,7 +78,12 @@ const AppShell: React.FC = () => {
         const sub = AppState.addEventListener('change', (state) => {
             if (state === 'active') refreshInsightNotifications();
         });
-        return () => sub.remove();
+        // Tapping the weekly summary opens the review.
+        const tap = Notifications.addNotificationResponseReceivedListener((response) => {
+            const url = response.notification.request.content.data?.url;
+            if (typeof url === 'string') router.push(url as never);
+        });
+        return () => { sub.remove(); tap.remove(); };
     }, [isSettingsReady]);
 
     useEffect(() => {
@@ -134,6 +139,10 @@ const AppShell: React.FC = () => {
                 <Stack.Screen
                     name="Ask"
                     options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+                />
+                <Stack.Screen
+                    name="Review"
+                    options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
                 />
                 <Stack.Screen
                     name="Goal"
