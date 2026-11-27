@@ -35,15 +35,15 @@ export const ensureNotificationPermission = async (): Promise<boolean> => {
 };
 
 /** This week so far vs the average of the previous 4 weeks, prorated to the days elapsed. */
-const loadWeekStats = async (db: QueryDb, today: Date) => {
+export const loadWeekStats = async (db: QueryDb, today: Date) => {
   const week = resolveRange({ preset: 'this_week' }, today);
   const todayISO = format(today, 'yyyy-MM-dd');
   const elapsed = (today.getDay() + 6) % 7 + 1; // Monday = 1 … Sunday = 7
   const usualFrom = format(subDays(new Date(`${week.from}T00:00:00`), USUAL_WEEKS * 7), 'yyyy-MM-dd');
   const usualTo = format(subDays(new Date(`${week.from}T00:00:00`), 1), 'yyyy-MM-dd');
 
-  const rows = await db.getAllAsync<{ name: string; now: number; before: number }>(
-    `SELECT c.name AS name,
+  const rows = await db.getAllAsync<{ id: number; name: string; now: number; before: number }>(
+    `SELECT c.id AS id, c.name AS name,
        COALESCE(SUM(CASE WHEN t.date >= ? AND t.date <= ? THEN t.amount END), 0) AS now,
        COALESCE(SUM(CASE WHEN t.date >= ? AND t.date <= ? THEN t.amount END), 0) AS before
      FROM categories c LEFT JOIN transactions t ON t.category_id = c.id GROUP BY c.id`,
@@ -56,7 +56,7 @@ const loadWeekStats = async (db: QueryDb, today: Date) => {
   return {
     weekSpent,
     usualWeek: before > 0 ? prorate(before) : null,
-    topCategory: top && top.now > 0 ? { name: top.name, spent: top.now, usual: prorate(top.before) } : null,
+    topCategory: top && top.now > 0 ? { id: top.id, name: top.name, spent: top.now, usual: prorate(top.before) } : null,
   };
 };
 
@@ -79,7 +79,7 @@ export const refreshInsightNotifications = async (db: QueryDb = askDb): Promise<
       );
       await Notifications.scheduleNotificationAsync({
         identifier: DIGEST_ID,
-        content: digest,
+        content: { ...digest, data: { url: '/Review' } },
         trigger: { type: Notifications.SchedulableTriggerInputTypes.WEEKLY, weekday: DIGEST_WEEKDAY, hour: DIGEST_HOUR, minute: 0 },
       });
     }
