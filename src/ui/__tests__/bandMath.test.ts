@@ -1,4 +1,4 @@
-import { bandSegments, hueFor } from '../bands';
+import { bandSegments, hueFor } from '../bandMath';
 import { CATEGORY_HUES } from '../tokens';
 
 const seg = (key: string, value: number) => ({ key, value, color: '#000' });
