@@ -6,7 +6,6 @@ import { Screen, Field, Card, ListRow, Bands, Kolam, KButton, Money, Symbol, Hat
 import { useCurrency } from '../../src/hooks';
 import { useSettingsStore } from '../../src/store';
 import { useToday } from '../../src/today/useToday';
-import { useLogActions } from '../../src/today/LogActions';
 import { TransactionWithDetails } from '../../src/types';
 
 const labelFor = (t: TransactionWithDetails) => t.merchant || t.item_name || t.notes || t.category_name;
@@ -16,11 +15,10 @@ export default function TodayScreen() {
   const { c, isDark } = useKolam();
   const { formatWhole } = useCurrency();
   const { data, nothingSpentToday } = useToday();
-  const { openLogMenu } = useLogActions();
   const budgetPeriod = useSettingsStore((st) => st.budgetPeriod);
   const [kolamWidth, setKolamWidth] = React.useState(0);
 
-  const openLog = (voice = false) => router.push(voice ? { pathname: '/QuickLog', params: { voice: '1' } } : '/QuickLog');
+  const openLog = (voice = false) => router.push(voice ? { pathname: '/Log', params: { voice: '1' } } : '/Log');
   const onKolamLayout = (e: LayoutChangeEvent) => setKolamWidth(e.nativeEvent.layout.width);
 
   const now = new Date();
@@ -41,9 +39,9 @@ export default function TodayScreen() {
       subtitle={format(now, 'EEEE, d MMMM')}
       right={
         <Pressable
-          onPress={openLogMenu}
+          onPress={() => openLog()}
           accessibilityRole="button"
-          accessibilityLabel="Log a spend: type, add manually, or scan a receipt"
+          accessibilityLabel="Log a spend"
           style={({ pressed }) => [styles.headerBtn, { backgroundColor: c.surface, opacity: pressed ? 0.7 : 1 }]}
         >
           <Symbol name="plus" fallback="plus" color={c.ink} />
