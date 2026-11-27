@@ -28,8 +28,9 @@ export default function PlanScreen() {
     return over(b) - over(a) || b.spent - a.spent;
   });
 
-  const row = (onPress: () => void, label: string, children: React.ReactNode, last = false) => (
+  const row = (key: string, onPress: () => void, label: string, children: React.ReactNode, last = false) => (
     <Pressable
+      key={key}
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={label}
@@ -81,7 +82,7 @@ export default function PlanScreen() {
         {budgets.length === 0 ? <Text style={[type.sub, { color: c.muted }]}>Add a category to start budgeting.</Text> : null}
         {budgets.map((cat, i) => {
           const over = cat.budget_limit > 0 ? cat.spent - cat.budget_limit : 0;
-          return row(() => router.push({ pathname: '/EditCategory', params: { categoryId: String(cat.id) } }), `${cat.name}, ${formatWhole(cat.spent)} of ${formatWhole(cat.budget_limit)}. Edit`, (
+          return row(`cat-${cat.id}`, () => router.push({ pathname: '/EditCategory', params: { categoryId: String(cat.id) } }), `${cat.name}, ${formatWhole(cat.spent)} of ${formatWhole(cat.budget_limit)}. Edit`, (
             <>
               <View style={styles.row}>
                 <View style={styles.name}>
@@ -117,7 +118,7 @@ export default function PlanScreen() {
         ) : null}
         {(data?.goals ?? []).map((g, i, arr) => {
           const p = goalPlan(g, todayISO, formatWhole);
-          return row(() => router.push({ pathname: '/Goal', params: { goalId: String(g.id) } }), `${g.name}, ${formatWhole(g.saved)} of ${formatWhole(g.target)}. ${p.line}`, (
+          return row(`goal-${g.id}`, () => router.push({ pathname: '/Goal', params: { goalId: String(g.id) } }), `${g.name}, ${formatWhole(g.saved)} of ${formatWhole(g.target)}. ${p.line}`, (
             <>
               <View style={styles.row}>
                 <Text style={[type.body, { color: c.ink, flex: 1 }]} numberOfLines={1}>{g.name}</Text>
