@@ -41,13 +41,15 @@ export default function TabsLayout() {
         if (Platform.OS === 'ios') {
             ActionSheetIOS.showActionSheetWithOptions(
                 {
-                    options: ['Cancel', 'Add Manually', 'Scan Receipt'],
+                    options: ['Cancel', 'Type or Say It', 'Add Manually', 'Scan Receipt'],
                     cancelButtonIndex: 0,
                 },
                 (buttonIndex) => {
                     if (buttonIndex === 1) {
-                        router.push('/AddTransaction');
+                        router.push('/QuickLog');
                     } else if (buttonIndex === 2) {
+                        router.push('/AddTransaction');
+                    } else if (buttonIndex === 3) {
                         pickImage();
                     }
                 }
@@ -57,6 +59,12 @@ export default function TabsLayout() {
                 'Add Transaction',
                 'Choose how to add a transaction',
                 [
+                    {
+                        id: 'quick',
+                        label: 'Type or Say It',
+                        icon: 'mic',
+                        onPress: () => router.push('/QuickLog'),
+                    },
                     {
                         id: 'manual',
                         label: 'Add Manually',

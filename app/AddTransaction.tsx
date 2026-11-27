@@ -15,13 +15,15 @@ import { Suggestion } from '../src/ai/categorizer';
 
 export const AddTransactionScreen: React.FC = () => {
     const router = useRouter();
-    const { categoryId, subcategoryId, itemName: itemNameParam, amount: amountParam, notes: notesParam, date: dateParam } = useLocalSearchParams<{
+    const { categoryId, subcategoryId, itemName: itemNameParam, amount: amountParam, notes: notesParam, date: dateParam, merchant: merchantParam, source: sourceParam } = useLocalSearchParams<{
         categoryId?: string;
         subcategoryId?: string;
         itemName?: string;
         amount?: string;
         notes?: string;
         date?: string;
+        merchant?: string;
+        source?: string;
     }>();
     const parsedCategoryId = categoryId ? Number(categoryId) : undefined;
     const parsedSubcategoryId = subcategoryId ? Number(subcategoryId) : undefined;
@@ -172,6 +174,8 @@ export const AddTransactionScreen: React.FC = () => {
                 amount: parseFloat(amount),
                 notes: description.trim(),
                 date: format(date, 'yyyy-MM-dd'),
+                merchant: typeof merchantParam === 'string' ? merchantParam : null,
+                source: sourceParam === 'voice' || sourceParam === 'text' ? sourceParam : 'manual',
             });
             await learnCategory(itemName.trim(), selectedCategory.id, selectedSubcategory?.id ?? null);
             success();
