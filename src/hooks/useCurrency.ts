@@ -5,6 +5,8 @@ import { getCurrencyByCode } from '../constants';
 interface CurrencyFormatter {
   format: (amount: number) => string;
   formatCompact: (amount: number) => string;
+  /** Rounded to whole units, e.g. ₹4,093 — for estimates where decimals add false precision. */
+  formatWhole: (amount: number) => string;
   symbol: string;
   code: string;
 }
@@ -50,9 +52,23 @@ export const useCurrency = (): CurrencyFormatter => {
     }
   }, [currency, format]);
 
+  const formatWhole = useCallback((amount: number): string => {
+    try {
+      return new Intl.NumberFormat(currency.locale, {
+        style: 'currency',
+        currency: currency.code,
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(amount);
+    } catch {
+      return `${currency.symbol}${Math.round(amount)}`;
+    }
+  }, [currency]);
+
   return {
     format,
     formatCompact,
+    formatWhole,
     symbol: currency.symbol,
     code: currency.code,
   };

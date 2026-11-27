@@ -11,7 +11,7 @@ const MAX_ROWS = 3;
 /** Up to three categories, most at risk first. Shared by the Home card and Ask answers. */
 export const ForecastRows: React.FC<{ forecast: Forecast; onPressCategory?: (id: number, name: string) => void }> = ({ forecast, onPressCategory }) => {
   const { colors, spacing, textStyles } = useTheme();
-  const { formatCompact } = useCurrency();
+  const { formatWhole } = useCurrency();
   if (forecast.status !== 'ok') return null;
   const atRisk = forecast.categories.filter((c) => c.overOn).slice(0, MAX_ROWS);
   if (atRisk.length === 0) {
@@ -30,7 +30,7 @@ export const ForecastRows: React.FC<{ forecast: Forecast; onPressCategory?: (id:
           <View style={[styles.dot, { backgroundColor: c.color }]} />
           <Text style={[textStyles.body, { color: colors.text, flex: 1 }]} numberOfLines={1}>{c.name}</Text>
           <Text style={[textStyles.bodySmall, { color: colors.error }]}>
-            {formatCompact(c.likely)} of {formatCompact(c.budget)} · over ~{format(parseISO(c.overOn!), 'd MMM')}
+            {formatWhole(c.likely)} of {formatWhole(c.budget)} · {c.spent > c.budget ? 'already over' : `over ~${format(parseISO(c.overOn!), 'd MMM')}`}
           </Text>
         </TouchableOpacity>
       ))}
@@ -41,7 +41,7 @@ export const ForecastRows: React.FC<{ forecast: Forecast; onPressCategory?: (id:
 /** Home card: where spending is heading this budget period. */
 export const ForecastCard: React.FC<{ forecast: Forecast | null; onPressCategory?: (id: number, name: string) => void }> = ({ forecast, onPressCategory }) => {
   const { colors, spacing, textStyles, borderRadius } = useTheme();
-  const { formatCompact } = useCurrency();
+  const { formatWhole } = useCurrency();
   if (!forecast) return null;
   return (
     <View
@@ -54,11 +54,11 @@ export const ForecastCard: React.FC<{ forecast: Forecast | null; onPressCategory
       ) : (
         <>
           <Text style={[textStyles.h3, { color: colors.text, marginTop: spacing.xs }]}>
-            On pace for {formatCompact(forecast.total.low)}–{formatCompact(forecast.total.high)}
+            On pace for {formatWhole(forecast.total.low)}–{formatWhole(forecast.total.high)}
           </Text>
           <Text style={[textStyles.bodySmall, { color: colors.textSecondary }]}>
-            likely {formatCompact(forecast.total.likely)}
-            {forecast.total.budget > 0 ? ` of ${formatCompact(forecast.total.budget)} budget` : ''} by {format(parseISO(forecast.period.to), 'd MMM')}
+            likely {formatWhole(forecast.total.likely)}
+            {forecast.total.budget > 0 ? ` of ${formatWhole(forecast.total.budget)} budget` : ''} by {format(parseISO(forecast.period.to), 'd MMM')}
           </Text>
           <ForecastRows forecast={forecast} onPressCategory={onPressCategory} />
         </>

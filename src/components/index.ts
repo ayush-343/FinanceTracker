@@ -25,3 +25,4 @@ export { SuggestionChip } from './SuggestionChip';
 export { AskButton } from './AskButton';
 export { AskResultCard } from './AskResultCard';
 export { ForecastCard, ForecastRows } from './ForecastCard';
+export { SubscriptionSuggestion } from './SubscriptionSuggestion';

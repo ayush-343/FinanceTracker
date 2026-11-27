@@ -1,7 +1,7 @@
 import React, { useReducer, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { useTheme } from '../src/theme';
@@ -66,9 +66,22 @@ export const AddSubscriptionScreen: React.FC = () => {
         loadCategories();
     }, []);
 
+    const params = useLocalSearchParams<{ name?: string; amount?: string; frequency?: string; categoryId?: string }>();
+
     const loadCategories = async () => {
         const cats = await getCategories();
-        dispatch({ type: 'SET_FIELD', field: 'categories', value: cats });
+        // Prefill when opened from a "Track it as a subscription?" suggestion.
+        const prefillCategory = params.categoryId ? cats.find((c) => c.id === Number(params.categoryId)) ?? null : null;
+        dispatch({
+            type: 'LOAD_DATA',
+            payload: {
+                categories: cats,
+                ...(params.name ? { name: params.name } : {}),
+                ...(params.amount ? { amount: params.amount } : {}),
+                ...(params.frequency === 'weekly' || params.frequency === 'monthly' ? { frequency: params.frequency } : {}),
+                ...(prefillCategory ? { selectedCategory: prefillCategory } : {}),
+            },
+        });
     };
 
     const handleCategorySelect = (category: Category) => {

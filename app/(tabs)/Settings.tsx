@@ -552,6 +552,12 @@ export const SettingsScreen: React.FC = () => {
                         title={`${budgetPeriod === 'monthly' ? 'Monthly' : 'Weekly'} Budget`}
                         subtitle={formatCurrency(totalBudget)}
                         onPress={handleOpenBudgetEditor}
+                    />
+                    <SettingRow
+                        icon="repeat"
+                        title="Subscriptions"
+                        subtitle="Recurring payments and suggestions"
+                        onPress={() => { light(); router.push('/(tabs)/Subscriptions'); }}
                         isLast
                     />
                 </SettingsGroup>

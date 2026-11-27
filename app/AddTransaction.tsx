@@ -12,6 +12,8 @@ import { useCurrency, useHaptics, useCategorySuggestion } from '../src/hooks';
 import { Category, Subcategory } from '../src/types';
 import { getCategories, getSubcategories, createItem, getItems, learnCategory } from '../src/database';
 import { Suggestion } from '../src/ai/categorizer';
+import { detectDuplicate, detectUnusual } from '../src/ai/insights/detectors';
+import { loadRecentTransactions, loadTransactionsSince } from '../src/ai/insights/load';
 
 export const AddTransactionScreen: React.FC = () => {
     const router = useRouter();
@@ -33,6 +35,7 @@ export const AddTransactionScreen: React.FC = () => {
     const { addTransaction } = useBudgetStore();
 
     const [amount, setAmount] = useState('');
+    const [warning, setWarning] = useState<string | null>(null);
     const [itemName, setItemName] = useState('');
     const [description, setDescription] = useState('');
     const [date, setDate] = useState(new Date());
@@ -114,6 +117,37 @@ export const AddTransactionScreen: React.FC = () => {
         if (suggestion?.source === 'exact' && !selectedCategory) applySuggestion(suggestion);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [suggestion]);
+
+    // Non-blocking checks before saving: likely duplicate, or much bigger than usual for this category.
+    useEffect(() => {
+        const value = parseFloat(amount);
+        if (!value || value <= 0) { setWarning(null); return; }
+        let cancelled = false;
+        const timer = setTimeout(async () => {
+            try {
+                const label = (typeof merchantParam === 'string' && merchantParam) || itemName;
+                const duplicate = detectDuplicate({ amount: value, label, now: new Date().toISOString() }, await loadRecentTransactions());
+                if (cancelled) return;
+                if (duplicate) {
+                    const mins = Math.max(1, Math.round((Date.now() - Date.parse(duplicate.createdAt)) / 60000));
+                    setWarning(`Looks like a duplicate of ${formatCurrency(duplicate.amount)} ${duplicate.label} added ${mins} min ago.`);
+                    return;
+                }
+                if (selectedCategory) {
+                    const unusual = detectUnusual({ amount: value, categoryId: selectedCategory.id }, await loadTransactionsSince(90));
+                    if (cancelled) return;
+                    if (unusual) {
+                        setWarning(`This is much bigger than your usual ${selectedCategory.name} purchase (${formatCurrency(unusual.median)}).`);
+                        return;
+                    }
+                }
+                setWarning(null);
+            } catch (error) {
+                console.warn('[AddTransaction] checks failed:', error);
+            }
+        }, 400);
+        return () => { cancelled = true; clearTimeout(timer); };
+    }, [amount, itemName, selectedCategory, merchantParam, formatCurrency]);
 
     const handleCategorySelect = (category: Category) => {
         setSelectedCategory(category);
@@ -470,6 +504,16 @@ export const AddTransactionScreen: React.FC = () => {
                             numberOfLines={3}
                         />
                     </View>
+
+                    {warning && (
+                        <View
+                            accessibilityRole="alert"
+                            style={{ flexDirection: 'row', alignItems: 'flex-start', marginTop: spacing.xl, padding: spacing.md, borderRadius: borderRadius.lg, backgroundColor: `${colors.warning}1F` }}
+                        >
+                            <Feather name="alert-circle" size={18} color={colors.warning} style={{ marginTop: 1 }} />
+                            <Text style={[textStyles.bodySmall, { color: colors.text, marginLeft: spacing.sm, flex: 1 }]}>{warning}</Text>
+                        </View>
+                    )}
 
                     {/* Submit Button */}
                     <View style={{ marginTop: spacing.xxl }}>

@@ -5,7 +5,8 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../src/theme';
-import { CategoryCard, EmptyState, PendingItemsBanner, ScanningModal, BarcodeScannerModal, showActionSheet, AskButton } from '../../src/components';
+import { CategoryCard, EmptyState, PendingItemsBanner, ScanningModal, BarcodeScannerModal, showActionSheet, AskButton, ForecastCard } from '../../src/components';
+import { useForecast } from '../../src/hooks/useForecast';
 import { useWalkthroughContext } from '../../src/components/WalkthroughContext';
 import { BudgetSummaryCard } from '../../src/components/BudgetSummaryCard';
 import { useBudgetStore, useSettingsStore, useWalkthroughStore } from '../../src/store';
@@ -21,6 +22,7 @@ const CARD_WIDTH = (SCREEN_WIDTH - HORIZONTAL_PADDING * 2 - CARD_GAP) / 2;
 
 const HomeScreen: React.FC = () => {
     const router = useRouter();
+    const { forecast } = useForecast();
     const { colors, spacing } = useTheme();
     const { format } = useCurrency();
     const { light } = useHaptics();
@@ -155,6 +157,12 @@ const HomeScreen: React.FC = () => {
                             totalBudget={totalBudget}
                             periodLabel={periodLabel}
                         />
+                        <View style={{ marginTop: 12 }}>
+                            <ForecastCard
+                                forecast={forecast}
+                                onPressCategory={(id, name) => router.push({ pathname: '/Category', params: { categoryId: String(id), categoryName: name } })}
+                            />
+                        </View>
                     </View>
                 </View>
 
