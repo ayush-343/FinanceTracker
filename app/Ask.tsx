@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -25,7 +25,7 @@ const STARTERS = [
 
 interface Exchange { id: number; question: string; answer?: { result: AskResult; sentence: string } }
 
-export function AskView({ asTab = false }: { asTab?: boolean }) {
+export function AskView({ asTab = false, initialQuestion }: { asTab?: boolean; initialQuestion?: string }) {
     const router = useRouter();
     const { colors, spacing, textStyles, borderRadius } = useTheme();
     const { format: money } = useCurrency();
@@ -66,6 +66,16 @@ export function AskView({ asTab = false }: { asTab?: boolean }) {
             setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 50);
         }
     };
+
+    // Asked from Activity search: ask it once when it arrives.
+    const lastAsked = useRef<string | undefined>(undefined);
+    useEffect(() => {
+        if (initialQuestion && initialQuestion !== lastAsked.current) {
+            lastAsked.current = initialQuestion;
+            ask(initialQuestion);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [initialQuestion]);
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={asTab ? ['top'] : ['top', 'bottom']}>

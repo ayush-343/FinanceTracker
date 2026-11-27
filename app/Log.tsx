@@ -195,7 +195,7 @@ export default function LogSheet() {
       if (editingId) {
         await updateTransaction(editingId, {
           amount, date: draft.date, category_id: draft.categoryId, subcategory_id: draft.subcategoryId,
-          notes: draft.merchant ? draft.note : label, merchant: draft.merchant,
+          notes: draft.merchant ? draft.note : label, merchant: draft.merchant ? label || draft.merchant : null,
           // A renamed purchase stops showing its old item's name.
           ...(label !== originalLabel.current ? { item_id: null } : {}),
         });
