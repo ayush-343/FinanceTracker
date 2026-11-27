@@ -18,7 +18,9 @@ interface KButtonProps {
 export const KButton: React.FC<KButtonProps> = ({ title, onPress, variant = 'primary', loading, disabled, onField, style, accessibilityHint }) => {
   const { c } = useKolam();
   const primary = variant === 'primary';
-  const textColor = primary ? c.onAction : onField ? c.fieldInk : c.ink;
+  const off = !!disabled && !loading;
+  // Disabled keeps its label readable: it often says why ("Pick a category").
+  const textColor = off ? c.muted : primary ? c.onAction : onField ? c.fieldInk : c.ink;
   return (
     <Pressable
       onPress={onPress}
@@ -28,8 +30,8 @@ export const KButton: React.FC<KButtonProps> = ({ title, onPress, variant = 'pri
       accessibilityHint={accessibilityHint}
       style={({ pressed }) => [
         styles.btn,
-        primary ? { backgroundColor: c.action } : { borderWidth: 1.5, borderColor: onField ? c.fieldLine : c.hairline },
-        { opacity: disabled ? 0.45 : pressed ? 0.85 : 1 },
+        primary ? { backgroundColor: off ? c.hairline : c.action } : { borderWidth: 1.5, borderColor: onField ? c.fieldLine : c.hairline },
+        { opacity: pressed ? 0.85 : 1 },
         style,
       ]}
     >
