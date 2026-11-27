@@ -5,7 +5,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../src/theme';
-import { CategoryCard, EmptyState, PendingItemsBanner, ScanningModal, BarcodeScannerModal, showActionSheet } from '../../src/components';
+import { CategoryCard, EmptyState, PendingItemsBanner, ScanningModal, BarcodeScannerModal, showActionSheet, AskButton } from '../../src/components';
 import { useWalkthroughContext } from '../../src/components/WalkthroughContext';
 import { BudgetSummaryCard } from '../../src/components/BudgetSummaryCard';
 import { useBudgetStore, useSettingsStore, useWalkthroughStore } from '../../src/store';
@@ -132,13 +132,16 @@ const HomeScreen: React.FC = () => {
                                 {periodLabel}
                             </Text>
                         </View>
-                        <TouchableOpacity
-                            style={[styles.searchButton, { backgroundColor: colors.card, borderColor: colors.border }]}
-                            onPress={handleSearchPress}
-                            activeOpacity={0.7}
-                        >
-                            <Feather name="search" size={20} color="#FFFFFF" />
-                        </TouchableOpacity>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <AskButton />
+                            <TouchableOpacity
+                                style={[styles.searchButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+                                onPress={handleSearchPress}
+                                activeOpacity={0.7}
+                            >
+                                <Feather name="search" size={20} color="#FFFFFF" />
+                            </TouchableOpacity>
+                        </View>
                     </View>
 
                     {/* Budget Summary */}

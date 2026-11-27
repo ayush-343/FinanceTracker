@@ -22,3 +22,5 @@ export { WalkthroughTooltip } from './WalkthroughTooltip';
 // Import sheets registration (side-effect import)
 import './sheets';
 export { SuggestionChip } from './SuggestionChip';
+export { AskButton } from './AskButton';
+export { AskResultCard } from './AskResultCard';

@@ -116,6 +116,10 @@ const AppShell: React.FC = () => {
                 <Stack.Screen name="Category" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="Items" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen
+                    name="Ask"
+                    options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+                />
+                <Stack.Screen
                     name="QuickLog"
                     options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
                 />

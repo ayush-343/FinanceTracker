@@ -7,7 +7,7 @@ import { PieChart } from 'react-native-gifted-charts';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../../src/theme';
-import { TimeframePicker, CategoryDistribution } from '../../src/components';
+import { TimeframePicker, CategoryDistribution, AskButton } from '../../src/components';
 import { useWalkthroughContext } from '../../src/components/WalkthroughContext';
 import { useBudgetStore, useSettingsStore } from '../../src/store';
 import { useCurrency } from '../../src/hooks';
@@ -371,12 +371,15 @@ const AnalyticsScreen: React.FC = () => {
             {/* Header */}
             <View style={[styles.header, { paddingHorizontal: spacing.lg }]}>
                 <Text style={[styles.headerTitle, { color: colors.text }]}>Financial Insights</Text>
-                <TouchableOpacity
-                    onPress={() => router.push('/(tabs)/Settings')}
-                    style={[styles.profileButton, { backgroundColor: colors.card }]}
-                >
-                    <Feather name="user" size={20} color={colors.textSecondary} />
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <AskButton />
+                    <TouchableOpacity
+                        onPress={() => router.push('/(tabs)/Settings')}
+                        style={[styles.profileButton, { backgroundColor: colors.card }]}
+                    >
+                        <Feather name="user" size={20} color={colors.textSecondary} />
+                    </TouchableOpacity>
+                </View>
             </View>
 
             <ScrollView
