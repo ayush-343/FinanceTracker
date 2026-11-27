@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TextInput, Pressable, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, Pressable, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -9,7 +9,8 @@ import { Card, Chip, Hatch, KButton, PillInput, Symbol, useKolam, hueMap, type, 
 import { useCurrency, useDictation } from '../src/hooks';
 import { useBudgetStore, useSettingsStore } from '../src/store';
 import {
-  createItem, getCategories, getItems, getSubcategories, learnCategory, loadCategoryMemory, loadDrawnDays, loadKnownItems, markNothingSpent,
+  createItem, deleteTransaction, getCategories, getItems, getSubcategories, getTransactionById, learnCategory, loadCategoryMemory, loadDrawnDays,
+  loadKnownItems, markNothingSpent, updateTransaction,
 } from '../src/database';
 import { suggestCategory, KnownItem, MemoryRow } from '../src/ai/categorizer';
 import { preParse } from '../src/ai/quicklog/preParse';
@@ -25,7 +26,7 @@ import { Category, Subcategory, TransactionSource } from '../src/types';
 
 type Params = {
   voice?: string; categoryId?: string; subcategoryId?: string; itemName?: string; amount?: string;
-  notes?: string; date?: string; merchant?: string; source?: string;
+  notes?: string; date?: string; merchant?: string; source?: string; transactionId?: string;
 };
 
 const iso = (d: Date) => format(d, 'yyyy-MM-dd');
@@ -66,6 +67,24 @@ export default function LogSheet() {
   const [saving, setSaving] = React.useState(false);
   const [showPicker, setShowPicker] = React.useState(false);
   const autoStarted = React.useRef(false);
+  const editingId = params.transactionId ? Number(params.transactionId) : null;
+  const originalCategory = React.useRef<number | null>(null);
+  const originalLabel = React.useRef('');
+
+  // Edit mode: load the purchase into the card; every field counts as the user's own.
+  React.useEffect(() => {
+    if (!editingId) return;
+    getTransactionById(editingId).then((t) => {
+      if (!t) return;
+      originalCategory.current = t.category_id;
+      originalLabel.current = t.merchant || t.item_name || t.notes || '';
+      setDraft({
+        amount: String(t.amount), what: t.merchant || t.item_name || t.notes || '', merchant: t.merchant ?? null,
+        date: t.date, categoryId: t.category_id, subcategoryId: t.subcategory_id, categorySource: 'user', note: t.item_name || t.merchant ? t.notes : '',
+      });
+      setTouched({ amount: true, what: true, date: true, category: true });
+    }).catch((e) => console.warn('[Log] load purchase failed:', e));
+  }, [editingId]);
 
   const hues = hueMap(categories.map((x) => x.id), isDark);
   const validIds = React.useMemo(() => new Set(categories.map((x) => x.id)), [categories]);
@@ -173,6 +192,18 @@ export default function LogSheet() {
     setSaving(true);
     try {
       const label = (draft.what || draft.merchant || '').trim();
+      if (editingId) {
+        await updateTransaction(editingId, {
+          amount, date: draft.date, category_id: draft.categoryId, subcategory_id: draft.subcategoryId,
+          notes: draft.merchant ? draft.note : label, merchant: draft.merchant,
+          // A renamed purchase stops showing its old item's name.
+          ...(label !== originalLabel.current ? { item_id: null } : {}),
+        });
+        if (label && originalCategory.current !== draft.categoryId) await learnCategory(label, draft.categoryId, draft.subcategoryId);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+        router.back();
+        return;
+      }
       let itemId: number | undefined;
       if (draft.subcategoryId && label) {
         const existing = (await getItems(draft.subcategoryId)).find((i) => i.name.trim().toLowerCase() === label.toLowerCase());
@@ -199,6 +230,22 @@ export default function LogSheet() {
     }
   };
 
+  const confirmDelete = () => {
+    if (!editingId) return;
+    Alert.alert('Delete this purchase?', 'It will be removed from your history and totals. This cannot be undone.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          await deleteTransaction(editingId);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+          router.back();
+        },
+      },
+    ]);
+  };
+
   const nothingToday = async () => {
     await markNothingSpent(todayISO);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
@@ -206,18 +253,20 @@ export default function LogSheet() {
   };
 
   const yesterdayISO = iso(subDays(new Date(), 1));
-  const showNothing = !sentence.trim() && !draft.amount && !drawn.has(todayISO);
+  const showNothing = !editingId && !sentence.trim() && !draft.amount && !drawn.has(todayISO);
   const selectedCat = categories.find((x) => x.id === draft.categoryId);
 
   return (
     <SafeAreaView edges={['top', 'bottom']} style={[styles.root, { backgroundColor: c.ground }]}>
       <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={styles.header}>
-          <Text accessibilityRole="header" style={[type.title, { color: c.ink }]}>Log a spend</Text>
+          <Text accessibilityRole="header" style={[type.title, { color: c.ink }]}>{editingId ? 'Edit purchase' : 'Log a spend'}</Text>
           <View style={styles.headerRight}>
-            <Pressable onPress={scanner.pickImage} accessibilityRole="button" accessibilityLabel="Scan a receipt" hitSlop={8} style={[styles.iconBtn, { backgroundColor: c.surface }]}>
-              <Symbol name="doc.text.viewfinder" fallback="camera" color={c.ink} />
-            </Pressable>
+            {editingId ? null : (
+              <Pressable onPress={scanner.pickImage} accessibilityRole="button" accessibilityLabel="Scan a receipt" hitSlop={8} style={[styles.iconBtn, { backgroundColor: c.surface }]}>
+                <Symbol name="doc.text.viewfinder" fallback="camera" color={c.ink} />
+              </Pressable>
+            )}
             <Pressable onPress={() => router.back()} accessibilityRole="button" hitSlop={8} style={styles.cancel}>
               <Text style={[type.body, { color: c.muted }]}>Cancel</Text>
             </Pressable>
@@ -225,6 +274,7 @@ export default function LogSheet() {
         </View>
 
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: space.xxxl }}>
+          {editingId ? null : (
           <View style={{ marginHorizontal: space.lg }}>
             <PillInput
               value={sentence}
@@ -248,8 +298,9 @@ export default function LogSheet() {
                 : dictation.error ?? 'Read on this phone. You check everything before it saves.'}
             </Text>
           </View>
+          )}
 
-          <Card style={{ marginTop: space.lg }}>
+          <Card style={{ marginTop: editingId ? space.xs : space.lg }}>
             <View style={styles.amountRow}>
               <Text style={[type.caption, { color: c.muted }]}>Amount</Text>
               <TextInput
@@ -340,7 +391,7 @@ export default function LogSheet() {
 
           <View style={{ marginHorizontal: space.lg, marginTop: space.lg }}>
             <KButton
-              title={missing ?? saveLabel(draft.date, todayISO, drawn)}
+              title={missing ?? (editingId ? 'Save changes' : saveLabel(draft.date, todayISO, drawn))}
               onPress={save}
               disabled={!!missing}
               loading={saving}
@@ -348,6 +399,7 @@ export default function LogSheet() {
             {showNothing ? (
               <KButton title="Nothing spent today" variant="ghost" onPress={nothingToday} style={{ marginTop: space.sm }} accessibilityHint="Draws today's loop without adding a purchase" />
             ) : null}
+            {editingId ? <KButton title="Delete purchase" variant="ghost" onPress={confirmDelete} style={{ marginTop: space.sm }} /> : null}
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
