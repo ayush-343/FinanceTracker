@@ -271,8 +271,8 @@ export const createTransaction = async (transaction: Omit<Transaction, 'id' | 'c
   return withDatabase(async (db) => {
     console.log('[Database] createTransaction called with:', JSON.stringify(transaction, null, 2));
     const result = await db.runAsync(
-      'INSERT INTO transactions (item_id, category_id, subcategory_id, amount, date, notes) VALUES (?, ?, ?, ?, ?, ?)',
-      [transaction.item_id, transaction.category_id, transaction.subcategory_id, transaction.amount, transaction.date, transaction.notes]
+      'INSERT INTO transactions (item_id, category_id, subcategory_id, amount, date, notes, merchant, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [transaction.item_id, transaction.category_id, transaction.subcategory_id, transaction.amount, transaction.date, transaction.notes, transaction.merchant ?? null, transaction.source ?? 'manual']
     );
     console.log('[Database] Transaction inserted, lastInsertRowId:', result.lastInsertRowId);
     return result.lastInsertRowId;
@@ -290,6 +290,8 @@ export const updateTransaction = async (id: number, transaction: Partial<Omit<Tr
     if (transaction.amount !== undefined) { updates.push('amount = ?'); values.push(transaction.amount); }
     if (transaction.date !== undefined) { updates.push('date = ?'); values.push(transaction.date); }
     if (transaction.notes !== undefined) { updates.push('notes = ?'); values.push(transaction.notes); }
+    if (transaction.merchant !== undefined) { updates.push('merchant = ?'); values.push(transaction.merchant); }
+    if (transaction.source !== undefined) { updates.push('source = ?'); values.push(transaction.source); }
 
     if (updates.length > 0) {
       values.push(id);

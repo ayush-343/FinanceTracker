@@ -51,8 +51,12 @@ export interface Transaction {
   amount: number;
   date: string;
   notes: string;
+  merchant?: string | null;
+  source?: TransactionSource;
   created_at: string;
 }
+
+export type TransactionSource = 'manual' | 'scan' | 'text' | 'voice';
 
 // Subscription
 export interface Subscription {
