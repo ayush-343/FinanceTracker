@@ -155,6 +155,7 @@ export default function ActivityScreen() {
                 const cell = grid.cells.find((x) => x.row === r && x.col === col);
                 if (!cell) return <View key={col} style={styles.cell} />;
                 const isDrawn = cell.state === 'drawn' || cell.state === 'today-drawn';
+                const isToday = cell.state === 'today-drawn' || cell.state === 'today-open';
                 const selected = day === cell.iso;
                 const total = dayTotals[cell.iso];
                 return (
@@ -163,10 +164,10 @@ export default function ActivityScreen() {
                     onPress={() => setDay(selected ? null : cell.iso)}
                     accessibilityRole="button"
                     accessibilityState={{ selected }}
-                    accessibilityLabel={`${format(parseISO(cell.iso), 'd MMMM')}${total ? `, ${total}` : ''}${isDrawn ? ', logged' : ''}`}
+                    accessibilityLabel={`${isToday ? 'Today, ' : ''}${format(parseISO(cell.iso), 'd MMMM')}${total ? `, ${total}` : ''}${isDrawn ? ', logged' : ''}`}
                     style={[styles.cell, selected && { backgroundColor: c.ink, borderRadius: radii.small }]}
                   >
-                    <View style={[styles.dayRing, { borderColor: isDrawn ? (selected ? c.ground : c.ink) : 'transparent' }]}>
+                    <View style={[styles.dayRing, { borderColor: isToday ? c.action : isDrawn ? (selected ? c.ground : c.ink) : 'transparent', borderWidth: isToday ? 2.5 : 1.5 }]}>
                       <Text style={[type.money(14, '600'), { color: selected ? c.ground : cell.state === 'future' ? c.muted : c.ink }]}>{cell.day}</Text>
                     </View>
                     <Text style={[type.money(10, '500'), { color: selected ? c.ground : c.muted, marginTop: 2 }]}>{total ? compact(total) : ' '}</Text>
