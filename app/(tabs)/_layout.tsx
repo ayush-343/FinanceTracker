@@ -1,20 +1,10 @@
-import React, { useEffect } from 'react';
-import { Tabs, useRouter } from 'expo-router';
+import React from 'react';
+import { Tabs } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { useWalkthroughContext } from '../../src/components/WalkthroughContext';
 import { Symbol, useKolam } from '../../src/ui';
 
 export default function TabsLayout() {
-    const router = useRouter();
     const { c } = useKolam();
-
-    // Connect walkthrough tab navigation
-    const { setNavigateToTab } = useWalkthroughContext();
-    useEffect(() => {
-        setNavigateToTab((tabName: string) => {
-            router.push(`/(tabs)/${tabName}` as any);
-        });
-    }, [router, setNavigateToTab]);
 
     return (
         <Tabs
@@ -33,11 +23,7 @@ export default function TabsLayout() {
             <Tabs.Screen name="Ask" options={{ title: 'Ask', tabBarIcon: ({ color }) => <Symbol name="bubble.left" fallback="message-circle" color={color} size={22} /> }} />
             <Tabs.Screen name="Plan" options={{ title: 'Plan', tabBarIcon: ({ color }) => <Symbol name="chart.line.uptrend.xyaxis" fallback="trending-up" color={color} size={22} /> }} />
             <Tabs.Screen name="You" options={{ title: 'You', tabBarIcon: ({ color }) => <Symbol name="person.crop.circle" fallback="user" color={color} size={22} /> }} />
-            {/* Legacy screens, still reachable by route until R3–R6 replace them. */}
-            <Tabs.Screen name="Home" options={{ href: null }} />
-            <Tabs.Screen name="Analytics" options={{ href: null }} />
-            <Tabs.Screen name="Calendar" options={{ href: null }} />
-            <Tabs.Screen name="Settings" options={{ href: null }} />
+            {/* Reached from Plan and You, not from the tab bar. */}
             <Tabs.Screen name="Subscriptions" options={{ href: null }} />
         </Tabs>
     );
