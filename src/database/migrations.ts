@@ -33,6 +33,19 @@ export const MIGRATIONS: { version: number; sql: string }[] = [
       );
     `,
   },
+  {
+    version: 4,
+    sql: `
+      CREATE TABLE IF NOT EXISTS goals (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        target REAL NOT NULL,
+        saved REAL NOT NULL DEFAULT 0,
+        target_date TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+      );
+    `,
+  },
 ];
 
 export const runMigrations = async (db: SqlExec): Promise<number> => {
