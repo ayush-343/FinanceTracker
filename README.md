@@ -1,11 +1,11 @@
 # 💸 Finance Tracker
 
 <p align="center">
-  <strong>A beautifully designed, AI-powered personal finance app built with React Native & Expo</strong>
+  <strong>A private, on-device-AI personal finance app for iPhone, built with React Native & Expo</strong>
 </p>
 
 <p align="center">
-  Track spending, manage budgets, scan receipts with AI, and gain actionable insights — all from your pocket.
+  Log a spend in one sentence, watch your month draw itself as a kolam, and get honest answers about your money — all on your phone.
 </p>
 
 <p align="center">
@@ -47,110 +47,61 @@ https://github.com/user-attachments/assets/8d667c59-0ede-4f05-bbe8-f6817ed2c1d8
 
 <table>
   <tr>
-    <td align="center">
-      <img src="assets/IMG_4928.PNG" width="250" alt="Home Dashboard" />
-      <br />
-      <strong>Home Dashboard</strong>
-      <br />
-      <em>Budget overview with category cards</em>
-    </td>
-    <td align="center">
-      <img src="assets/IMG_4922.PNG" width="250" alt="Financial Insights" />
-      <br />
-      <strong>Financial Insights</strong>
-      <br />
-      <em>Spending breakdown & donut chart</em>
-    </td>
-    <td align="center">
-      <img src="assets/IMG_4923.PNG" width="250" alt="Analytics Deep Dive" />
-      <br />
-      <strong>Analytics Deep Dive</strong>
-      <br />
-      <em>Category distribution & monthly comparison</em>
-    </td>
+    <td align="center"><img src="docs/screenshots/1today-light.png" width="220" alt="Today" /><br /><strong>Today</strong><br /><em>The month kolam and what's left today</em></td>
+    <td align="center"><img src="docs/screenshots/2activity-light.png" width="220" alt="Activity" /><br /><strong>Activity</strong><br /><em>Search, month bands, day groups</em></td>
+    <td align="center"><img src="docs/screenshots/4plan-light.png" width="220" alt="Plan" /><br /><strong>Plan</strong><br /><em>Forecast, budgets, goals</em></td>
   </tr>
   <tr>
-    <td align="center">
-      <img src="assets/IMG_4924.PNG" width="250" alt="Calendar View" />
-      <br />
-      <strong>Calendar View</strong>
-      <br />
-      <em>Daily spending summary & transactions</em>
-    </td>
-    <td align="center">
-      <img src="assets/IMG_4925.PNG" width="250" alt="Settings" />
-      <br />
-      <strong>Settings</strong>
-      <br />
-      <em>Preferences, security & AI configuration</em>
-    </td>
-    <td></td>
+    <td align="center"><img src="docs/screenshots/3ask-light.png" width="220" alt="Ask" /><br /><strong>Ask</strong><br /><em>Questions answered on the phone</em></td>
+    <td align="center"><img src="docs/screenshots/7review.png" width="220" alt="Weekly review" /><br /><strong>Weekly review</strong><br /><em>A Sunday ritual</em></td>
+    <td align="center"><img src="docs/screenshots/5you-dark.png" width="220" alt="You (dark)" /><br /><strong>You</strong><br /><em>Settings, in dark mode</em></td>
   </tr>
 </table>
+
+*Screenshots use synthetic demo data.*
 
 ---
 
 ## ✨ Features
 
-### 🏠 Smart Home Dashboard
+**Daily Kolam.** Each day you log draws one loop of the month's kolam. Skipped days stay as dots and the pattern keeps going: no streak that resets, no guilt.
 
-- **Total Budget at a Glance** — Glassmorphic budget summary card with real-time progress
-- **Category Cards** — Visual spending breakdown per category with circular progress indicators
-- **Quick Add** — Floating action button to instantly log transactions
-- **Search** — Find transactions quickly across all categories
+### 🌞 Today
+- The month kolam: logged days join into a lattice; today's loop draws itself when the day closes
+- What's left today to stay on pace, with exact category bands
+- One-line log bar with a mic, and **Nothing spent today** to close a quiet day
 
-### 📊 Financial Insights & Analytics
+### ✍️ Log anything in one sentence
+- Type or say *"250 uber yesterday"*: amount, what, when and category fill in as you go
+- Categories are learned from your own corrections, with starter guesses for new merchants
+- Duplicate and unusually large purchases are flagged before you save (never blocked)
+- Receipt scanning (optional, with your own Gemini key) and manual entry in the same sheet
 
-- **Multi-Timeframe Analysis** — Switch between Day, Week, Month, and Year views
-- **Spending Breakdown** — Interactive donut chart showing total spend with category percentages
-- **Category Distribution** — Visual treemap of spending by category
-- **Monthly Comparison** — Bar chart comparing current vs. previous month spending
-- **Net Savings Tracker** — Real-time savings calculation with trend indicators
+### 📜 Activity
+- Search across merchants, items, notes and categories; long questions hand off to Ask
+- Month switcher, exact category shares, filter chips, day groups with totals
+- Month grid view; edit or delete any purchase
 
-### 📅 Calendar View
+### 💬 Ask (on-device AI)
+- *"Biggest categories last month"*, *"This month vs last month"*, *"Will I go over budget?"*
+- The model only picks a query type; the app computes every number from your data, and any model sentence containing a number not in the result is discarded
+- Tap a bar or purchase in an answer to open it in Activity
 
-- **Visual Spending Calendar** — Color-coded daily spending heatmap
-- **Daily Summary Panel** — Tap any day to see an "On Track" / "Over Budget" status
-- **Transaction Details** — Per-day breakdown with category icons and amounts
-- **Monthly Navigation** — Browse through months to track spending history
+### 📈 Plan
+- Where the month is heading: a forecast range, not a guess dressed as certainty
+- Budgets per category (over budget is hatched and named, never shamed in red)
+- **Savings goals** with plain arithmetic: *"₹3,000 a month gets you there by 27 Feb"*
+- Upcoming subscription charges and suggestions to track repeat payments
+- **Weekly review** every Sunday: your week's loops, what changed, one thing to try
 
-### 🤖 AI Receipt Scanner (Gemini API)
+### 🙋 You
+- Currency, budget period and total, appearance, Face ID lock
+- On-device AI: Apple Intelligence, a downloadable local model (Qwen3.5 0.8B), or off
+- Weekly review and budget alert notifications (local, nothing leaves the phone)
+- Export the month as a PDF; erase all data
 
-- **Receipt Photo Scanning** — Snap a photo of any receipt or invoice
-- **Barcode Detection** — Integrated barcode scanner for quick product lookup
-- **Auto Item Detection** — AI extracts line items, prices, and quantities
-- **Smart Categorization** — Automatically suggests spending categories
-- **Review & Edit** — Review scanned items before adding to your budget
-- **Bring Your Own API Key** — Use your personal Gemini API key for AI features
-
-### 🔄 Subscription Management
-
-- **Track Recurring Expenses** — Manage Netflix, Spotify, gym memberships, and more
-- **Billing Cycle Awareness** — Weekly, monthly, quarterly, and yearly billing periods
-- **Monthly Cost Overview** — See total subscription costs at a glance
-
-### 🎓 Guided Onboarding & Walkthrough
-
-- **Animated Onboarding** — Beautiful Lottie-animated intro screens for first-time users
-- **Step-by-Step Setup** — Guided currency selection, category creation, and biometric setup
-- **In-App Walkthrough** — Interactive overlay walkthrough to learn every feature
-- **Replay Anytime** — Re-trigger the walkthrough from Settings
-
-### ⚙️ Settings & Customization
-
-- **Profile Management** — Manage your profile and preferences
-- **Multiple Currencies** — Support for USD, EUR, GBP, INR, JPY, and more
-- **Budget Period** — Toggle between weekly and monthly budget periods
-- **Appearance** — System, Light, and Dark theme options
-- **Adjustable Budget** — Set and modify your total monthly budget
-- **PDF Export** — Generate detailed spending reports and share them
-
-### 🔒 Security & Privacy
-
-- **Face ID / Touch ID Lock** — Biometric authentication to secure the app
-- **Secure Storage** — Sensitive data (API keys, preferences) stored with Expo Secure Store
-- **Local-First Architecture** — All financial data stored on-device with SQLite
-- **No Cloud Dependency** — Your data never leaves your device
+### 🔒 Private by construction
+All data lives in SQLite on the phone. Categorising, forecasting, questions and summaries run on the device. The only network use is the optional model download and, if you choose, receipt scanning with Gemini.
 
 ---
 
@@ -158,19 +109,16 @@ https://github.com/user-attachments/assets/8d667c59-0ede-4f05-bbe8-f6817ed2c1d8
 
 | Layer | Technology |
 | :--- | :--- |
-| **Framework** | React Native 0.81.5 + Expo SDK 54 |
+| **Framework** | React Native 0.81 (New Architecture) + Expo SDK 54 |
 | **Language** | TypeScript 5.9 |
-| **Navigation** | Expo Router (File-based routing) |
-| **State Management** | Zustand with persistence |
-| **Database** | Expo SQLite |
-| **AI / ML** | Google Gemini API (Bring Your Own Key) |
-| **Charts** | react-native-gifted-charts |
-| **Animations** | React Native Reanimated + Lottie |
-| **Forms** | React Hook Form |
-| **UI Components** | Custom components + Expo Blur + Linear Gradient |
-| **Icons** | @expo/vector-icons (Feather) |
-| **Lists** | @shopify/flash-list |
-| **Security** | expo-local-authentication + expo-secure-store |
+| **Navigation** | Expo Router (native tabs and modal sheets) |
+| **State** | Zustand |
+| **Database** | expo-sqlite with versioned migrations |
+| **On-device AI** | AI SDK + `@react-native-ai/apple` (Apple Intelligence) and `@react-native-ai/llama` / `llama.rn` (local GGUF) |
+| **Speech** | expo-speech-recognition (on-device) |
+| **Design system** | `src/ui` (Daily Kolam tokens and components), SF Symbols via expo-symbols, react-native-svg + Reanimated |
+| **Notifications** | expo-notifications (local only) |
+| **Tests** | Jest (jest-expo), sql.js for real SQLite in tests |
 
 ---
 
@@ -215,135 +163,60 @@ https://github.com/user-attachments/assets/8d667c59-0ede-4f05-bbe8-f6817ed2c1d8
    GEMINI_API_KEY=your_api_key_here
    ```
 
-   Or configure it in-app via **Settings → Gemini API Key**.
+   Or configure it in-app via **You → Gemini key for receipts**.
 
 ### Running the App
 
-#### iOS Simulator
-
 ```bash
-npx expo run:ios
+npm test                     # unit tests
+npx expo run:ios             # development build on the simulator
 ```
 
-#### Physical iPhone
+**On your iPhone, without the Mac (Release build):**
 
-1. **Connect your iPhone** via USB
+```bash
+LANG=en_US.UTF-8 npx expo run:ios --device <your-device> --configuration Release
+```
 
-2. **Find your device ID**
+Then on the phone: **Settings → General → VPN & Device Management → Trust** your developer certificate. With a free Apple account the build expires after 7 days. The app uses local notifications only, so `plugins/withoutPushEntitlement.js` removes the push capability that free accounts cannot sign.
 
-   ```bash
-   xcrun xctrace list devices
-   ```
-
-3. **Run on device**
-
-   ```bash
-   npx expo run:ios --device YOUR_DEVICE_ID
-   ```
-
-   Or open via Xcode:
-
-   ```bash
-   open ios/FinanceTracker.xcworkspace
-   ```
-
-   Select your device and press **⌘R**.
-
-#### First Time on Physical Device
-
-1. **Trust the Developer Certificate on iPhone:**
-   - Navigate to **Settings → General → VPN & Device Management**
-   - Tap on your developer profile → **Trust**
-
-2. **Configure Signing in Xcode (if needed):**
-   - Open `ios/FinanceTracker.xcworkspace`
-   - Select the project → **Signing & Capabilities**
-   - Enable **"Automatically manage signing"**
-   - Select your Apple ID team
+If CocoaPods fails with an encoding error, set `export LANG=en_US.UTF-8`.
 
 ---
 
 ## 📁 Project Structure
 
 ```
-FinanceTracker/
-├── app/                          # Expo Router — file-based routing
-│   ├── (onboarding)/             # Onboarding flow
-│   │   ├── AnimatedOnboarding.tsx
-│   │   ├── BiometricSetup.tsx
-│   │   ├── CategorySetup.tsx
-│   │   └── CurrencySetup.tsx
-│   ├── (tabs)/                   # Main tab screens
-│   │   ├── Home.tsx
-│   │   ├── Analytics.tsx
-│   │   ├── Calendar.tsx
-│   │   ├── Subscriptions.tsx
-│   │   └── Settings.tsx
-│   ├── AddTransaction.tsx        # Transaction forms
-│   ├── AddCategory.tsx
-│   ├── AddSubcategory.tsx
-│   ├── AddSubscription.tsx
-│   ├── ReviewScannedItems.tsx    # AI scan review screen
-│   ├── Category.tsx              # Category detail view
-│   ├── Items.tsx                 # Items list view
-│   └── _layout.tsx               # Root layout
-├── src/
-│   ├── components/               # Reusable UI components
-│   │   ├── BudgetSummaryCard.tsx
-│   │   ├── CategoryCard.tsx
-│   │   ├── CalendarDay.tsx
-│   │   ├── CustomTabBar.tsx
-│   │   ├── CircularProgress.tsx
-│   │   ├── BarcodeScannerModal.tsx
-│   │   ├── ScanningModal.tsx
-│   │   ├── OnboardingSlide.tsx
-│   │   ├── WalkthroughOverlay.tsx
-│   │   ├── SwipeableTransaction.tsx
-│   │   └── ...
-│   ├── services/                 # Business logic & API services
-│   │   ├── receiptService.ts     # Gemini AI receipt scanning
-│   │   └── barcodeService.ts     # Barcode detection & lookup
-│   ├── database/                 # SQLite database layer
-│   │   ├── index.ts              # Database initialization & migrations
-│   │   └── queries.ts            # CRUD operations
-│   ├── hooks/                    # Custom React hooks
-│   │   ├── useBiometricAuth.ts
-│   │   ├── useCurrency.ts
-│   │   ├── useHaptics.ts
-│   │   └── useReceiptScanner.ts
-│   ├── store/                    # Zustand state stores
-│   │   ├── budgetStore.ts
-│   │   ├── settingsStore.ts
-│   │   ├── subscriptionStore.ts
-│   │   ├── scanStore.ts
-│   │   └── walkthroughStore.ts
-│   ├── constants/                # App constants & defaults
-│   ├── theme/                    # Colors, typography, spacing
-│   ├── types/                    # TypeScript type definitions
-│   └── utils/                    # Utility functions & helpers
-├── assets/
-│   ├── onboarding/               # Lottie animations for onboarding
-│   ├── icon.png                  # App icon
-│   └── splash-icon.png           # Splash screen
-└── ios/                          # Native iOS project
+app/
+  (tabs)/          Today, Activity, Ask, Plan, You (+ Subscriptions)
+  (onboarding)/    Start: three steps ending with day one
+  Log.tsx          one sheet for logging, scanning and editing
+  Goal.tsx         savings goals
+  Review.tsx       the weekly review
+src/
+  ui/              Daily Kolam design system (tokens, Kolam, Bands, Field, ...)
+  ai/              categorizer, engines, quick log, Ask, forecast, insights
+  today/ activity/ plan/ review/ log/ onboarding/   screen logic (pure, tested)
+  database/        SQLite, migrations, queries
+  services/        notifications, PDF report, receipt scanning
+docs/superpowers/  specs and implementation plans
+DESIGN.md          the design system;  PRODUCT.md  product context
 ```
 
 ---
 
 ## 🗄️ Database Schema
 
-The app uses **Expo SQLite** with the following schema:
-
 | Table | Purpose |
 | :--- | :--- |
-| `categories` | Budget categories with limits, colors, and icons |
-| `subcategories` | Nested subcategories within parent categories |
-| `items` | Individual trackable items per subcategory |
-| `transactions` | All spending records with amounts, dates, and notes |
-| `subscriptions` | Recurring payment tracking with billing cycles |
-| `settings` | User preferences and app configuration |
-| `daily_spending_cache` | Cached daily spending totals for performance |
-| `monthly_spending_cache` | Cached monthly spending totals for performance |
+| `categories`, `subcategories`, `items` | Categories with budgets, nested items |
+| `transactions` | Purchases, with `merchant` and `source` (manual, text, voice, scan) |
+| `subscriptions`, `subscription_skips` | Recurring payments |
+| `category_memory` | What the app has learned about your categories |
+| `day_marks` | "Nothing spent today" days for the kolam |
+| `goals` | Savings goals |
+
+Schema changes go through `src/database/migrations.ts` (`PRAGMA user_version`), so existing installs upgrade in place.
 
 ---
 
@@ -378,7 +251,7 @@ export const DEFAULT_CATEGORIES = [
 
 The app supports **Bring Your Own API Key** for AI-powered receipt scanning. Configure it via:
 
-- **In-app:** Settings → AI Scanner → Gemini API Key
+- **In-app:** You → Gemini key for receipts
 - **Environment variable:** Add `GEMINI_API_KEY` to your `.env` file
 
 ---
@@ -426,16 +299,14 @@ Here are some ways you can contribute:
 
 ## 🗺️ Roadmap
 
-- [ ] Android support
-- [ ] Cloud sync & backup
-- [ ] Recurring transaction automation
-- [ ] Budget forecasting with ML
-- [ ] Widgets (iOS)
-- [ ] Multi-language support
+- [x] On-device AI: learned categories, one-sentence logging, Ask, forecasts
+- [x] Savings goals and the weekly review
+- [ ] Restyle the remaining legacy screens (Subscriptions, category editing)
+- [ ] Home Screen widget and Siri shortcut for logging
+- [ ] Shareable month-end kolam
 - [ ] Income tracking
-- [ ] Shared budgets / family accounts
-
-Have a feature idea? [Open a discussion](https://github.com/ayush-343/FinanceTracker/discussions) and let's talk about it!
+- [ ] Android release
+- [ ] Encrypted backup
 
 ---
 
