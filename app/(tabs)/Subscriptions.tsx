@@ -8,7 +8,13 @@ import { Feather } from '@expo/vector-icons';
 import { GestureHandlerRootView, Swipeable, RectButton } from 'react-native-gesture-handler';
 import { Animated as RNAnimated } from 'react-native';
 import { useTheme } from '../../src/theme';
-import { EmptyState } from '../../src/components';
+import { EmptyState, SubscriptionSuggestion } from '../../src/components';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { detectSubscriptionCandidates, SubscriptionCandidate } from '../../src/ai/insights/detectors';
+import { loadTransactionsSince } from '../../src/ai/insights/load';
+
+const DISMISSED_KEY = 'dismissed_subscription_suggestions';
+const SUGGESTION_LOOKBACK_DAYS = 120;
 import { useSubscriptionStore } from '../../src/store';
 import { useCurrency, useHaptics } from '../../src/hooks';
 import { Subscription } from '../../src/types';
@@ -92,10 +98,29 @@ const SubscriptionsScreen: React.FC = () => {
         setIsLoading(false);
     };
 
+    const [suggestions, setSuggestions] = useState<SubscriptionCandidate[]>([]);
+    const loadSuggestions = useCallback(async () => {
+        try {
+            const dismissed = new Set<string>(JSON.parse((await AsyncStorage.getItem(DISMISSED_KEY)) ?? '[]'));
+            const history = await loadTransactionsSince(SUGGESTION_LOOKBACK_DAYS);
+            setSuggestions(detectSubscriptionCandidates(history, subscriptions.map((s) => ({ name: s.name, amount: s.amount })), dismissed));
+        } catch (error) {
+            console.warn('[Subscriptions] suggestions failed:', error);
+        }
+    }, [subscriptions]);
+
+    const dismissSuggestion = async (key: string) => {
+        light();
+        const dismissed: string[] = JSON.parse((await AsyncStorage.getItem(DISMISSED_KEY)) ?? '[]');
+        await AsyncStorage.setItem(DISMISSED_KEY, JSON.stringify([...dismissed, key]));
+        setSuggestions((prev) => prev.filter((s) => s.key !== key));
+    };
+
     useFocusEffect(
         useCallback(() => {
             loadData();
-        }, [subscriptions.length])
+            loadSuggestions();
+        }, [subscriptions.length, loadSuggestions])
     );
 
     const handleDelete = (id: number, name: string) => {
@@ -186,6 +211,25 @@ const SubscriptionsScreen: React.FC = () => {
                         {subsWithCategory.length} active subscription{subsWithCategory.length !== 1 ? 's' : ''}
                     </Text>
                 </View>
+
+                {suggestions.length > 0 && (
+                    <View style={{ paddingHorizontal: spacing.lg }}>
+                        {suggestions.map((s) => (
+                            <SubscriptionSuggestion
+                                key={s.key}
+                                candidate={s}
+                                onDismiss={() => dismissSuggestion(s.key)}
+                                onTrack={() => {
+                                    light();
+                                    router.push({
+                                        pathname: '/AddSubscription',
+                                        params: { name: s.label, amount: String(s.amount), frequency: s.frequency, categoryId: String(s.categoryId) },
+                                    });
+                                }}
+                            />
+                        ))}
+                    </View>
+                )}
 
                 {/* Subscription List */}
                 <FlashList

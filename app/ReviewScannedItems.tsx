@@ -11,7 +11,8 @@ import { useBudgetStore } from '../src/store';
 import { useScanStore } from '../src/store/scanStore';
 import { useCurrency, useHaptics } from '../src/hooks';
 import { Category, Subcategory } from '../src/types';
-import { getCategories, getSubcategories, createItem, getItems } from '../src/database';
+import { getCategories, getSubcategories, createItem, getItems, learnCategory, loadCategoryMemory, loadKnownItems } from '../src/database';
+import { suggestCategory } from '../src/ai/categorizer';
 
 const ReviewScannedItemsScreen: React.FC = () => {
     const router = useRouter();
@@ -92,6 +93,15 @@ const ReviewScannedItemsScreen: React.FC = () => {
     const preselectCategoryForItem = async (item: typeof currentItem, cats: Category[]) => {
         if (!item || cats.length === 0) return;
 
+        // The user's own history wins over the AI scanner's guess.
+        try {
+            const [memory, knownItems] = await Promise.all([loadCategoryMemory(), loadKnownItems()]);
+            const learned = suggestCategory(item.name, memory, knownItems, new Set(cats.map(c => c.id)));
+            if (learned) item = { ...item, suggestedCategoryId: learned.categoryId, suggestedSubcategoryId: learned.subcategoryId };
+        } catch (error) {
+            console.warn('[ReviewScannedItems] category memory lookup failed:', error);
+        }
+
         if (item.suggestedCategoryId) {
             const suggestedCategory = cats.find(c => c.id === item.suggestedCategoryId);
             if (suggestedCategory) {
@@ -166,11 +176,13 @@ const ReviewScannedItemsScreen: React.FC = () => {
                 amount: currentItem.amount,
                 notes: `Scanned from receipt`,
                 date: format(date, 'yyyy-MM-dd'),
+                source: 'scan' as const,
             };
 
             console.log('[ReviewScannedItems] Adding transaction:', JSON.stringify(transactionData, null, 2));
 
             const transactionId = await addTransaction(transactionData);
+            await learnCategory(currentItem.name, selectedCategory.id, selectedSubcategory?.id ?? null);
 
             console.log('[ReviewScannedItems] Transaction added with ID:', transactionId);
 

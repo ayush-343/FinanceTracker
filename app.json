@@ -33,11 +33,22 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      "./plugins/withoutPushEntitlement",
       "expo-sqlite",
       "expo-secure-store",
       "expo-localization",
       "@react-native-community/datetimepicker",
-      "expo-router"
+      "expo-router",
+      "expo-speech-recognition",
+      "llama.rn",
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Used to log purchases by voice.",
+          "speechRecognitionPermission": "Used to turn your words into a transaction on this device."
+        }
+      ],
+      "expo-notifications"
     ],
     "extra": {
       "eas": {

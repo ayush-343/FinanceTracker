@@ -1,0 +1,146 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Finance Tracker — Daily Kolam redesign mockups</title><style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#D9DED6;font-family:-apple-system,"SF Pro Text",system-ui,sans-serif;color:#1E2A25;padding:32px}
+.page h1.title{font-size:28px;margin-bottom:4px}.page>p{color:#5B6A63;margin-bottom:24px;max-width:900px}
+.grid{display:flex;flex-wrap:wrap;gap:28px}
+figure{width:390px}figcaption{margin-top:10px;font-size:14px;color:#3E4C45;line-height:1.4}figcaption b{display:block;font-size:16px;color:#1E2A25}
+.phone{position:relative;width:390px;height:844px;overflow:hidden;background:#EEF1EA;border-radius:44px;box-shadow:0 20px 40px -20px rgba(30,42,37,.45)}
+.num{font-family:ui-rounded,"SF Pro Rounded",system-ui,sans-serif;font-variant-numeric:tabular-nums}
+.status{height:47px;display:flex;justify-content:space-between;align-items:flex-end;padding:0 28px 6px;font-weight:600;font-size:15px}
+.head{display:flex;justify-content:space-between;align-items:flex-end;padding:6px 20px 12px}
+.head h1{font-size:34px;font-weight:700;letter-spacing:-.4px}.head p{font-size:15px;color:#5B6A63;margin-top:2px}
+.avatar{width:36px;height:36px;border-radius:18px;background:#1E2A25;color:#F4EFE6;display:grid;place-items:center;font-weight:600;font-size:14px}
+.row{display:flex;justify-content:space-between;align-items:baseline}
+.t17{font-size:17px;font-weight:600}.s13{font-size:13px}.s15{font-size:15px}
+.muted{color:#5B6A63}.muted-d{color:#B9C4BE}.tu{color:#F2B21B}
+.field{margin:0 16px;background:#1E2A25;border-radius:24px;padding:16px;color:#F4EFE6}
+.field svg{display:block;margin:10px auto 6px}
+.card{margin:14px 16px 0;padding:16px;background:#fff;border-radius:20px}.card.tight{padding:14px 16px;margin-top:12px}
+.card h3{font-size:13px;color:#5B6A63;font-weight:600;margin-bottom:8px}
+.big{font-size:40px;font-weight:700;letter-spacing:-1px;line-height:1.05}
+.bands{position:relative;height:10px;border-radius:5px;background:#E3E8E2;margin-top:14px;display:flex;overflow:visible}
+.bands span{height:100%}.bands span:first-child{border-radius:5px 0 0 5px}.bands.tall{height:14px;margin:10px 16px 0}
+.marker{position:absolute;top:-4px;width:2px;height:18px;background:#1E2A25}.marker.light{background:#F4EFE6}
+.legend{display:flex;justify-content:space-between;font-size:12px;color:#5B6A63;margin-top:8px}.legend.light{color:#B9C4BE}
+.logbar{margin:14px 16px 0;display:flex;gap:10px;align-items:center}
+.input{flex:1;height:52px;border-radius:26px;background:#fff;border:1.5px solid #D5DCD4;display:flex;align-items:center;padding:0 18px;font-size:16px;color:#7A8781}
+.mic{width:52px;height:52px;border-radius:26px;background:#F2B21B;display:grid;place-items:center;font-weight:700}
+.list{margin:16px 20px 0}.list h2{font-size:13px;font-weight:600;color:#5B6A63;margin:10px 0 4px}
+.item{display:flex;align-items:center;height:52px;border-bottom:1px solid #DCE2DA;font-size:16px}
+.dot{display:inline-block;width:10px;height:10px;border-radius:5px;margin-right:10px;flex:none}
+.grow{flex:1}
+.tabs{position:absolute;left:0;right:0;bottom:0;height:84px;background:rgba(238,241,234,.96);border-top:1px solid #D5DCD4;display:flex;justify-content:space-around;padding-top:10px}
+.tab{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;color:#7A8781;width:64px}
+.tab i{width:24px;height:24px;border-radius:7px;border:2px solid #7A8781}.tab.on{color:#1E2A25;font-weight:600}.tab.on i{border-color:#1E2A25;background:#F2B21B}
+.scrim{position:absolute;inset:0;background:rgba(30,42,37,.45)}
+.sheet{position:absolute;left:0;right:0;bottom:0;top:120px;background:#EEF1EA;border-radius:28px 28px 0 0;padding:10px 16px 0}
+.grab{width:40px;height:5px;border-radius:3px;background:#C4CCC3;margin:0 auto 14px}
+.big-input{height:auto;min-height:72px;border-radius:20px;margin-top:14px;font-size:22px;font-weight:600;color:#1E2A25;align-items:flex-start;padding:16px 18px}
+.confirm{background:#fff;border-radius:20px;padding:16px}
+.kv{display:flex;justify-content:space-between;align-items:center;height:44px;border-top:1px solid #E3E8E2;font-size:16px}
+.pill{display:flex;align-items:center}.pill em{font-style:normal;margin-left:4px}
+.warn{display:flex;align-items:center;gap:10px;margin-top:12px;padding:12px 14px;border-radius:14px;background:#fff;font-size:14px}
+.hatch{width:18px;height:18px;border-radius:5px;flex:none;background:repeating-linear-gradient(135deg,#1E2A25 0 2px,transparent 2px 6px)}.hatch.sm{display:inline-block;width:12px;height:12px;vertical-align:-2px;margin-right:6px}
+.btn{height:54px;border-radius:27px;background:#F2B21B;display:grid;place-items:center;font-weight:600;font-size:17px;margin-top:14px}
+.btn.ghost{background:transparent;border:1.5px solid #C4CCC3;margin-top:10px}.btn.ghost.light{color:#F4EFE6;border-color:#4A5A52}
+.seg{display:flex;background:#E0E6DE;border-radius:9px;padding:2px;font-size:13px;font-weight:600}.seg span{padding:6px 14px;border-radius:7px;color:#5B6A63}.seg .on{background:#fff;color:#1E2A25}
+.search{margin:0 16px;height:40px;border-radius:12px;background:#E0E6DE;display:flex;align-items:center;padding:0 14px;color:#6E7D76;font-size:15px}
+.monthrow{display:flex;justify-content:space-between;align-items:baseline;margin:16px 16px 0}
+.chips{display:flex;gap:8px;margin:12px 16px 0}.chips.wrap{flex-wrap:wrap}
+.chip{display:flex;align-items:center;height:34px;padding:0 14px;border-radius:17px;background:#fff;border:1px solid #D5DCD4;font-size:14px}.chip .dot{margin-right:6px;width:8px;height:8px}.chip.on{background:#1E2A25;color:#F4EFE6;border-color:#1E2A25}
+.list h2.row{display:flex}
+.range{position:relative;height:12px;border-radius:6px;background:#33433B;margin-top:16px}
+.rfill{position:absolute;left:0;top:0;bottom:0;background:#F4EFE6;border-radius:6px 0 0 6px}
+.rband{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(135deg,#F2B21B 0 3px,transparent 3px 7px)}
+.brow{display:flex;align-items:center;font-size:15px;margin-top:6px}
+.bar{height:8px;border-radius:4px;background:#E3E8E2;margin-top:8px;overflow:hidden}.bar span{display:block;height:100%}
+.over{margin:6px 0 6px;color:#1E2A25}
+.bubble{margin:4px 16px 0 auto;max-width:280px;background:#1E2A25;color:#F4EFE6;padding:12px 16px;border-radius:20px 20px 6px 20px;font-size:16px;width:fit-content;margin-right:16px}
+.hb{display:grid;grid-template-columns:78px 1fr 70px;align-items:center;gap:8px;margin-top:10px;font-size:14px}.hb b{text-align:right}
+.hbar{height:10px;border-radius:5px;background:#E3E8E2;overflow:hidden}.hbar span{display:block;height:100%}
+.logbar.ask{position:absolute;left:0;right:0;bottom:96px}
+.review{position:absolute;inset:0;background:#1E2A25;color:#F4EFE6}
+.segs{display:flex;gap:4px;padding:8px 16px}.segs i{flex:1;height:3px;border-radius:2px;background:#4A5A52}.segs i.on{background:#F4EFE6}
+.rv{font-size:40px;font-weight:700;letter-spacing:-1px;margin:8px 24px 0;line-height:1.05}
+.rvp{margin:4px 24px 0;font-size:17px;line-height:1.4;color:#DCE3DE}
+.rvnum{display:flex;gap:24px;margin:24px 24px 0}.rvnum div{font-size:13px;color:#B9C4BE}.rvnum span{display:block;font-size:28px;font-weight:700;color:#F4EFE6}
+.rvact{position:absolute;left:16px;right:16px;bottom:40px}
+</style></head><body><div class="page">
+<h1 class="title">Daily Kolam — key screens</h1><p>iPhone 390×844, light appearance. Demo data is synthetic. Every number is computed in the app; the AI only reads sentences and plans questions.</p><div class="grid">
+<figure><div class="phone"><div class="status"><span>9:41</span><span>●●● 100%</span></div>
+<div class="head"><div><h1>Today</h1><p>Friday, 27 November</p></div><div class="avatar">AS</div></div>
+<section class="field"><div class="row"><span class="t17">November</span><span class="muted-d num">24 of 27 days drawn</span></div><svg width="326" height="182" viewBox="0 0 326 182" fill="none" role="img" aria-label="24 of 27 days logged in November"><path d="M0 22 Q8.74 10.22 23 3 Q37.26 10.22 46 22 Q37.26 33.78 23 41 Q8.74 33.78 0 22Z M46 22 Q54.74 10.22 69 3 Q83.26 10.22 92 22 Q83.26 33.78 69 41 Q54.74 33.78 46 22Z M92 22 Q100.74 10.22 115 3 Q129.26 10.22 138 22 Q129.26 33.78 115 41 Q100.74 33.78 92 22Z M138 22 Q146.74 10.22 161 3 Q175.26 10.22 184 22 Q175.26 33.78 161 41 Q146.74 33.78 138 22Z M184 22 Q192.74 10.22 207 3 Q221.26 10.22 230 22 Q221.26 33.78 207 41 Q192.74 33.78 184 22Z M230 22 Q238.74 10.22 253 3 Q267.26 10.22 276 22 Q267.26 33.78 253 41 Q238.74 33.78 230 22Z M276 22 Q284.74 10.22 299 3 Q313.26 10.22 322 22 Q313.26 33.78 299 41 Q284.74 33.78 276 22Z M0 60 Q8.74 48.22 23 41 Q37.26 48.22 46 60 Q37.26 71.78 23 79 Q8.74 71.78 0 60Z M92 60 Q100.74 48.22 115 41 Q129.26 48.22 138 60 Q129.26 71.78 115 79 Q100.74 71.78 92 60Z M138 60 Q146.74 48.22 161 41 Q175.26 48.22 184 60 Q175.26 71.78 161 79 Q146.74 71.78 138 60Z M184 60 Q192.74 48.22 207 41 Q221.26 48.22 230 60 Q221.26 71.78 207 79 Q192.74 71.78 184 60Z M230 60 Q238.74 48.22 253 41 Q267.26 48.22 276 60 Q267.26 71.78 253 79 Q238.74 71.78 230 60Z M276 60 Q284.74 48.22 299 41 Q313.26 48.22 322 60 Q313.26 71.78 299 79 Q284.74 71.78 276 60Z M0 98 Q8.74 86.22 23 79 Q37.26 86.22 46 98 Q37.26 109.78 23 117 Q8.74 109.78 0 98Z M46 98 Q54.74 86.22 69 79 Q83.26 86.22 92 98 Q83.26 109.78 69 117 Q54.74 109.78 46 98Z M92 98 Q100.74 86.22 115 79 Q129.26 86.22 138 98 Q129.26 109.78 115 117 Q100.74 109.78 92 98Z M184 98 Q192.74 86.22 207 79 Q221.26 86.22 230 98 Q221.26 109.78 207 117 Q192.74 109.78 184 98Z M230 98 Q238.74 86.22 253 79 Q267.26 86.22 276 98 Q267.26 109.78 253 117 Q238.74 109.78 230 98Z M276 98 Q284.74 86.22 299 79 Q313.26 86.22 322 98 Q313.26 109.78 299 117 Q284.74 109.78 276 98Z M0 136 Q8.74 124.22 23 117 Q37.26 124.22 46 136 Q37.26 147.78 23 155 Q8.74 147.78 0 136Z M46 136 Q54.74 124.22 69 117 Q83.26 124.22 92 136 Q83.26 147.78 69 155 Q54.74 147.78 46 136Z M92 136 Q100.74 124.22 115 117 Q129.26 124.22 138 136 Q129.26 147.78 115 155 Q100.74 147.78 92 136Z M138 136 Q146.74 124.22 161 117 Q175.26 124.22 184 136 Q175.26 147.78 161 155 Q146.74 147.78 138 136Z M184 136 Q192.74 124.22 207 117 Q221.26 124.22 230 136 Q221.26 147.78 207 155 Q192.74 147.78 184 136Z" stroke="#F4EFE6" stroke-width="1.8" stroke-linejoin="round"/><circle cx="23" cy="22" r="3" fill="#F4EFE6"/><circle cx="69" cy="22" r="3" fill="#F4EFE6"/><circle cx="115" cy="22" r="3" fill="#F4EFE6"/><circle cx="161" cy="22" r="3" fill="#F4EFE6"/><circle cx="207" cy="22" r="3" fill="#F4EFE6"/><circle cx="253" cy="22" r="3" fill="#F4EFE6"/><circle cx="299" cy="22" r="3" fill="#F4EFE6"/><circle cx="23" cy="60" r="3" fill="#F4EFE6"/><circle cx="69" cy="60" r="3" fill="#6E7D76"/><circle cx="115" cy="60" r="3" fill="#F4EFE6"/><circle cx="161" cy="60" r="3" fill="#F4EFE6"/><circle cx="207" cy="60" r="3" fill="#F4EFE6"/><circle cx="253" cy="60" r="3" fill="#F4EFE6"/><circle cx="299" cy="60" r="3" fill="#F4EFE6"/><circle cx="23" cy="98" r="3" fill="#F4EFE6"/><circle cx="69" cy="98" r="3" fill="#F4EFE6"/><circle cx="115" cy="98" r="3" fill="#F4EFE6"/><circle cx="161" cy="98" r="3" fill="#6E7D76"/><circle cx="207" cy="98" r="3" fill="#F4EFE6"/><circle cx="253" cy="98" r="3" fill="#F4EFE6"/><circle cx="299" cy="98" r="3" fill="#F4EFE6"/><circle cx="23" cy="136" r="3" fill="#F4EFE6"/><circle cx="69" cy="136" r="3" fill="#F4EFE6"/><circle cx="115" cy="136" r="3" fill="#F4EFE6"/><circle cx="161" cy="136" r="3" fill="#F4EFE6"/><circle cx="207" cy="136" r="3" fill="#F4EFE6"/><path d="M230 136 Q239 124 253 117 Q267 124 276 136 Q267 148 253 155 Q239 148 230 136Z" stroke="#F2B21B" stroke-width="2.5" stroke-dasharray="5 5"/><circle cx="253" cy="136" r="4" fill="#F2B21B"/><circle cx="299" cy="136" r="3" fill="#6E7D76"/><circle cx="23" cy="174" r="3" fill="#6E7D76"/><circle cx="69" cy="174" r="3" fill="#6E7D76"/></svg>
+<p class="muted-d s13">Log today to close <b class="tu">Friday's loop</b>. Skipped days stay as dots; the pattern keeps going.</p></section>
+<section class="card"><div class="big num">₹1,180</div><p class="muted s15">left today to stay on pace for ₹45,000</p>
+<div class="bands"><span style="width:38%;background:#E8623C"></span><span style="width:14%;background:#3D4FB3"></span><span style="width:9%;background:#2F9C8F"></span><span style="width:2%;background:#C98B1D"></span><i class="marker" style="left:90%"></i></div>
+<div class="legend num"><span>₹28,420 spent</span><span>pace ₹40,500</span></div></section>
+<div class="logbar"><div class="input">200 coffee at Blue Tokai…</div><div class="mic">●</div></div>
+<section class="list"><h2>Yesterday</h2>
+<div class="item"><i class="dot" style="background:#E8623C"></i><div class="grow">Blue Tokai<div class="muted s13">Food · coffee</div></div><b class="num">₹180</b></div>
+<div class="item"><i class="dot" style="background:#3D4FB3"></i><div class="grow">Uber<div class="muted s13">Transport</div></div><b class="num">₹250</b></div></section>
+<nav class="tabs"><div class="tab on"><i></i>Today</div><div class="tab"><i></i>Activity</div><div class="tab"><i></i>Ask</div><div class="tab"><i></i>Plan</div><div class="tab"><i></i>You</div></nav></div><figcaption><b>Today</b>The month kolam leads. Logging closes today's loop; skips never reset.</figcaption></figure>
+<figure><div class="phone"><div class="status"><span>9:41</span><span>●●● 100%</span></div>
+<div class="scrim"></div>
+<section class="sheet"><div class="grab"></div>
+<div class="row"><span class="t17">Log a spend</span><span class="muted s15">Cancel</span></div>
+<div class="input big-input">250 uber trip yesterday</div>
+<p class="muted s13" style="margin:8px 2px 14px">Read on this phone · Apple Intelligence</p>
+<div class="confirm">
+ <div class="row"><span class="muted s13">Amount</span><span class="big num" style="font-size:34px">₹250</span></div>
+ <div class="kv"><span class="muted">What</span><span>Uber trip</span></div>
+ <div class="kv"><span class="muted">When</span><span>Yesterday · Thu 26 Nov</span></div>
+ <div class="kv"><span class="muted">Category</span><span class="pill"><i class="dot" style="background:#3D4FB3"></i>Transport <em class="muted s13">· learned</em></span></div>
+</div>
+<div class="warn"><span class="hatch"></span>Looks like a duplicate of ₹250 Uber added 3 min ago.</div>
+<div class="btn">Save · closes Thursday's loop</div>
+<div class="btn ghost">Nothing spent today</div>
+</section></div><figcaption><b>Log sheet</b>One sentence, typed or spoken. The confirm card replaces the old jump to Add Transaction.</figcaption></figure>
+<figure><div class="phone"><div class="status"><span>9:41</span><span>●●● 100%</span></div>
+<div class="head"><div><h1>Activity</h1></div><div class="seg"><span class="on">List</span><span>Month</span></div></div>
+<div class="search">Search Swiggy, rent, “last week”…</div>
+<div class="monthrow"><span class="t17">November <span class="muted">▾</span></span><b class="num">₹28,420</b></div>
+<div class="bands tall"><span style="width:38%;background:#E8623C"></span><span style="width:24%;background:#3D4FB3"></span><span style="width:16%;background:#2F9C8F"></span><span style="width:12%;background:#8E4A9E"></span><span style="width:10%;background:#C98B1D"></span></div>
+<div class="chips"><span class="chip on">All</span><span class="chip"><i class="dot" style="background:#E8623C"></i>Food 38%</span><span class="chip"><i class="dot" style="background:#3D4FB3"></i>Transport 24%</span></div>
+<section class="list"><h2 class="row"><span>Thu 26 Nov</span><span class="num">₹842</span></h2>
+<div class="item"><i class="dot" style="background:#3D4FB3"></i><div class="grow">Uber<div class="muted s13">Transport · voice</div></div><b class="num">₹250</b></div>
+<div class="item"><i class="dot" style="background:#E8623C"></i><div class="grow">Swiggy<div class="muted s13">Food · delivery</div></div><b class="num">₹412</b></div>
+<div class="item"><i class="dot" style="background:#E8623C"></i><div class="grow">Blue Tokai<div class="muted s13">Food · coffee</div></div><b class="num">₹180</b></div>
+<h2 class="row"><span>Wed 25 Nov</span><span class="num">₹1,319</span></h2>
+<div class="item"><i class="dot" style="background:#2F9C8F"></i><div class="grow">DMart<div class="muted s13">Groceries · scanned</div></div><b class="num">₹1,200</b></div>
+<div class="item"><i class="dot" style="background:#8E4A9E"></i><div class="grow">Spotify<div class="muted s13">Subscription</div></div><b class="num">₹119</b></div></section>
+<nav class="tabs"><div class="tab"><i></i>Today</div><div class="tab on"><i></i>Activity</div><div class="tab"><i></i>Ask</div><div class="tab"><i></i>Plan</div><div class="tab"><i></i>You</div></nav></div><figcaption><b>Activity</b>Search, month bands at exact shares, day groups with totals. Month view replaces Calendar.</figcaption></figure>
+<figure><div class="phone"><div class="status"><span>9:41</span><span>●●● 100%</span></div>
+<div class="head"><div><h1>Plan</h1><p>November · 3 days left</p></div></div>
+<section class="field"><p class="muted-d s13">Where the month is heading</p>
+<div class="big num" style="color:#F4EFE6">₹43k – ₹45k</div><p class="muted-d s15">likely ₹44,100 of your ₹45,000 budget</p>
+<div class="range"><span class="rfill" style="width:63%"></span><span class="rband" style="left:63%;width:33%"></span><i class="marker light" style="left:98%"></i></div>
+<div class="legend num light"><span>₹28,420 spent</span><span>budget ₹45,000</span></div></section>
+<section class="card tight"><h3>Budgets</h3>
+<div class="brow"><span class="grow"><i class="dot" style="background:#E8623C"></i>Food</span><span class="num s13">₹10,800 / ₹10,000</span></div><div class="bar"><span style="width:100%;background:#E8623C"></span></div><p class="s13 over"><span class="hatch sm"></span>₹800 over · pause delivery this week?</p>
+<div class="brow"><span class="grow"><i class="dot" style="background:#3D4FB3"></i>Transport</span><span class="num s13">₹6,820 / ₹9,000</span></div><div class="bar"><span style="width:76%;background:#3D4FB3"></span></div></section>
+<section class="card tight"><h3>Goals</h3>
+<div class="brow"><span class="grow">Goa trip · March</span><span class="num s13">₹18,000 / ₹30,000</span></div><div class="bar"><span style="width:60%;background:#F2B21B"></span></div>
+<p class="muted s13">₹4,000 a month gets you there by 28 Feb.</p></section>
+<section class="card tight"><h3>Coming up</h3><div class="brow"><span class="grow"><i class="dot" style="background:#8E4A9E"></i>Spotify</span><span class="num s13">₹119 · 5 Dec</span></div></section>
+<nav class="tabs"><div class="tab"><i></i>Today</div><div class="tab"><i></i>Activity</div><div class="tab"><i></i>Ask</div><div class="tab on"><i></i>Plan</div><div class="tab"><i></i>You</div></nav></div><figcaption><b>Plan</b>Forecast dominates. Budgets, goals, upcoming subscriptions. Over budget = hatch + words.</figcaption></figure>
+<figure><div class="phone"><div class="status"><span>9:41</span><span>●●● 100%</span></div>
+<div class="head"><div><h1>Ask</h1><p>Answers worked out on this phone</p></div></div>
+<div class="bubble">Where did my money go last month?</div>
+<section class="card"><p class="s15">Food was your biggest at <b>₹11,240</b> of <b>₹39,870</b> in October.</p>
+<div class="hb"><span>Food</span><div class="hbar"><span style="width:100%;background:#E8623C"></span></div><b class="num">₹11,240</b></div>
+<div class="hb"><span>Rent</span><div class="hbar"><span style="width:89%;background:#C98B1D"></span></div><b class="num">₹10,000</b></div>
+<div class="hb"><span>Transport</span><div class="hbar"><span style="width:62%;background:#3D4FB3"></span></div><b class="num">₹6,980</b></div>
+<div class="hb"><span>Groceries</span><div class="hbar"><span style="width:44%;background:#2F9C8F"></span></div><b class="num">₹4,950</b></div>
+<p class="muted s13" style="margin-top:10px">Tap a bar to see its purchases</p></section>
+<div class="chips wrap"><span class="chip">Compare with September</span><span class="chip">Biggest purchases</span><span class="chip">Will I go over?</span></div>
+<div class="logbar ask"><div class="input">Ask about your spending…</div><div class="mic">↑</div></div>
+<nav class="tabs"><div class="tab"><i></i>Today</div><div class="tab"><i></i>Activity</div><div class="tab on"><i></i>Ask</div><div class="tab"><i></i>Plan</div><div class="tab"><i></i>You</div></nav></div><figcaption><b>Ask</b>Answer sentence plus exact bars; tap through to purchases. Follow-up chips.</figcaption></figure>
+<figure><div class="phone"><div class="review"><div class="status"><span>9:41</span><span>●●● 100%</span></div>
+<div class="segs"><i class="on"></i><i class="on"></i><i></i><i></i></div>
+<p class="muted-d s15" style="margin:40px 24px 0">Your week · 23–29 Nov</p>
+<h1 class="rv">6 of 7 days drawn</h1>
+<div style="margin:22px 32px"><svg width="326" height="52" viewBox="0 0 326 52" fill="none"><path d="M0 26 Q9 14 23 7 Q37 14 46 26 Q37 38 23 45 Q9 38 0 26Z M46 26 Q55 14 69 7 Q83 14 92 26 Q83 38 69 45 Q55 38 46 26Z M92 26 Q101 14 115 7 Q129 14 138 26 Q129 38 115 45 Q101 38 92 26Z M184 26 Q193 14 207 7 Q221 14 230 26 Q221 38 207 45 Q193 38 184 26Z M230 26 Q239 14 253 7 Q267 14 276 26 Q267 38 253 45 Q239 38 230 26Z M276 26 Q285 14 299 7 Q313 14 322 26 Q313 38 299 45 Q285 38 276 26Z" stroke="#F4EFE6" stroke-width="1.8"/><circle cx="23" cy="26" r="3" fill="#F4EFE6"/><circle cx="69" cy="26" r="3" fill="#F4EFE6"/><circle cx="115" cy="26" r="3" fill="#F4EFE6"/><circle cx="161" cy="26" r="3" fill="#6E7D76"/><circle cx="207" cy="26" r="3" fill="#F4EFE6"/><circle cx="253" cy="26" r="3" fill="#F4EFE6"/><circle cx="299" cy="26" r="3" fill="#F4EFE6"/></svg></div>
+<p class="rvp">You logged every day but Wednesday. Food came in <b class="tu">30% above</b> your usual week, mostly weeknight delivery.</p>
+<div class="rvnum num"><div><span>₹8,940</span>this week</div><div><span>₹7,860</span>usual week</div></div>
+<div class="rvact"><div class="btn">Set a weeknight food limit</div><div class="btn ghost light">Next: month forecast</div></div></div></div><figcaption><b>Weekly review</b>Sunday ritual as swipeable full-screen cards in the kolam field.</figcaption></figure>
+</div></div></body></html>

@@ -1,7 +1,14 @@
+import '../src/ai/polyfills';
 import React, { useEffect, useState, useMemo } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Platform, BackHandler, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Platform, BackHandler, View, Text, StyleSheet, TouchableOpacity, AppState } from 'react-native';
+import * as Notifications from 'expo-notifications';
+import { refreshInsightNotifications } from '../src/services/insightNotifications';
+
+Notifications.setNotificationHandler({
+    handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: false, shouldSetBadge: false }),
+});
 import { BlurView } from 'expo-blur';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -9,8 +16,8 @@ import { SheetProvider } from 'react-native-actions-sheet';
 import { Feather } from '@expo/vector-icons';
 import { ThemeProvider, useTheme } from '../src/theme';
 import { initDatabase } from '../src/database';
-import { LoadingScreen, WalkthroughProvider, WalkthroughOverlay } from '../src/components';
-import { useSettingsStore, useWalkthroughStore } from '../src/store';
+import { LoadingScreen } from '../src/components';
+import { useSettingsStore } from '../src/store';
 import { useBiometricAuth } from '../src/hooks';
 
 // Import sheets registration
@@ -20,7 +27,6 @@ const AppShell: React.FC = () => {
     const { colors, isDark } = useTheme();
     const { isOnboardingCompleted, isBiometricEnabled, loadSettings } = useSettingsStore();
     const { authenticate, isAuthenticated, isAuthenticating, isLocked } = useBiometricAuth();
-    const { loadWalkthroughStatus } = useWalkthroughStore();
     const router = useRouter();
     const segments = useSegments();
 
@@ -52,8 +58,6 @@ const AppShell: React.FC = () => {
 
                 // Then: Load settings (requires database)
                 await loadSettings();
-                // Load walkthrough status (AsyncStorage, no DB needed)
-                await loadWalkthroughStatus();
                 setIsSettingsReady(true);
             } catch (error) {
                 console.error('Initialization failed:', error);
@@ -62,18 +66,33 @@ const AppShell: React.FC = () => {
         };
 
         initialize();
-    }, [loadSettings, loadWalkthroughStatus]);
+    }, [loadSettings]);
+
+    // Recompute the weekly summary and budget alerts whenever the app opens or returns to the foreground.
+    useEffect(() => {
+        if (!isSettingsReady) return;
+        refreshInsightNotifications();
+        const sub = AppState.addEventListener('change', (state) => {
+            if (state === 'active') refreshInsightNotifications();
+        });
+        // Tapping the weekly summary opens the review.
+        const tap = Notifications.addNotificationResponseReceivedListener((response) => {
+            const url = response.notification.request.content.data?.url;
+            if (typeof url === 'string') router.push(url as never);
+        });
+        return () => { sub.remove(); tap.remove(); };
+    }, [isSettingsReady]);
 
     useEffect(() => {
         if (!isSettingsReady) return;
 
         if (!isOnboardingCompleted && !isInOnboarding) {
-            router.replace('/(onboarding)/AnimatedOnboarding');
+            router.replace('/(onboarding)/Start');
             return;
         }
 
         if (isOnboardingCompleted && isInOnboarding) {
-            router.replace('/(tabs)/Home');
+            router.replace('/(tabs)/Today');
         }
     }, [isOnboardingCompleted, isSettingsReady, router, isInOnboarding]);
 
@@ -114,6 +133,26 @@ const AppShell: React.FC = () => {
                 <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
                 <Stack.Screen name="Category" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="Items" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen
+                    name="Ask"
+                    options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+                />
+                <Stack.Screen
+                    name="Review"
+                    options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
+                />
+                <Stack.Screen
+                    name="Goal"
+                    options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+                />
+                <Stack.Screen
+                    name="Log"
+                    options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+                />
+                <Stack.Screen
+                    name="QuickLog"
+                    options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+                />
                 <Stack.Screen
                     name="AddTransaction"
                     options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
@@ -185,8 +224,6 @@ const AppShell: React.FC = () => {
                 </View>
             )}
 
-            {/* Walkthrough overlay — renders on top of everything */}
-            <WalkthroughOverlay />
         </>
     );
 };
@@ -236,11 +273,9 @@ export default function RootLayout() {
         <GestureHandlerRootView style={{ flex: 1 }}>
             <SafeAreaProvider>
                 <ThemeProvider>
-                    <WalkthroughProvider>
-                        <SheetProvider>
-                            <AppShell />
-                        </SheetProvider>
-                    </WalkthroughProvider>
+                    <SheetProvider>
+                        <AppShell />
+                    </SheetProvider>
                 </ThemeProvider>
             </SafeAreaProvider>
         </GestureHandlerRootView>

@@ -1,5 +1,6 @@
 import * as SQLite from 'expo-sqlite';
 import { Platform } from 'react-native';
+import { runMigrations } from './migrations';
 
 const DATABASE_NAME = 'finance_tracker.db';
 
@@ -243,6 +244,8 @@ const initializeDatabase = async (database: SQLite.SQLiteDatabase): Promise<void
     CREATE INDEX IF NOT EXISTS idx_barcode_cache_barcode ON barcode_cache (barcode);
     CREATE INDEX IF NOT EXISTS idx_barcode_cache_expires ON barcode_cache (expires_at);
   `);
+
+  await runMigrations(database);
 };
 
 const closeDatabase = async (): Promise<void> => {

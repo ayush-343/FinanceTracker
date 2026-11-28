@@ -1,124 +1,30 @@
-import React, { useCallback, useEffect } from 'react';
-import { Platform, ActionSheetIOS } from 'react-native';
-import { Tabs, useRouter } from 'expo-router';
-import { useTheme } from '../../src/theme';
-import { CustomTabBar } from '../../src/components/CustomTabBar';
-import { showActionSheet } from '../../src/components/ActionSheet';
-import { useWalkthroughContext } from '../../src/components/WalkthroughContext';
-import { useHaptics } from '../../src/hooks';
-import { useReceiptScanner } from '../../src/hooks/useReceiptScanner';
-import { ScanningModal } from '../../src/components/ScanningModal';
-import { BarcodeScannerModal } from '../../src/components/BarcodeScannerModal';
+import React from 'react';
+import { Tabs } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import { Symbol, useKolam } from '../../src/ui';
 
 export default function TabsLayout() {
-    const { colors } = useTheme();
-    const router = useRouter();
-    const { light } = useHaptics();
-    const {
-        isScanning,
-        error,
-        showModal,
-        showBarcodeScanner,
-        pickImage,
-        retry,
-        goToManualEntry,
-        closeModal,
-        closeBarcodeScanner,
-        handleBarcodeScanComplete,
-    } = useReceiptScanner();
-
-    // Connect walkthrough tab navigation
-    const { setNavigateToTab } = useWalkthroughContext();
-    useEffect(() => {
-        setNavigateToTab((tabName: string) => {
-            router.push(`/(tabs)/${tabName}` as any);
-        });
-    }, [router, setNavigateToTab]);
-
-    const handleFabPress = useCallback(() => {
-        light();
-        if (Platform.OS === 'ios') {
-            ActionSheetIOS.showActionSheetWithOptions(
-                {
-                    options: ['Cancel', 'Add Manually', 'Scan Receipt'],
-                    cancelButtonIndex: 0,
-                },
-                (buttonIndex) => {
-                    if (buttonIndex === 1) {
-                        router.push('/AddTransaction');
-                    } else if (buttonIndex === 2) {
-                        pickImage();
-                    }
-                }
-            );
-        } else {
-            showActionSheet(
-                'Add Transaction',
-                'Choose how to add a transaction',
-                [
-                    {
-                        id: 'manual',
-                        label: 'Add Manually',
-                        icon: 'edit-3',
-                        onPress: () => router.push('/AddTransaction'),
-                    },
-                    {
-                        id: 'scan',
-                        label: 'Scan Receipt',
-                        icon: 'camera',
-                        onPress: () => pickImage(),
-                    },
-                ]
-            );
-        }
-    }, [light, router]);
+    const { c } = useKolam();
 
     return (
-        <>
-            <Tabs
-                initialRouteName="Home"
-                tabBar={(props) => (
-                    <CustomTabBar
-                        currentRoute={props.state.routes[props.state.index]?.name ?? 'Home'}
-                        onTabPress={(name) => {
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
-                            router.push(`/(tabs)/${name}` as any);
-                        }}
-                        onFabPress={handleFabPress}
-                    />
-                )}
-                screenOptions={{
-                    headerShown: false,
-                    tabBarStyle: { display: 'none' },
-                }}
-            >
-                <Tabs.Screen name="Home" options={{ title: 'Home' }} />
-                <Tabs.Screen name="Analytics" options={{ title: 'Insights' }} />
-                <Tabs.Screen name="Calendar" options={{ title: 'Calendar' }} />
-                <Tabs.Screen name="Settings" options={{ title: 'Settings' }} />
-                <Tabs.Screen
-                    name="Subscriptions"
-                    options={{
-                        href: null,
-                    }}
-                />
-            </Tabs>
-
-            <ScanningModal
-                visible={showModal}
-                isLoading={isScanning}
-                error={error}
-                onRetry={retry}
-                onManualEntry={goToManualEntry}
-                onClose={closeModal}
-            />
-
-            <BarcodeScannerModal
-                visible={showBarcodeScanner}
-                onClose={closeBarcodeScanner}
-                onScanComplete={handleBarcodeScanComplete}
-            />
-        </>
+        <Tabs
+            initialRouteName="Today"
+            screenOptions={{
+                headerShown: false,
+                tabBarActiveTintColor: c.ink,
+                tabBarInactiveTintColor: c.muted,
+                tabBarStyle: { backgroundColor: c.ground, borderTopColor: c.hairline },
+                tabBarLabelStyle: { fontSize: 10, fontWeight: '600' },
+            }}
+            screenListeners={{ tabPress: () => { Haptics.selectionAsync().catch(() => {}); } }}
+        >
+            <Tabs.Screen name="Today" options={{ title: 'Today', tabBarIcon: ({ color }) => <Symbol name="sun.max" fallback="sun" color={color} size={22} /> }} />
+            <Tabs.Screen name="Activity" options={{ title: 'Activity', tabBarIcon: ({ color }) => <Symbol name="list.bullet" fallback="list" color={color} size={22} /> }} />
+            <Tabs.Screen name="Ask" options={{ title: 'Ask', tabBarIcon: ({ color }) => <Symbol name="bubble.left" fallback="message-circle" color={color} size={22} /> }} />
+            <Tabs.Screen name="Plan" options={{ title: 'Plan', tabBarIcon: ({ color }) => <Symbol name="chart.line.uptrend.xyaxis" fallback="trending-up" color={color} size={22} /> }} />
+            <Tabs.Screen name="You" options={{ title: 'You', tabBarIcon: ({ color }) => <Symbol name="person.crop.circle" fallback="user" color={color} size={22} /> }} />
+            {/* Reached from Plan and You, not from the tab bar. */}
+            <Tabs.Screen name="Subscriptions" options={{ href: null }} />
+        </Tabs>
     );
 }

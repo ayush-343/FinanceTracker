@@ -1,0 +1,258 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-27T19:11:36.649526+00:00",
+  "title": "Design System: Daily Kolam",
+  "extensions": {
+    "colorMeta": {
+      "action": {
+        "role": "primary",
+        "displayName": "Turmeric",
+        "tonalRamp": [
+          "oklch(15% 0.053 80)",
+          "oklch(25% 0.08 80)",
+          "oklch(35% 0.107 80)",
+          "oklch(45% 0.133 80)",
+          "oklch(55% 0.16 80)",
+          "oklch(70% 0.12 80)",
+          "oklch(85% 0.08 80)",
+          "oklch(95% 0.053 80)"
+        ]
+      },
+      "field": {
+        "role": "neutral",
+        "displayName": "Wet-stone Slate",
+        "tonalRamp": [
+          "oklch(15% 0.008 160)",
+          "oklch(25% 0.013 160)",
+          "oklch(35% 0.017 160)",
+          "oklch(45% 0.021 160)",
+          "oklch(55% 0.025 160)",
+          "oklch(70% 0.019 160)",
+          "oklch(85% 0.013 160)",
+          "oklch(95% 0.008 160)"
+        ]
+      },
+      "field-ink": {
+        "role": "neutral",
+        "displayName": "Rice-flour Line"
+      },
+      "ground": {
+        "role": "neutral",
+        "displayName": "Lime-wash Ground",
+        "tonalRamp": [
+          "oklch(15% 0.004 130)",
+          "oklch(25% 0.006 130)",
+          "oklch(35% 0.008 130)",
+          "oklch(45% 0.01 130)",
+          "oklch(55% 0.012 130)",
+          "oklch(70% 0.009 130)",
+          "oklch(85% 0.006 130)",
+          "oklch(95% 0.004 130)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "White Surface"
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Moss Muted"
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline"
+      },
+      "data": {
+        "role": "secondary",
+        "displayName": "Ledger Indigo",
+        "tonalRamp": [
+          "oklch(15% 0.05 270)",
+          "oklch(25% 0.075 270)",
+          "oklch(35% 0.1 270)",
+          "oklch(45% 0.125 270)",
+          "oklch(55% 0.15 270)",
+          "oklch(70% 0.112 270)",
+          "oklch(85% 0.075 270)",
+          "oklch(95% 0.05 270)"
+        ]
+      },
+      "hue-1": {
+        "role": "secondary",
+        "displayName": "Category Hue 1"
+      },
+      "hue-2": {
+        "role": "secondary",
+        "displayName": "Category Hue 2"
+      },
+      "hue-3": {
+        "role": "secondary",
+        "displayName": "Category Hue 3"
+      },
+      "hue-4": {
+        "role": "secondary",
+        "displayName": "Category Hue 4"
+      },
+      "hue-5": {
+        "role": "secondary",
+        "displayName": "Category Hue 5"
+      },
+      "hue-6": {
+        "role": "secondary",
+        "displayName": "Category Hue 6"
+      },
+      "hue-7": {
+        "role": "secondary",
+        "displayName": "Category Hue 7"
+      },
+      "hue-8": {
+        "role": "secondary",
+        "displayName": "Category Hue 8"
+      }
+    },
+    "typographyMeta": {
+      "large-title": {
+        "displayName": "Large Title",
+        "purpose": "One per screen; caps at 1.3x Dynamic Type."
+      },
+      "money": {
+        "displayName": "Money",
+        "purpose": "Every amount, SF Pro Rounded tabular; 2x cap below 24pt."
+      },
+      "money-hero": {
+        "displayName": "Hero Money",
+        "purpose": "Left-today and month totals (34-40pt); 1.3x cap, single line, shrinks to 0.5."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "loop-draw",
+        "value": "600ms cubic ease-out strokeDashoffset + light impact haptic",
+        "purpose": "Today's kolam loop drawing when the day closes; skipped under Reduce Motion."
+      },
+      {
+        "name": "press-fade",
+        "value": "opacity 0.85 button / 0.8 round action / 0.7 chip / 0.6 row",
+        "purpose": "Pressed state; no scale or lift."
+      }
+    ],
+    "breakpoints": []
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Turmeric pill; the only action colour.",
+      "html": "<button class=\"ds-btn-primary\">Save</button>",
+      "css": ".ds-btn-primary{background:#F2B21B;color:#1E2A25;height:54px;padding:0 20px;border:none;border-radius:27px;font:600 17px -apple-system, 'SF Pro Text', system-ui, sans-serif;min-width:200px} .ds-btn-primary:active{opacity:.85} .ds-btn-primary:focus-visible{outline:2px solid #1E2A25;outline-offset:2px} .ds-btn-primary:disabled{background:#D5DCD4;color:#5B6A63}"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Hairline outline pill for secondary actions.",
+      "html": "<button class=\"ds-btn-ghost\">Not now</button>",
+      "css": ".ds-btn-ghost{background:transparent;color:#1E2A25;height:54px;padding:0 20px;border:1.5px solid #D5DCD4;border-radius:27px;font:600 17px -apple-system, 'SF Pro Text', system-ui, sans-serif;min-width:200px} .ds-btn-ghost:active{opacity:.85} .ds-btn-ghost:focus-visible{outline:2px solid #F2B21B;outline-offset:2px}"
+    },
+    {
+      "name": "Pill Input",
+      "kind": "input",
+      "refersTo": "pill-input",
+      "description": "Log bar: pill field with turmeric round mic action.",
+      "html": "<div class=\"ds-pill\"><input class=\"ds-pill-input\" placeholder=\"Coffee 4.50\"><button class=\"ds-pill-act\" aria-label=\"Speak\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#1E2A25\" stroke-width=\"2\" stroke-linecap=\"round\"><rect x=\"9\" y=\"2\" width=\"6\" height=\"12\" rx=\"3\"/><path d=\"M5 11a7 7 0 0 0 14 0M12 18v4\"/></svg></button></div>",
+      "css": ".ds-pill{display:flex;gap:10px;align-items:center;width:340px} .ds-pill-input{flex:1;height:52px;border-radius:26px;border:1.5px solid #D5DCD4;background:#fff;padding:0 18px;font:16px -apple-system, 'SF Pro Text', system-ui, sans-serif;color:#1E2A25} .ds-pill-input:focus-visible{outline:none;border-color:#1E2A25} .ds-pill-act{width:52px;height:52px;border-radius:26px;border:none;background:#F2B21B;display:flex;align-items:center;justify-content:center} .ds-pill-act:active{opacity:.8}"
+    },
+    {
+      "name": "Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Filter or suggestion chip with optional hue dot.",
+      "html": "<div class=\"ds-chips\"><button class=\"ds-chip\"><i style=\"background:#E8623C\"></i>Food</button><button class=\"ds-chip ds-chip-on\">All</button></div>",
+      "css": ".ds-chips{display:flex;gap:8px} .ds-chip{display:flex;align-items:center;height:34px;padding:0 14px;border-radius:17px;border:1px solid #D5DCD4;background:#fff;color:#1E2A25;font:14px -apple-system, 'SF Pro Text', system-ui, sans-serif} .ds-chip i{width:8px;height:8px;border-radius:4px;margin-right:6px} .ds-chip-on{background:#1E2A25;border-color:#1E2A25;color:#EEF1EA} .ds-chip:active{opacity:.7}"
+    },
+    {
+      "name": "Card with Bands",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "White card: hero Rounded amount, exact-share bands, pace marker.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-amt\">$42</div><div class=\"ds-sub\">left today to stay on pace for $1,800</div><div class=\"ds-bands\"><span style=\"width:30%;background:#E8623C\"></span><span style=\"width:18%;background:#3D4FB3\"></span><span style=\"width:12%;background:#2F9C8F\"></span><b style=\"left:55%\"></b></div></div>",
+      "css": ".ds-card{background:#fff;border-radius:20px;padding:16px;width:320px;font-family:-apple-system, 'SF Pro Text', system-ui, sans-serif} .ds-amt{font:700 40px ui-rounded, 'SF Pro Rounded', -apple-system, sans-serif;letter-spacing:-1px;font-variant-numeric:tabular-nums;color:#1E2A25} .ds-sub{font-size:15px;color:#5B6A63;margin-top:6px} .ds-bands{position:relative;display:flex;height:10px;border-radius:5px;background:#D5DCD4;margin-top:16px} .ds-bands span:first-child{border-radius:5px 0 0 5px} .ds-bands b{position:absolute;top:-4px;width:2px;height:18px;margin-left:-1px;background:#1E2A25;border-radius:1px}"
+    },
+    {
+      "name": "Kolam Field",
+      "kind": "custom",
+      "refersTo": "field",
+      "description": "The one slate field: month lattice of loops, dots for skipped days, turmeric dashed loop for today.",
+      "html": "<div class=\"ds-field\"><svg width=\"280\" height=\"28\" viewBox=\"0 0 280 28\"><g fill=\"none\" stroke=\"#F4EFE6\" stroke-width=\"1.8\"><path d=\"M0 14Q7.6 5.3 20 0Q32.4 5.3 40 14Q32.4 22.7 20 28Q7.6 22.7 0 14Z\"/><path d=\"M40 14Q47.6 5.3 60 0Q72.4 5.3 80 14Q72.4 22.7 60 28Q47.6 22.7 40 14Z\"/></g><circle cx=\"20\" cy=\"14\" r=\"3\" fill=\"#F4EFE6\"/><circle cx=\"60\" cy=\"14\" r=\"3\" fill=\"#F4EFE6\"/><circle cx=\"100\" cy=\"14\" r=\"3\" fill=\"#B9C4BE\" opacity=\".75\"/><path d=\"M120 14Q127.6 5.3 140 0Q152.4 5.3 160 14Q152.4 22.7 140 28Q127.6 22.7 120 14Z\" fill=\"none\" stroke=\"#F2B21B\" stroke-width=\"2.5\" stroke-dasharray=\"5 5\"/><circle cx=\"140\" cy=\"14\" r=\"4\" fill=\"#F2B21B\"/><circle cx=\"180\" cy=\"14\" r=\"1.5\" fill=\"#B9C4BE\" opacity=\".4\"/><circle cx=\"220\" cy=\"14\" r=\"1.5\" fill=\"#B9C4BE\" opacity=\".4\"/><circle cx=\"260\" cy=\"14\" r=\"1.5\" fill=\"#B9C4BE\" opacity=\".4\"/></svg></div>",
+      "css": ".ds-field{background:#1E2A25;border-radius:24px;padding:16px;width:280px}"
+    },
+    {
+      "name": "Over-budget Hatch",
+      "kind": "custom",
+      "refersTo": "",
+      "description": "Diagonal hatch swatch used instead of red, always paired with words.",
+      "html": "<div class=\"ds-over\"><span class=\"ds-hatch\"></span>Over your budget by $64. Plan shows where it went.</div>",
+      "css": ".ds-over{display:flex;align-items:center;gap:10px;font:15px -apple-system, 'SF Pro Text', system-ui, sans-serif;color:#1E2A25;width:320px} .ds-hatch{flex:none;width:18px;height:18px;border-radius:5px;background:repeating-linear-gradient(-45deg,#1E2A25 0 1.6px,transparent 1.6px 4.2px)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Daily Kolam",
+    "overview": "Each logged day draws one loop of the month's kolam on a slate threshold stone, so the month reads as a pattern you made rather than a score you failed. The app is a calm native iOS surface: a lime-wash ground, white cards that each hold one idea, and a single dark wet-stone field per screen that carries the dominant element (the kolam, the month total, the forecast) in rice-flour lines.\n\nColour is rationed. Turmeric belongs to action and to today, nothing else. Categories keep a fixed hue for life, and their bands are drawn at exact proportions. Over budget is shown with diagonal hatch and plain words, never with red.",
+    "keyCharacteristics": [
+      "One slate field per screen, everything else white on lime-wash.",
+      "Turmeric is the only action and today colour.",
+      "Exact-share category bands in a fixed hue wheel.",
+      "Hatch plus words for over budget and forecast range.",
+      "SF Pro Text for UI, SF Pro Rounded tabular numerals for money.",
+      "Native large titles, pill inputs, SF Symbols, generous 20-26pt radii."
+    ],
+    "rules": [
+      {
+        "name": "The One Turmeric Rule",
+        "body": "Turmeric marks the thing you can do and the day you are in. It is never decoration, never a category, never a status.",
+        "section": "colors"
+      },
+      {
+        "name": "The Hatch-Not-Red Rule",
+        "body": "Over budget and uncertain ranges are drawn with diagonal hatch (1.6pt strokes on a 6pt tile, `hatchInk` or turmeric) plus a sentence saying what happened. There is no red or error colour for money.",
+        "section": "colors"
+      },
+      {
+        "name": "The Fixed Wheel Rule",
+        "body": "A category's hue is assigned once from the wheel and stays the same on every screen and in both themes (dark uses the lifted twin).",
+        "section": "colors"
+      },
+      {
+        "name": "The Scaling Caps Rule",
+        "body": "Large titles and display money cap at 1.3x Dynamic Type; all other text caps at 2x. Money at 24pt or larger is single-line and shrinks to fit (down to 0.5) instead of wrapping.",
+        "section": "typography"
+      },
+      {
+        "name": "The Rounded-Means-Money Rule",
+        "body": "SF Pro Rounded appears only on amounts; labels next to them stay in SF Pro Text.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Stone Rule",
+        "body": "Hierarchy is ground, surface, field. If something needs to stand out, it moves onto the field; it never gets a shadow.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do put exactly one slate field on a screen, carrying its dominant element.",
+      "Do reserve turmeric for the primary action and for today.",
+      "Do render every amount with `Money` (rounded, tabular) and every icon with `Symbol`.",
+      "Do draw category shares at exact proportions in their fixed wheel hue.",
+      "Do show over budget with hatch and a plain sentence about what happened and what's next.",
+      "Do respect the 1.3x / 2x text-scaling caps and let large money shrink to fit."
+    ],
+    "donts": [
+      "Don't use red, or any error colour, for overspend.",
+      "Don't add shadows; use the ground, surface, field ladder.",
+      "Don't reassign or reshuffle a category's hue.",
+      "Don't use turmeric for categories, decoration or status.",
+      "Don't animate anything with the loop's ceremony other than closing a day, and never ignore Reduce Motion."
+    ]
+  }
+}

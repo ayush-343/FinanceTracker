@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { parseISO } from 'date-fns';
+import { useForecast } from '../src/hooks/useForecast';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../src/theme';
 import { ProgressBar, EmptyState, Button, SwipeableSubcategory } from '../src/components';
@@ -30,6 +32,13 @@ export const CategoryScreen: React.FC = () => {
     const { format } = useCurrency();
     const { light } = useHaptics();
     const { dateRange, removeCategory, removeSubcategory } = useBudgetStore();
+    const { forecast } = useForecast();
+    const categoryForecast = forecast?.status === 'ok'
+        ? (() => {
+            const c = forecast.categories.find((x) => x.categoryId === parsedCategoryId);
+            return c ? { ...c, forecastEnd: forecast.period.to } : null;
+        })()
+        : null;
 
     const [category, setCategory] = useState<CategoryWithSpending | null>(null);
     const [subcategories, setSubcategories] = useState<SubcategoryWithSpending[]>([]);
@@ -214,6 +223,15 @@ export const CategoryScreen: React.FC = () => {
                             </Text>
                         </View>
                     </View>
+
+                    {categoryForecast && (
+                        <Text style={[textStyles.bodySmall, { color: colors.textSecondary, marginBottom: spacing.sm }]}>
+                            {categoryForecast.overOn && categoryForecast.spent <= categoryForecast.budget ? <Feather name="alert-triangle" size={13} color={colors.error} /> : null}
+                            {categoryForecast.overOn && categoryForecast.spent <= categoryForecast.budget ? ' ' : ''}
+                            On pace for {format(categoryForecast.likely)} by {formatDate(parseISO(categoryForecast.forecastEnd), 'd MMM')}
+                            {categoryForecast.overOn && categoryForecast.spent <= categoryForecast.budget ? ` · likely over around ${formatDate(parseISO(categoryForecast.overOn), 'd MMM')}` : ''}
+                        </Text>
+                    )}
 
                     <ProgressBar
                         progress={category.percentage}

@@ -15,9 +15,11 @@ export { PendingItemsBanner } from './PendingItemsBanner';
 export { ScanningModal } from './ScanningModal';
 export { BarcodeScannerModal } from './BarcodeScannerModal';
 export { showActionSheet } from './ActionSheet';
-export { WalkthroughProvider, useWalkthroughContext } from './WalkthroughContext';
-export { WalkthroughOverlay } from './WalkthroughOverlay';
-export { WalkthroughTooltip } from './WalkthroughTooltip';
 
 // Import sheets registration (side-effect import)
 import './sheets';
+export { SuggestionChip } from './SuggestionChip';
+export { AskButton } from './AskButton';
+export { AskResultCard } from './AskResultCard';
+export { ForecastCard, ForecastRows } from './ForecastCard';
+export { SubscriptionSuggestion } from './SubscriptionSuggestion';
